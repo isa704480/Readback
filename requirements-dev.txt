@@ -1,0 +1,7 @@
+# Only for the experiments and the microphone harness; never needed on Render.
+-r requirements.txt
+sounddevice==0.5.6
+soundfile==0.14.0
+numpy==2.5.2
+pytest
+pytest-asyncio

@@ -1,0 +1,150 @@
+/* The consent step. Grounds: G = --bg #f5f5f7 (the page), S = --surface #fff
+ * (the two panels). Every ratio below is WCAG 2.1 against the named ground. */
+
+.consent {
+  padding-block: var(--sp-5) var(--sp-7);
+}
+
+.consent__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  text-transform: uppercase;
+  color: var(--text-2); /* 4.66 on G */
+}
+
+.consent__title {
+  font-size: var(--text-2xl);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-h2);
+  color: var(--text); /* 15.46 on G */
+  overflow-wrap: anywhere;
+}
+
+.consent__lede {
+  font-size: var(--text-body-size);
+  line-height: var(--leading-read);
+  color: var(--text-body); /* 9.20 on G */
+}
+
+.consent__h2 {
+  font-size: var(--text-lg);
+  color: var(--text); /* 16.83 on S */
+  margin-bottom: var(--sp-3);
+}
+
+/* Numbered, because the disclosure has four distinct points and a person who
+ * skims should still see there are four. Hairlines between them, no tint. */
+.consent__points {
+  list-style: decimal;
+  padding-left: 1.4em;
+  color: var(--text-body); /* 10.01 on S */
+  line-height: var(--leading-read);
+}
+
+.consent__points li {
+  padding-block: var(--sp-3);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.consent__points li::marker {
+  font-family: var(--font-mono);
+  color: var(--text-2); /* 5.07 on S */
+}
+
+.consent__allParty {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: flex-start;
+  margin-top: var(--sp-4);
+  color: var(--text); /* 16.83 on S; the one sentence that must not be skimmed */
+  font-weight: 500;
+  line-height: var(--leading-body);
+}
+
+.consent__allParty svg {
+  margin-top: 3px;
+}
+
+.consent__version {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  justify-content: space-between;
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--hairline);
+  color: var(--text-2); /* 5.07 on S */
+  font-variant-numeric: tabular-nums;
+}
+
+.consent__note {
+  color: var(--text-2); /* 4.66 on G */
+}
+
+/* ------------------------------------------------------------- controls -- */
+
+.consent__controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* The whole row is the target: 44px minimum, and the label text is inside the
+ * <label>, so a tap anywhere on the sentence toggles the box. */
+.consent__check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  min-height: var(--touch-min);
+  padding: var(--sp-2) 0;
+  cursor: pointer;
+  color: var(--text); /* 16.83 on S */
+  line-height: var(--leading-body);
+}
+
+.consent__check input {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin: 2px 0 0; /* optical: the box sits on the first line's x-height */
+  accent-color: var(--accent-text);
+  cursor: pointer;
+}
+
+.consent__check input:disabled,
+.consent__check:has(input:disabled) {
+  cursor: not-allowed;
+  color: var(--text-2); /* 5.07 on S: still readable while the server is asked */
+}
+
+.consent__check input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.consent__go {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--hairline);
+}
+
+.consent__micNote {
+  color: var(--text-2); /* 5.07 on S */
+}
+
+@media (min-width: 660px) {
+  .consent__title {
+    font-size: var(--text-3xl);
+    letter-spacing: var(--tracking-title);
+  }
+
+  .consent__go {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+}

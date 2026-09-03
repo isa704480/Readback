@@ -1,0 +1,15 @@
+# Readback — server runtime. Pinned to the versions the suite is green on
+# (67 passed, 2026-09-04). Render installs from this file; a missing entry is a
+# failed first deploy, which is how this file came to exist.
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+starlette==0.41.3
+pydantic==2.10.4
+pydantic-settings==2.7.0
+sqlalchemy==2.0.36
+httpx==0.28.1
+websockets==17.0.1
+# Postgres driver for Render/Neon. Not installed on the dev laptop, which runs
+# SQLite; db.py's normalise_database_url() rewrites postgres:// to
+# postgresql+psycopg:// so this is the one that has to be present in prod.
+psycopg[binary]==3.2.3

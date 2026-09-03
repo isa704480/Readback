@@ -43,6 +43,10 @@ export const en = {
   // ---------------------------------------------------------------- shell --
 
   'app.skipToContent': 'Skip to content',
+  /* The route boundary's one sentence (App.tsx RouteFallback). It was
+   * referenced before it existed, which tsc -b reported and vite build did
+   * not: esbuild strips types and never sees the missing key. */
+  'app.routeFailed': 'This screen could not be drawn. Reload the page, and tell us if it keeps happening.',
 
   // --------------------------------------------------------------- topbar --
 
@@ -856,6 +860,138 @@ export const en = {
   'record.export.replay.all': 'Every row came from a recorded fixture, not a live call.',
   'record.export.replay.mixed':
     'Some rows came from recorded fixtures; the source column says which.',
+
+  // -------------------------------------------------------------- consent --
+
+  /* THE CONSENT STEP (screens/Consent.tsx). ARCHITECTURE 3.12: all-party
+   * consent, always, no jurisdiction toggle, and browser permission is not
+   * consent. These strings are the disclosure itself, so a translation has to
+   * stay TRUE, not merely fluent: what is streamed, what is kept, what is not,
+   * in which language the agent listens, and that nothing waives it. */
+  'consent.eyebrow': 'Before the microphone opens',
+  'consent.title': 'Consent, first',
+  'consent.lede':
+    'Readback listens to the call in the background and writes reference numbers down. Nothing opens until everybody on the call has been told, and until you have read and accepted this.',
+  'consent.what.title': 'What happens on this call',
+  'consent.what.1':
+    'The microphone on this device is streamed to Readback’s server, which forwards it to the speech recogniser. Raw audio is never stored anywhere along that path — not on this device, not on the server, not upstream.',
+  'consent.what.2':
+    'Only identifiers are kept: the number, its format, whether it settled, and how many times the agent had to ask. The conversation around them is never written down.',
+  'consent.what.3':
+    'The agent listens in English. When it cannot settle one character, it asks about that one character, once, and then goes quiet again.',
+  'consent.what.4':
+    'A session stops itself after {seconds} seconds. You can stop it sooner at any moment, and stopping ends the recogniser connection immediately.',
+  'consent.allParty':
+    'Every person on the call must know an assistant is listening, wherever they are calling from. There is no setting that waives this, and there will not be one.',
+  'consent.version': 'Disclosure version',
+  'consent.version.loading': 'Reading the version from the server…',
+  'consent.version.unavailable':
+    'The server could not be reached, so the disclosure version is unknown and a session cannot start.',
+  'consent.replayOnly':
+    'This server has no recognition key, or its daily budget is spent. A session started here would not hear this microphone, so none can be started.',
+  'consent.accept.label': 'I have read this and I accept it.',
+  'consent.played.label': 'The other party on the call has been told that an assistant is listening.',
+  'consent.start': 'Start listening',
+  'consent.starting': 'Opening',
+  'consent.mic.note': 'The browser asks for the microphone only after you press this, never before.',
+
+  // ----------------------------------------------------------------- live --
+
+  /* THE LIVE SCREEN (screens/Live.tsx). DESIGN-BRIEF 4.1-4.3. No transcript,
+   * no confidence, and nothing on screen while the agent is silent except the
+   * fact that it is listening and has decided to stay quiet. */
+  'live.eyebrow': 'Live',
+  'live.title': 'Listening on this call',
+  'live.state.starting': 'Recording consent',
+  'live.state.connecting': 'Opening the session',
+  'live.state.listening': 'Listening',
+  'live.state.ended': 'Ended',
+  'live.state.failed': 'Stopped',
+
+  /* The silence indicator, live. The sentence and the gate come from the
+   * record's held-line keys (record.held.*), which the same component reads. */
+  'live.armed': 'Hearing something that could be {format}.',
+  'live.idle': 'Nothing that looks like an identifier yet.',
+  'live.elapsed.label': 'listening for',
+  'live.elapsed.sr': 'Listening for {time}.',
+  'live.cap.remaining': 'about {s} s left of the {cap} s cap',
+  'live.cap.explain':
+    'Every session stops itself at {cap} seconds. That is the deployment’s budget rule, not a fault.',
+
+  'live.rack.title': 'Capture rack',
+  'live.rack.meta': 'live',
+  'live.row.reason': 'reason: {reason}',
+  'live.stop': 'Stop and end the session',
+  'live.hidden.notice':
+    'Audio was not sent for {s} s while this tab was hidden. Nothing was buffered and nothing was replayed; the recogniser simply heard silence.',
+  'live.noSignal':
+    'The microphone is open but delivering silence. Check the mute switch on the device or in the operating system.',
+
+  /* What the browser actually granted, from track.getSettings(). The request
+   * is not what gets printed; the answer is. */
+  'live.mic.title': 'What the browser granted',
+  'live.mic.rate': '{rate} Hz from the device, resampled to 16000 Hz',
+  'live.mic.rate.unknown': 'device rate not reported; context at {rate} Hz, resampled to 16000 Hz',
+  'live.mic.channels': '{n} ch',
+  'live.mic.ec': 'echo cancellation',
+  'live.mic.ns': 'noise suppression',
+  'live.mic.agc': 'auto gain',
+  'live.mic.unknown': 'not reported',
+  'live.mic.device': 'device',
+  'live.mic.device.unknown': 'unnamed device',
+  'live.chunks': '{n} chunks sent · 100 ms each',
+
+  /* THE QUESTION MOMENT (4.3). Position, alternatives, what happens if nobody
+   * answers. The agent's own sentence is English and is quoted as such. */
+  'live.q.title': 'One character',
+  'live.q.position': 'Position {n}',
+  'live.q.blind':
+    'The check digit cannot tell these two apart. The agent asks about this pair every time; that is diligence, not doubt.',
+  'live.q.says': 'The agent says, in English:',
+  'live.q.tap': 'Tap the character you heard.',
+  'live.q.voiceNote':
+    'In this build the answer is taken from the tap. Saying it into the microphone is not yet read as an answer.',
+  'live.q.nobody':
+    'If nobody answers within a few seconds, the agent counts the question against its budget and carries on: it may ask once more, or hand the number to a person.',
+  'live.q.choice': 'Answer {char}',
+  'live.q.sent': 'Answer sent',
+
+  /* The end, in the server's words. `reason` is the pipeline's own label. */
+  'live.ended.title': 'The session has ended.',
+  'live.ended.reason.complete': 'The call ended and the agent wrote down what it had.',
+  'live.ended.reason.cap':
+    'The {cap}-second cap on a session was reached, so the recogniser connection was closed. That cap is the deployment’s budget rule, not a fault.',
+  'live.ended.reason.stopped': 'You stopped it.',
+  'live.ended.reason.error': 'The pipeline stopped with an error.',
+  'live.ended.reason.other': 'Ended: {reason}.',
+  'live.ended.tally': '{captures} written · {silent} without asking · {questions} asked',
+  'live.ended.waiting': 'Waiting for the server’s tally…',
+  'live.again': 'Start another session',
+
+  /* FAILURE STATES. Each one is a different thing that happened and names a
+   * different next step. Not one of them may be collapsed into another. */
+  'live.fail.consent_absent':
+    'The server refused to open a session because no consent was recorded with it. The microphone was not touched and nothing was captured.',
+  'live.fail.server_unreachable':
+    'Cannot reach the Readback service. No session was opened and the microphone was not touched.',
+  'live.fail.server_refused':
+    'The Readback service declined to open a session. Its own reason is printed below.',
+  'live.fail.no_live_capture':
+    'The session opened, but this server has no recognition key or its daily budget is spent, so it could not hear this microphone. The microphone was not opened.',
+  'live.fail.mic_denied':
+    'The browser refused the microphone. Allow it for this site in the address bar, then start again.',
+  'live.fail.mic_missing': 'No microphone was found on this device.',
+  'live.fail.mic_busy': 'The microphone is held by another application or another tab.',
+  'live.fail.mic_unsupported':
+    'This browser cannot capture audio here. It needs a secure origin (https, or localhost) and AudioWorklet support.',
+  'live.fail.audio_refused':
+    'The server did not accept the audio socket, so no audio was sent. The close code is printed below.',
+  'live.fail.upstream_refused':
+    'The speech recogniser refused the connection. The session ended before anything was heard.',
+  'live.fail.connection_lost':
+    'The connection to the server dropped mid-session. The session is over; anything already written is on the record.',
+  'live.fail.device_lost': 'The microphone stopped delivering audio mid-session.',
+  'live.fail.detail': 'Detail',
 } as const;
 
 /** Every key in the catalog. Adding one here is what forces uz and ru to move. */

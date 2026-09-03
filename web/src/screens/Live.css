@@ -1,0 +1,303 @@
+/* The live screen. Grounds: G = --bg #f5f5f7 (page), S = --surface #ffffff
+ * (every panel). Ratios are WCAG 2.1 against the ground named on the line.
+ *
+ * NO MOTION IS DECLARED HERE. The rack's motions live in motion.css and are
+ * keyed on .rack--live; the breath on the silence indicator is motion.css's
+ * .rb-quiet. This file positions things and colours them, and nothing in it
+ * transitions or animates -- an operator screen has no reveal and nothing
+ * scroll-linked (motion.css BANNED 13). */
+
+.live {
+  padding-block: var(--sp-5) var(--sp-7);
+  min-width: 0;
+}
+
+.live__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.live__eyebrow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  text-transform: uppercase;
+  color: var(--text-2); /* 4.66 on G */
+}
+
+.live__title {
+  font-size: var(--text-2xl);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-h2);
+  color: var(--text); /* 15.46 on G */
+  overflow-wrap: anywhere;
+}
+
+/* --------------------------------------------------- the silence indicator */
+
+.quiet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.quiet__head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-3);
+}
+
+/* The breath. --text-2 on S is 5.07 at rest and, at motion.css's measured
+ * floor of 0.77 opacity, 3.21 -- over the 3:1 a meaningful graphic needs. */
+.quiet__dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--r-full);
+  background: var(--text-2);
+  align-self: center;
+}
+
+.quiet__word {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--text); /* 16.83 on S */
+}
+
+.quiet__elapsed {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  color: var(--text-2); /* 5.07 on S */
+}
+
+.quiet__elapsedLabel {
+  font-size: var(--text-meta);
+}
+
+/* The still equivalent (motion.css 8): a number that advances once a second.
+ * --text on S so it is the first thing read under reduced motion. */
+.rb-silence-elapsed {
+  color: var(--text); /* 16.83 on S */
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-lg);
+}
+
+.quiet__armed {
+  color: var(--text-body); /* 10.01 on S */
+}
+
+.quiet__cap {
+  color: var(--text-2); /* 5.07 on S */
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.live__capExplain {
+  color: var(--text-2); /* 4.66 on G */
+}
+
+/* ---------------------------------------------------------- the question */
+
+.ask {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.ask__eyebrow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  text-transform: uppercase;
+  color: var(--accent-text); /* 5.11 on S: the one accent, on the one state that wants a human */
+}
+
+.ask__says {
+  color: var(--text-body); /* 10.01 on S */
+  line-height: var(--leading-body);
+}
+
+.ask__says q {
+  quotes: '“' '”';
+  color: var(--text); /* 16.83 on S */
+}
+
+.ask__tap {
+  color: var(--text); /* 16.83 on S */
+  font-weight: 500;
+}
+
+.ask__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+/* A chip is a slot the operator can press: the rack's identifier glyph at
+ * button size. 64px square clears the 44px floor with room for a thumb. The
+ * border is the control edge: --text-3 on S is 3.62, past WCAG 1.4.11's 3:1. */
+.ask__chip {
+  min-width: 64px;
+  min-height: 64px;
+  padding: 0 var(--sp-4);
+  background: var(--surface);
+  color: var(--text); /* 16.83 on S */
+  border: 1px solid var(--text-3);
+  border-radius: var(--r-thumb);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.ask__chip:not(:disabled):hover {
+  background: var(--hover);
+  border-color: var(--text-2);
+}
+
+.ask__chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.ask__chip:disabled {
+  background: var(--track);
+  color: var(--text-2); /* 4.15 on --track */
+  border-color: transparent;
+  cursor: not-allowed;
+}
+
+.ask__sent {
+  color: var(--text-2); /* 5.07 on S */
+}
+
+.ask__blind {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: flex-start;
+  color: var(--text-body); /* 10.01 on S */
+}
+
+.ask__blind svg {
+  margin-top: 3px;
+}
+
+.ask__note {
+  color: var(--text-2); /* 5.07 on S */
+  line-height: var(--leading-body);
+}
+
+/* ------------------------------------------------------------ the mic */
+
+.mic__title {
+  font-size: var(--text-meta);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text); /* 16.83 on S */
+  margin-bottom: var(--sp-3);
+}
+
+.mic__facts {
+  display: flex;
+  flex-direction: column;
+}
+
+.mic__facts > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-4);
+  justify-content: space-between;
+  padding-block: var(--sp-2);
+  border-bottom: 1px solid var(--hairline);
+  min-width: 0;
+}
+
+.mic__facts dt {
+  color: var(--text-2); /* 5.07 on S */
+}
+
+.mic__facts dd {
+  color: var(--text); /* 16.83 on S */
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.mic__chunks {
+  margin-top: var(--sp-3);
+  color: var(--text-2); /* 5.07 on S */
+  font-variant-numeric: tabular-nums;
+}
+
+/* -------------------------------------------------------------- the end */
+
+.end {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.end__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  text-transform: uppercase;
+  color: var(--text-2); /* 5.07 on S */
+}
+
+.end__title {
+  font-size: var(--text-xl);
+  color: var(--text); /* 16.83 on S */
+}
+
+.end__reason {
+  color: var(--text-body); /* 10.01 on S */
+  line-height: var(--leading-body);
+}
+
+.end__tally {
+  color: var(--text-2); /* 5.07 on S */
+  font-variant-numeric: tabular-nums;
+}
+
+.end__detail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  color: var(--text-2); /* 5.07 on S */
+  overflow-wrap: anywhere;
+}
+
+.end__go,
+.live__stop {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.end__go {
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--hairline);
+}
+
+@media (min-width: 660px) {
+  .live__title {
+    font-size: var(--text-3xl);
+    letter-spacing: var(--tracking-title);
+  }
+
+  .end__go,
+  .live__stop {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}

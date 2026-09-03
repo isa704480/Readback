@@ -34,6 +34,7 @@ const catalog = {
   // ---------------------------------------------------------------- shell --
 
   'app.skipToContent': 'Asosiy mazmunga oʻtish',
+  'app.routeFailed': 'Bu ekranni chizib boʻlmadi. Sahifani qayta yuklang; agar takrorlansa, bizga ayting.',
 
   // --------------------------------------------------------------- topbar --
 
@@ -714,6 +715,121 @@ const catalog = {
     'Har bir qator jonli qoʻngʻiroqdan emas, yozib olingan fixturadan olingan.',
   'record.export.replay.mixed':
     'Ayrim qatorlar yozib olingan fixturalardan; qaysi biri ekanini manba ustuni aytadi.',
+
+  // -------------------------------------------------------------- consent --
+
+  'consent.eyebrow': 'Mikrofon ochilishidan oldin',
+  'consent.title': 'Avval — rozilik',
+  'consent.lede':
+    'Readback qoʻngʻiroqni fonda tinglaydi va raqamli identifikatorlarni yozib oladi. Qoʻngʻiroqdagi har bir kishi ogohlantirilmaguncha va siz buni oʻqib qabul qilmaguningizcha hech narsa ochilmaydi.',
+  'consent.what.title': 'Bu qoʻngʻiroqda nima boʻladi',
+  'consent.what.1':
+    'Bu qurilmadagi mikrofon Readback serveriga uzatiladi, server esa uni nutqni tanib oluvchiga yuboradi. Xom audio bu yoʻlning hech bir nuqtasida saqlanmaydi — na bu qurilmada, na serverda, na undan yuqorida.',
+  'consent.what.2':
+    'Faqat identifikatorlar saqlanadi: raqamning oʻzi, formati, hal boʻlgan-boʻlmagani va agent necha marta soʻrashga majbur boʻlgani. Ular atrofidagi suhbat hech qachon yozib olinmaydi.',
+  'consent.what.3':
+    'Agent ingliz tilida tinglaydi. Bitta belgini hal qila olmasa, aynan oʻsha bitta belgi haqida bir marta soʻraydi va yana jim boʻladi.',
+  'consent.what.4':
+    'Seans {seconds} soniyadan keyin oʻzi toʻxtaydi. Siz uni istalgan paytda ertaroq toʻxtatishingiz mumkin, toʻxtatish esa tanib oluvchi bilan aloqani darhol uzadi.',
+  'consent.allParty':
+    'Qoʻngʻiroqdagi har bir kishi, qayerdan qoʻngʻiroq qilayotganidan qatʼi nazar, yordamchi tinglayotganini bilishi shart. Buni bekor qiladigan sozlama yoʻq va boʻlmaydi ham.',
+  'consent.version': 'Ogohlantirish matni versiyasi',
+  'consent.version.loading': 'Versiya serverdan oʻqilmoqda…',
+  'consent.version.unavailable':
+    'Serverga ulanib boʻlmadi, shuning uchun ogohlantirish versiyasi nomaʼlum va seansni boshlab boʻlmaydi.',
+  'consent.replayOnly':
+    'Bu serverda tanib olish kaliti yoʻq yoki kunlik byudjeti tugagan. Bu yerda boshlangan seans bu mikrofonni eshitmaydi, shuning uchun seans boshlab boʻlmaydi.',
+  'consent.accept.label': 'Men buni oʻqidim va qabul qilaman.',
+  'consent.played.label': 'Qoʻngʻiroqdagi ikkinchi tomonga yordamchi tinglayotgani aytildi.',
+  'consent.start': 'Tinglashni boshlash',
+  'consent.starting': 'Ochilmoqda',
+  'consent.mic.note': 'Brauzer mikrofonni faqat shu tugmani bosganingizdan keyin soʻraydi, undan oldin hech qachon.',
+
+  // ----------------------------------------------------------------- live --
+
+  'live.eyebrow': 'Jonli',
+  'live.title': 'Bu qoʻngʻiroq tinglanmoqda',
+  'live.state.starting': 'Rozilik yozilmoqda',
+  'live.state.connecting': 'Seans ochilmoqda',
+  'live.state.listening': 'Tinglanmoqda',
+  'live.state.ended': 'Tugadi',
+  'live.state.failed': 'Toʻxtadi',
+
+  'live.armed': '{format} boʻlishi mumkin boʻlgan narsa eshitilmoqda.',
+  'live.idle': 'Hozircha identifikatorga oʻxshash hech narsa yoʻq.',
+  'live.elapsed.label': 'tinglash davomiyligi',
+  'live.elapsed.sr': '{time} davomida tinglanmoqda.',
+  'live.cap.remaining': '{cap} s chegaradan taxminan {s} s qoldi',
+  'live.cap.explain':
+    'Har bir seans {cap} soniyada oʻzi toʻxtaydi. Bu nosozlik emas, joriy oʻrnatmaning byudjet qoidasi.',
+
+  'live.rack.title': 'Yozuv paneli',
+  'live.rack.meta': 'jonli',
+  'live.row.reason': 'sabab: {reason}',
+  'live.stop': 'Toʻxtatish va seansni tugatish',
+  'live.hidden.notice':
+    'Bu varaq yashirin boʻlgan {s} s davomida audio yuborilmadi. Hech narsa buferga olinmadi va qayta yuborilmadi; tanib oluvchi shunchaki sukunatni eshitdi.',
+  'live.noSignal':
+    'Mikrofon ochiq, lekin faqat sukunat yetkazmoqda. Qurilmadagi yoki operatsion tizimdagi ovozsiz rejimni tekshiring.',
+
+  'live.mic.title': 'Brauzer nima berdi',
+  'live.mic.rate': 'qurilmadan {rate} Hz, 16000 Hz ga qayta namunalandi',
+  'live.mic.rate.unknown': 'qurilma chastotasi bildirilmadi; kontekst {rate} Hz, 16000 Hz ga qayta namunalandi',
+  'live.mic.channels': '{n} kanal',
+  'live.mic.ec': 'aks sadoni bostirish',
+  'live.mic.ns': 'shovqinni bostirish',
+  'live.mic.agc': 'avtomatik kuchaytirish',
+  'live.mic.unknown': 'bildirilmadi',
+  'live.mic.device': 'qurilma',
+  'live.mic.device.unknown': 'nomsiz qurilma',
+  'live.chunks': '{n} boʻlak yuborildi · har biri 100 ms',
+
+  'live.q.title': 'Bitta belgi',
+  'live.q.position': '{n}-oʻrin',
+  'live.q.blind':
+    'Nazorat raqami bu ikkisini farqlay olmaydi. Agent bu juftlik haqida har safar soʻraydi; bu shubha emas, sinchkovlik.',
+  'live.q.says': 'Agent ingliz tilida shunday deydi:',
+  'live.q.tap': 'Eshitgan belgingizga bosing.',
+  'live.q.voiceNote':
+    'Bu qurilishda javob bosishdan olinadi. Uni mikrofonga aytish hali javob sifatida oʻqilmaydi.',
+  'live.q.nobody':
+    'Bir necha soniya ichida hech kim javob bermasa, agent savolni oʻz byudjetiga hisoblaydi va davom etadi: yana bir marta soʻrashi yoki raqamni odamga topshirishi mumkin.',
+  'live.q.choice': '{char} deb javob berish',
+  'live.q.sent': 'Javob yuborildi',
+
+  'live.ended.title': 'Seans tugadi.',
+  'live.ended.reason.complete': 'Qoʻngʻiroq tugadi va agent eshitganini yozib oldi.',
+  'live.ended.reason.cap':
+    'Seans uchun {cap} soniyalik chegaraga yetildi, shuning uchun tanib oluvchi bilan aloqa yopildi. Bu chegara nosozlik emas, joriy oʻrnatmaning byudjet qoidasi.',
+  'live.ended.reason.stopped': 'Siz toʻxtatdingiz.',
+  'live.ended.reason.error': 'Quvur xato bilan toʻxtadi.',
+  'live.ended.reason.other': 'Tugadi: {reason}.',
+  'live.ended.tally': '{captures} yozildi · {silent} tasi soʻramasdan · {questions} savol',
+  'live.ended.waiting': 'Server yakuni kutilmoqda…',
+  'live.again': 'Yana bir seans boshlash',
+
+  'live.fail.consent_absent':
+    'Server seans ochishni rad etdi, chunki u bilan birga rozilik yozilmagan. Mikrofonga tegilmadi va hech narsa yozib olinmadi.',
+  'live.fail.server_unreachable':
+    'Readback xizmatiga ulanib boʻlmadi. Seans ochilmadi va mikrofonga tegilmadi.',
+  'live.fail.server_refused':
+    'Readback xizmati seans ochishdan bosh tortdi. Uning oʻz sababi quyida koʻrsatilgan.',
+  'live.fail.no_live_capture':
+    'Seans ochildi, lekin bu serverda tanib olish kaliti yoʻq yoki kunlik byudjeti tugagan, shuning uchun u bu mikrofonni eshita olmadi. Mikrofon ochilmadi.',
+  'live.fail.mic_denied':
+    'Brauzer mikrofonni rad etdi. Manzil qatorida bu sayt uchun ruxsat bering, keyin qaytadan boshlang.',
+  'live.fail.mic_missing': 'Bu qurilmada mikrofon topilmadi.',
+  'live.fail.mic_busy': 'Mikrofon boshqa dastur yoki boshqa varaq tomonidan band qilingan.',
+  'live.fail.mic_unsupported':
+    'Bu brauzer bu yerda audio yozib ololmaydi. Unga xavfsiz manba (https yoki localhost) va AudioWorklet qoʻllab-quvvatlashi kerak.',
+  'live.fail.audio_refused':
+    'Server audio soketini qabul qilmadi, shuning uchun audio yuborilmadi. Yopilish kodi quyida koʻrsatilgan.',
+  'live.fail.upstream_refused':
+    'Nutqni tanib oluvchi ulanishni rad etdi. Seans biror narsa eshitilishidan oldin tugadi.',
+  'live.fail.connection_lost':
+    'Seans oʻrtasida server bilan aloqa uzildi. Seans tugadi; allaqachon yozilgan narsalar yozuvda turibdi.',
+  'live.fail.device_lost': 'Seans oʻrtasida mikrofon audio yetkazishni toʻxtatdi.',
+  'live.fail.detail': 'Tafsilot',
 } as const;
 
 export const uz: Messages = catalog satisfies Translated<typeof en, typeof catalog>;

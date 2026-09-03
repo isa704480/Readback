@@ -40,9 +40,10 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import json
 import time
 import uuid
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
@@ -72,7 +73,7 @@ from server.pipeline import events as ev
 from server.pipeline.runner import Question, RunSummary, RunnerConfig, run_session
 from server.pipeline.store import SqlCaptureStore, apply_observations
 from server.stream.replay import Fixture, ReplaySource, fixture_dir
-from server.stream.source import SourceConfig
+from server.stream.source import SourceClosed, SourceConfig
 
 # The organisation every demo session belongs to. A fixed UUID rather than a
 # lookup by name: the row is created once at startup and referenced by id
@@ -151,6 +152,10 @@ class LiveSession:
     pending: dict[str, asyncio.Future[str]] = field(default_factory=dict)
     summary: RunSummary | None = None
     opened_at: float = field(default_factory=time.monotonic)
+    # The one `/audio` socket allowed to feed this session, while it is open.
+    # See `session_audio`: two microphones into one upstream socket is garbage
+    # in, and it is also how one tab would inject audio into another's call.
+    producer: WebSocket | None = None
 
     @property
     def running(self) -> bool:
@@ -501,6 +506,477 @@ async def session_live(websocket: WebSocket, session_id: uuid.UUID) -> None:
         with_close = websocket.client_state.name == "CONNECTED"
         if with_close:
             await websocket.close()
+
+
+# ------------------------------------------------------------ audio ingress --
+# The browser's microphone, arriving as binary PCM16 frames. Everything below
+# exists so that the thing on the other end of `LiveSource.send_audio` can be a
+# real person's voice rather than a fixture -- and so that the constraints the
+# upstream socket enforces by closing (frame size, pacing) are enforced HERE,
+# with a close code the browser can explain, rather than discovered as a 3007
+# from AssemblyAI with no audio to show for it.
+
+# PCM16 signed little-endian, mono, 16 kHz: 16 000 samples/s x 2 bytes = 32 000
+# bytes per second = 32 bytes per millisecond. Every duration in this section is
+# derived from this one number.
+AUDIO_BYTES_PER_MS: Final = 32
+
+# Upstream frame window, measured on the live socket: 50-1000 ms per binary
+# frame, sent no faster than real time; outside that the socket closes with
+# 3007. The ingress re-chunks to a fixed 100 ms frame -- comfortably inside the
+# window, and short enough that it adds at most one frame of latency to the
+# ~2 s interrupt budget (3.6).
+AUDIO_CHUNK_MS: Final = 100
+AUDIO_CHUNK_BYTES: Final = AUDIO_CHUNK_MS * AUDIO_BYTES_PER_MS
+# The shortest frame upstream accepts. A tail shorter than this at Terminate is
+# dropped: 49 ms of audio cannot carry a character and cannot be sent.
+AUDIO_MIN_FRAME_BYTES: Final = 50 * AUDIO_BYTES_PER_MS
+# How far ahead of real time a producer may run before it is refused. Two
+# seconds absorbs network jitter and a modest client-side batch, and bounds the
+# only place audio ever rests in this process at 64 KB per session.
+AUDIO_MAX_AHEAD_MS: Final = 2000
+AUDIO_MAX_AHEAD_BYTES: Final = AUDIO_MAX_AHEAD_MS * AUDIO_BYTES_PER_MS
+
+# How long to wait for the pipeline to write its last row after the upstream
+# socket has been told to Terminate. The runner ends on its own once the frame
+# stream ends; this is the backstop, not the mechanism.
+PIPELINE_DRAIN_S: Final = 5.0
+
+# WebSocket subprotocols. The browser's WebSocket API cannot set a header, and a
+# bearer token in a query string is a bearer token in every access log between
+# here and the browser -- so the token travels as a second offered subprotocol,
+# `readback.token.<token>`, beside `readback.audio`, and the server selects
+# `readback.audio` in reply. A non-browser client may send Authorization instead.
+AUDIO_SUBPROTOCOL: Final = "readback.audio"
+AUDIO_TOKEN_PROTOCOL_PREFIX: Final = "readback.token."
+
+# Close codes on the audio socket. 4xxx is the range RFC 6455 leaves to the
+# application, and the last three digits are the HTTP status they rhyme with so
+# a client can explain each one without a table.
+WS_AUDIO_TERMINATED: Final = 1000       # the client sent Terminate; clean end
+WS_AUDIO_BAD_MESSAGE: Final = 4400      # a text frame that is not a known control
+WS_AUDIO_NO_CONSENT: Final = 4403       # consent withdrawn or never recorded
+WS_AUDIO_UNKNOWN: Final = 4404          # no such session for this organisation
+WS_AUDIO_CAP: Final = 4408              # session_cap_seconds reached (3.11)
+WS_AUDIO_NOT_LIVE: Final = 4409         # a replay session has no microphone
+WS_AUDIO_ENDED: Final = 4410            # the session already ended
+WS_AUDIO_BAD_FRAME: Final = 4422        # a binary frame that is not PCM16
+WS_AUDIO_BUSY: Final = 4423             # this session already has a producer
+WS_AUDIO_TOO_FAST: Final = 4429         # more than AUDIO_MAX_AHEAD_MS ahead of real time
+WS_AUDIO_UPSTREAM: Final = 4502         # AssemblyAI could not be reached, or the pipeline failed
+
+
+@dataclass(frozen=True, slots=True)
+class _Outcome:
+    """How an audio socket ended, and whether a close frame is still owed."""
+
+    code: int
+    reason: str
+    send_close: bool = True
+    # What the session row should say. None leaves the runner's own verdict.
+    end_reason: str | None = None
+    # The client said Terminate: what is buffered is the end of a sentence and
+    # goes out at real time before the socket closes. Its own flag, because the
+    # code alone cannot say -- a client that closes with 1000 is also 1000.
+    drain: bool = False
+
+
+class _IngressStore(SqlCaptureStore):
+    """The session store, with the ingress allowed to name the end reason.
+
+    `run_session` writes `end_reason` from what it observed, and what it observes
+    when the ingress terminates the upstream socket is simply that the frame
+    stream ended -- "complete". The reason it ended is known one layer up: the
+    cap fired, or the human hung up. Overriding at `finish` rather than after it
+    keeps one `session.ended` audit row per session, carrying the true reason.
+    """
+
+    end_reason: str | None = None
+
+    def finish(self, *, billed_seconds: int, end_reason: str,
+               confidence_regime: str | None) -> None:
+        super().finish(billed_seconds=billed_seconds,
+                       end_reason=self.end_reason or end_reason,
+                       confidence_regime=confidence_regime)
+
+
+def _ws_token(websocket: WebSocket) -> str:
+    """The bearer token, from the header or the token subprotocol. "" if none."""
+    token = auth._bearer(websocket.headers.get("authorization"))
+    if token:
+        return token
+    for offered in websocket.headers.get("sec-websocket-protocol", "").split(","):
+        offered = offered.strip()
+        if offered.startswith(AUDIO_TOKEN_PROTOCOL_PREFIX):
+            return offered[len(AUDIO_TOKEN_PROTOCOL_PREFIX):]
+    return ""
+
+
+def _control_kind(text: str | None) -> str | None:
+    """The `type` of a JSON control frame, or None for anything else."""
+    if not text:
+        return None
+    try:
+        payload = json.loads(text)
+    except ValueError:
+        return None
+    if not isinstance(payload, dict):
+        return None
+    kind = payload.get("type")
+    return kind if isinstance(kind, str) else None
+
+
+class _AudioIngress:
+    """One browser microphone feeding one upstream socket, at real time.
+
+    Three tasks race: the receiver (frames in), the pacer (frames out) and the
+    cap timer; the pipeline task is a fourth participant so that the session
+    ending on its own -- upstream inactivity, `/stop` -- ends the ingress too.
+    Whichever finishes first names the outcome, the rest are cancelled, and the
+    caller terminates upstream regardless.
+
+    THE ONLY PLACE AUDIO RESTS. `_buf` holds at most `AUDIO_MAX_AHEAD_BYTES`
+    of PCM between arrival and `send_audio`, lives exactly as long as the
+    socket, and is cleared on the way out. Nothing here writes bytes anywhere
+    else -- not a file, not a log, not a queue -- and nothing may.
+    """
+
+    def __init__(self, websocket: WebSocket, source: Any, *,
+                 cap_seconds: float, opened_at: float) -> None:
+        self.ws = websocket
+        self.source = source
+        self.cap_seconds = cap_seconds
+        self.opened_at = opened_at
+        self.bytes_in = 0
+        self.bytes_out = 0
+        self._buf = bytearray()
+        self._ready = asyncio.Event()
+        self._final = False
+        self._next_send_at: float | None = None
+
+    # -- frames in ---------------------------------------------------------
+    async def _receive(self) -> _Outcome:
+        while True:
+            try:
+                msg = await self.ws.receive()
+            except (WebSocketDisconnect, RuntimeError):
+                return _Outcome(1006, "client disconnected", send_close=False,
+                                end_reason="user")
+            if msg["type"] == "websocket.disconnect":
+                return _Outcome(int(msg.get("code") or 1005), "client disconnected",
+                                send_close=False, end_reason="user")
+            data = msg.get("bytes")
+            if data is not None:
+                if not data:
+                    continue
+                if len(data) % 2:
+                    # A 16-bit sample cannot be split. Half a sample is not an
+                    # off-by-one, it is a client sending something else.
+                    return _Outcome(WS_AUDIO_BAD_FRAME,
+                                    "not PCM16: odd byte count", end_reason="user")
+                self.bytes_in += len(data)
+                self._buf += data
+                if len(self._buf) > AUDIO_MAX_AHEAD_BYTES:
+                    return _Outcome(WS_AUDIO_TOO_FAST,
+                                    f"audio more than {AUDIO_MAX_AHEAD_MS} ms ahead "
+                                    "of real time", end_reason="user")
+                self._ready.set()
+                continue
+            kind = _control_kind(msg.get("text"))
+            if kind == "Terminate":
+                # The pacer sends what is left, at real time, then stops.
+                self._final = True
+                self._ready.set()
+                return _Outcome(WS_AUDIO_TERMINATED, "terminated", end_reason="user",
+                                drain=True)
+            if kind == "KeepAlive":
+                # Accepted so a client heartbeat is not an error, and NOT
+                # forwarded: live.py never sends KeepAlive upstream by policy --
+                # in an always-listening product it is the burn-credits button.
+                continue
+            return _Outcome(WS_AUDIO_BAD_MESSAGE, "unexpected message",
+                            end_reason="user")
+
+    # -- frames out --------------------------------------------------------
+    async def _forward(self, chunk: bytes) -> None:
+        """Send one frame, no earlier than real time allows.
+
+        A frame may go out the moment it is complete, but never before the
+        previous frame's audio has actually elapsed on this clock. The schedule
+        is `max(previous + its duration, now)`, so a client at real time pays
+        nothing but its own jitter, a client that pauses does not bank credit
+        it could later spend in a burst, and upstream never sees audio faster
+        than the wall clock it bills by.
+        """
+        now = time.monotonic()
+        send_at = now if self._next_send_at is None else max(self._next_send_at, now)
+        # Looped, not a single sleep: the loop's timer may fire a clock
+        # resolution early (about 16 ms on Windows), and "no earlier than" is
+        # the property, so it is checked against the clock rather than trusted.
+        while now < send_at:
+            await asyncio.sleep(send_at - now)
+            now = time.monotonic()
+        await self.source.send_audio(chunk)
+        self.bytes_out += len(chunk)
+        self._next_send_at = send_at + len(chunk) / AUDIO_BYTES_PER_MS / 1000.0
+
+    async def _drain(self, *, final: bool) -> None:
+        # Peek, send, then delete: a cancellation during the paced sleep must
+        # leave the frame in the buffer, not lose it.
+        while len(self._buf) >= AUDIO_CHUNK_BYTES:
+            await self._forward(bytes(self._buf[:AUDIO_CHUNK_BYTES]))
+            del self._buf[:AUDIO_CHUNK_BYTES]
+        if final and len(self._buf) >= AUDIO_MIN_FRAME_BYTES:
+            await self._forward(bytes(self._buf))
+            self._buf.clear()
+
+    async def _pace(self) -> _Outcome:
+        try:
+            while True:
+                await self._ready.wait()
+                await self._drain(final=self._final)
+                if self._final:
+                    return _Outcome(WS_AUDIO_TERMINATED, "terminated", end_reason="user")
+                if len(self._buf) < AUDIO_CHUNK_BYTES:
+                    self._ready.clear()
+        except SourceClosed:
+            return _Outcome(WS_AUDIO_ENDED, "session ended")
+        except Exception as exc:
+            # The type, never the message (3.9): an upstream error can quote
+            # the frame it rejected.
+            return _Outcome(WS_AUDIO_UPSTREAM, f"upstream failed: {type(exc).__name__}",
+                            end_reason="error")
+
+    # -- the clock ---------------------------------------------------------
+    async def _cap(self) -> _Outcome:
+        remaining = self.cap_seconds - (time.monotonic() - self.opened_at)
+        if remaining > 0:
+            await asyncio.sleep(remaining)
+        return _Outcome(WS_AUDIO_CAP, "session cap reached", end_reason="cap")
+
+    # -- the race ----------------------------------------------------------
+    async def run(self, pipeline: asyncio.Task[Any]) -> _Outcome:
+        recv = asyncio.ensure_future(self._receive())
+        pace = asyncio.ensure_future(self._pace())
+        cap = asyncio.ensure_future(self._cap())
+        try:
+            done, _ = await asyncio.wait({recv, pace, cap, pipeline},
+                                         return_when=asyncio.FIRST_COMPLETED)
+            if cap in done:
+                outcome = cap.result()
+            elif recv in done:
+                outcome = recv.result()
+            elif pace in done:
+                outcome = pace.result()
+            else:
+                outcome = _pipeline_outcome(pipeline)
+            if outcome.drain:
+                # The human finished a sentence: the pacer sends the end of it
+                # at real time and returns on its own. Bounded, because the
+                # buffer never holds more than AUDIO_MAX_AHEAD_MS.
+                try:
+                    await asyncio.wait_for(asyncio.shield(pace),
+                                           AUDIO_MAX_AHEAD_MS / 1000.0 + 1.0)
+                except (asyncio.TimeoutError, Exception):
+                    pass
+        finally:
+            for task in (recv, pace, cap):
+                if not task.done():
+                    task.cancel()
+            await asyncio.gather(recv, pace, cap, return_exceptions=True)
+            self._buf.clear()
+        return outcome
+
+
+def _pipeline_outcome(pipeline: asyncio.Task[Any]) -> _Outcome:
+    if pipeline.cancelled():
+        return _Outcome(WS_AUDIO_ENDED, "session stopped")
+    if pipeline.exception() is not None:
+        return _Outcome(WS_AUDIO_UPSTREAM,
+                        f"pipeline failed: {type(pipeline.exception()).__name__}")
+    return _Outcome(WS_AUDIO_ENDED, "session ended")
+
+
+@app.websocket("/api/session/{session_id}/audio")
+async def session_audio(websocket: WebSocket, session_id: uuid.UUID,
+                        db: SASession = Depends(get_db),
+                        settings: Settings = Depends(get_settings)) -> None:
+    """Audio IN. Binary PCM16 frames from the one microphone on this session.
+
+    This is the seam's other half: `/api/session/start` recorded consent and
+    admitted the session; this socket is where `open_source` finally constructs
+    a `LiveSource`, hands it to the same `run_session` that replay uses, and
+    feeds it the browser's audio. The pipeline starts when the microphone
+    arrives, not when the session is admitted, because a session with no audio
+    yet is a slot and not a call.
+
+    NOT THE SAME SOCKET AS `/live`, ON PURPOSE. `/live` is OUT: any number of
+    viewers, a backlog then a broadcast, and a viewer leaving never touches the
+    pipeline because the call is still happening. This one is IN: exactly one
+    producer, and the producer leaving ends the call, because an upstream socket
+    with no microphone behind it bills for silence until the 3-hour ceiling.
+    Folding the two together would either let a viewer's tab-close hang up the
+    call, or let any viewer write audio into it.
+
+    Gates, in order, each with its own close code so the browser can explain it:
+      4404  no such session -- including one belonging to another organisation,
+            answered identically so a session id never confirms a foreign row
+      4403  consent withdrawn, or never recorded
+      4409  a replay session; there is no microphone to accept
+      4410  the session already ended
+      4423  the session already has an audio producer, or a running pipeline
+    The organisation check is `GET /api/sessions`' rule: the verified token's
+    organisation, never anything the caller sent; anonymous is the demo tenant.
+
+    Wire: binary frames are PCM16 LE mono 16 kHz, any size the client finds
+    convenient -- they are re-chunked to 100 ms and paced at real time here
+    (`_AudioIngress`). Text frames: `{"type":"Terminate"}` ends the session
+    cleanly (1000), `{"type":"KeepAlive"}` is accepted and dropped, anything else
+    is 4400. An odd byte count is 4422; more than 2 s ahead of real time is 4429;
+    `session_cap_seconds` on this socket's own clock is 4408 and records
+    `end_reason = "cap"`; upstream unreachable or the pipeline failing is 4502.
+
+    Down the socket comes exactly one text frame, `{"type":"Ready", ...}`, once
+    the pipeline is running; everything else the browser needs is on `/live`.
+
+    On every exit -- clean, dropped, capped, errored -- `terminate()` is sent
+    upstream exactly once (`LiveSource.terminate` is idempotent) and the
+    pipeline is given `PIPELINE_DRAIN_S` to write its last row.
+    """
+    offered = [p.strip() for p in websocket.headers.get("sec-websocket-protocol", "").split(",")]
+    await websocket.accept(
+        subprotocol=AUDIO_SUBPROTOCOL if AUDIO_SUBPROTOCOL in offered else None)
+
+    user = auth.resolve_user(_ws_token(websocket), db, settings)
+    org_id = acting_organisation(user)
+    row = db.get(Session, session_id)
+    live = _SESSIONS.get(session_id)
+    if row is None or row.organisation_id != org_id:
+        await websocket.close(WS_AUDIO_UNKNOWN, "unknown session")
+        return
+    if not row.consent_version or row.consent_withdrawn_at is not None:
+        await websocket.close(WS_AUDIO_NO_CONSENT, "consent not recorded")
+        return
+    if row.source != "live":
+        await websocket.close(WS_AUDIO_NOT_LIVE, "not a live session")
+        return
+    if live is None or not live.running or row.ended_at is not None:
+        await websocket.close(WS_AUDIO_ENDED, "session already ended")
+        return
+    if live.producer is not None or (live.task is not None and not live.task.done()):
+        await websocket.close(WS_AUDIO_BUSY, "session already has an audio producer")
+        return
+    # Claimed before the first await below, so two sockets racing for the same
+    # session cannot both pass the check above.
+    live.producer = websocket
+
+    source: Any = None
+    pipeline: asyncio.Task[Any] | None = None
+    store: _IngressStore | None = None
+    ingress: _AudioIngress | None = None
+    outcome = _Outcome(WS_AUDIO_UPSTREAM, "upstream unavailable", end_reason="error")
+    try:
+        try:
+            source = open_source(settings, None, config=SourceConfig(keyterms=()))
+            await source.connect()
+        except Exception:
+            # The key is wrong, the network is down, or the kill switch flipped
+            # between admission and now. The session cannot become a call, so
+            # it ends here rather than holding a capture slot for the grace
+            # period -- and the viewers on /live are told, by type only.
+            live.stream.emit(ev.ERROR, 0, message="upstream_unavailable")
+            live.stream.close()
+            row.ended_at = utcnow()
+            row.end_reason = "error"
+            audit.record(db, audit.SESSION_ENDED, organisation_id=row.organisation_id,
+                         session_id=row.id, actor="api",
+                         detail={"reason": "upstream_unavailable"})
+            db.commit()
+            await websocket.close(WS_AUDIO_UPSTREAM, "upstream unavailable")
+            return
+        opened_at = time.monotonic()
+        live.source = source
+        store = _IngressStore(db, row.id, row.organisation_id)
+        cfg = RunnerConfig(session_id=str(row.id), sockets=row.sockets,
+                           cap_seconds=settings.session_cap_seconds,
+                           source_label="live")
+        pipeline = asyncio.create_task(run_session(
+            source, live.stream, store=store, answerer=live.answerer(), config=cfg))
+        live.task = pipeline
+        audit.record(db, audit.SOCKET_OPENED, organisation_id=row.organisation_id,
+                     session_id=row.id, actor="api",
+                     detail={"kind": "audio", "sockets": row.sockets})
+        db.commit()
+        # The one frame that ever goes DOWN this socket: the pipeline is up and
+        # listening. The browser's three-state indicator (3.12) turns to
+        # "listening" on this and on nothing earlier -- a microphone permission
+        # is not a session, and an accepted handshake is not a pipeline.
+        await websocket.send_json({"type": "Ready", "session_id": str(row.id),
+                                   "cap_seconds": settings.session_cap_seconds,
+                                   "chunk_ms": AUDIO_CHUNK_MS})
+
+        ingress = _AudioIngress(websocket, source, cap_seconds=settings.session_cap_seconds,
+                                opened_at=opened_at)
+        try:
+            outcome = await ingress.run(pipeline)
+        except asyncio.CancelledError:
+            # The handler itself was cancelled: the ASGI server tearing the
+            # connection down, or the process going away. The runner's own
+            # convention for a cancellation is "user", and the finally below
+            # runs to completion regardless -- that is what it is for.
+            outcome = _Outcome(1006, "connection closed", send_close=False,
+                               end_reason="user")
+            raise
+    finally:
+        live.producer = None
+        if store is not None:
+            # Before terminate, because terminate is what makes the runner
+            # finish, and finish is what writes the row.
+            store.end_reason = outcome.end_reason
+        # ALWAYS. This is the line that stops the meter (3.11). Idempotent on the
+        # source side, so a pipeline that already terminated costs one no-op.
+        # Shielded so that a handler being cancelled still sends it: the
+        # cancellation interrupts our wait, not the Terminate frame.
+        if source is not None:
+            await _quietly(asyncio.shield(source.terminate()))
+        if pipeline is not None and not pipeline.done():
+            await _quietly(asyncio.wait_for(asyncio.shield(pipeline), PIPELINE_DRAIN_S))
+            if not pipeline.done():
+                pipeline.cancel()
+        if source is not None:
+            try:
+                audit.record(db, audit.SOCKET_CLOSED, organisation_id=row.organisation_id,
+                             session_id=row.id, actor="api",
+                             detail={"kind": "audio", "code": outcome.code,
+                                     "reason": outcome.reason,
+                                     "forwarded_ms": _ingress_ms(ingress)})
+                db.commit()
+            except Exception:
+                db.rollback()
+        if (outcome.send_close and websocket.client_state.name == "CONNECTED"
+                and websocket.application_state.name == "CONNECTED"):
+            await _quietly(websocket.close(outcome.code, outcome.reason))
+
+
+async def _quietly(aw: Awaitable[Any]) -> None:
+    """Await a piece of teardown without letting it mask the real exit.
+
+    Used only inside `session_audio`'s finally, where an exception -- including
+    a cancellation being re-delivered to a task that is already unwinding --
+    would replace whatever actually ended the socket. A shielded awaitable
+    keeps running when this returns early; that is the point of shielding it.
+    """
+    try:
+        await aw
+    except BaseException:
+        pass
+
+
+def _ingress_ms(ingress: _AudioIngress | None) -> int:
+    """Milliseconds forwarded upstream -- a count, never the audio. The audit
+    layer refuses a detail key that so much as names audio (ARCH 3.9), which is
+    how this key came to be called what it is."""
+    return 0 if ingress is None else ingress.bytes_out // AUDIO_BYTES_PER_MS
 
 
 # ----------------------------------------------------------------- answer ----

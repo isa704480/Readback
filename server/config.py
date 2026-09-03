@@ -8,6 +8,15 @@ from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+# Every value that ships as a default and must never ship as a deployment. Kept
+# next to the class rather than inline in the validator so the field default and
+# the refusal cannot drift apart without the diff showing both.
+_PLACEHOLDER_SECRETS: tuple[tuple[str, str], ...] = (
+    ("session_secret", "dev-secret-not-for-production"),
+    ("ip_hash_salt", "dev-salt-not-for-production"),
+)
+
+
 class Settings(BaseSettings):
     """Everything read from the environment, prefix READBACK_.
 
@@ -93,7 +102,10 @@ class Settings(BaseSettings):
     # deliberately an obvious placeholder rather than a random value generated
     # at import: a random default would work in dev and then silently sign
     # people out on every restart in production, which is a bug that looks like
-    # a flaky login. server/auth.py refuses to start a live deployment on it.
+    # a flaky login. `_check_invariants` below refuses to construct Settings on
+    # this default in any deployment shape (a key present and a non-SQLite
+    # database); server/auth.py does not check it and must not grow a second
+    # opinion.
     session_secret: SecretStr = SecretStr("dev-secret-not-for-production")
     session_ttl_hours: int = Field(default=720, gt=0)   # 30 days
 
@@ -155,7 +167,42 @@ class Settings(BaseSettings):
                 "daily_budget_seconds is below the cost of a single session; "
                 "the budget gate would reject every admission."
             )
+        # A deployment is "a key that can spend money and a database that is
+        # not a local file". On that shape the two placeholder secrets are
+        # refused at construction, so the process never binds a port: Render's
+        # health check fails, the log carries this sentence, and nobody signs
+        # in with a token anyone can forge. SQLite with a key is left alone on
+        # purpose -- that is a developer's laptop, and the tests construct
+        # Settings with placeholder keys against the default database.
+        if self.live_capture_possible and not self.database_url.startswith("sqlite"):
+            for name, value in _PLACEHOLDER_SECRETS:
+                # Empty counts as placeholder: pydantic-settings hands an env var
+                # that is set-but-blank through as "", not as the default, and
+                # an HMAC over an empty key is not a secret either.
+                if getattr(self, name).get_secret_value() in ("", value):
+                    # RuntimeError, not ValueError, on purpose: pydantic wraps a
+                    # ValueError in a ValidationError that echoes the input
+                    # dict -- including the first characters of the API key --
+                    # into the message, and the message goes to the deploy log.
+                    # Any other exception type propagates untouched.
+                    raise RuntimeError(
+                        f"READBACK_{name.upper()} is empty or still the development "
+                        f"placeholder. A deployment with an AssemblyAI key and a "
+                        f"real database must set its own value: "
+                        f"python -c \"import secrets; print(secrets.token_urlsafe(48))\""
+                    )
         return self
+
+    @property
+    def live_capture_possible(self) -> bool:
+        """A key is present, whether or not replay_mode currently masks it.
+
+        `live_capture` is the branch point for sessions; this is the branch
+        point for the secrets check, and they differ on purpose. Flipping
+        READBACK_REPLAY_MODE=true is the budget kill switch (3.11) and must not
+        silently re-admit a placeholder session secret on the same deployment.
+        """
+        return bool(self.assemblyai_api_key.get_secret_value())
 
 
 @lru_cache(maxsize=1)

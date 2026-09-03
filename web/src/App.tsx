@@ -55,6 +55,9 @@ const Pending = lazy(() =>
 const AccountScreen = lazy(() =>
   import("./routes/Account").then((m) => ({ default: m.AccountScreen })),
 );
+const Live = lazy(() =>
+  import("./screens/Live").then((m) => ({ default: m.Live })),
+);
 
 // ───────────────────────────────────────────────────────── shell context ──
 
@@ -306,7 +309,7 @@ export default function App() {
           <Route element={<AppRoutes />}>
             <Route path={NAV_PATHS.record} element={<Dashboard />} />
             <Route path={NAV_PATHS.account} element={<AccountScreen />} />
-            <Route path={NAV_PATHS.live} element={<Pending area="live" />} />
+            <Route path={NAV_PATHS.live} element={<Live />} />
             <Route
               path={NAV_PATHS.sessions}
               element={<Pending area="sessions" />}
