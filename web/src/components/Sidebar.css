@@ -1,0 +1,344 @@
+/* The signed-in navigation rail.
+ *
+ * Every colour is a token from tokens.css and every ratio quoted was computed
+ * with the WCAG 2.1 relative-luminance formula against the surface the text
+ * actually sits on. Backgrounds in play, both cool:
+ *   --surface #ffffff  the panel the rail is
+ *   --bg      #f5f5f7  the page behind it, and the current row's fill
+ *
+ * ONE PANEL, NOT SIX BOXES.
+ * This used to draw each of the six destinations as its own card: a 1px border,
+ * a 12px radius and a white fill each, floating on the ground with 8px between
+ * them. Six sibling links of the same kind are the textbook case for a single
+ * surface with the rows laid on it, and a rail of individually outlined boxes
+ * is the fragmentation pattern applied to the one component that has a proven
+ * shape. The rail is now one --surface panel at --r-panel with --sh-panel, and
+ * the rows carry no border, no fill and no radius of their own until something
+ * is true of them.
+ *
+ * IT IS A HEAVY MATERIAL AND IT IS NOT GLASS. The material grammar puts
+ * structural regions -- rails, sheets -- on the heavier material and
+ * interactive elements on the lighter one, and it forbids stacking a light
+ * translucent surface on another. The rail is structural, it sits ON the page
+ * ground rather than over moving content, and the sticky glass bar is already
+ * above it. So: solid --surface, and --sh-panel rather than --sh-card, because
+ * the bigger surface takes the thicker material. There is no backdrop-filter in
+ * this file and there must never be one.
+ *
+ * TWO SHAPES, ONE MARKUP. Below 1024px this is a horizontal strip that scrolls
+ * inside itself; at 1024px and up it is a 240px column. No element is added,
+ * removed or hidden between them -- the same six links are reachable in the
+ * same DOM order at every width, which is what makes the collapse safe for a
+ * keyboard and pointless to trap focus in. The argument is in Sidebar.tsx.
+ *
+ * MOTION. There is none, and that is the motion system being used rather than
+ * ignored. styles/motion.css BANNED §12 forbids transitioning background-color
+ * or border-color: it repaints, and every intermediate value on a ramp between
+ * two assigned tokens is a colour this vocabulary has not assigned. So hover
+ * and current-state paint changes land in one frame. DESIGN-BRIEF §6 points
+ * the same way -- this rail is on screen during a live call, and nothing on it
+ * may move while the agent is silent. */
+
+.sidebar {
+  /* A grid item that contains a horizontal scroller must be allowed to be
+   * narrower than its content, or the track sizes itself to max-content and
+   * the page grows instead of the strip. Account.css:69-81 records the
+   * measurement: 663px document scrollWidth in a 375px viewport before the
+   * equivalent line went in. */
+  min-width: 0;
+}
+
+/* THE PANEL, and below 1024px also the scroll container.
+ *
+ * position: relative is load bearing, not tidiness. The .sr-only spans inside
+ * are absolutely positioned, and inside an UNPOSITIONED scroller they resolve
+ * against the page instead and drag document scrollWidth past the viewport --
+ * the failure Rack.css records at 450px in a 375px viewport.
+ *
+ * THE PADDING IS THE FOCUS RING'S ROOM, and it is a real fix rather than
+ * symmetry. A horizontal scroller clips at its padding box, so with the links
+ * previously starting at x = 0 the 3px focus outline and its 2px offset were
+ * clipped clean off the leading edge of the first destination. 12px of padding
+ * puts the whole ring inside the box. It is 12 and not 8 below 1024px because
+ * the panel's 22px corner curve reaches 2.4px in at that height: 8px of padding
+ * would leave the ring's top-left corner nicked by the curve. Above 1024px the
+ * scroller is `overflow-x: visible`, nothing clips, and 8px is enough. */
+.sidebar__scroll {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  overflow-x: auto;
+  padding: var(--sp-3);
+  background: var(--surface);
+  border-radius: var(--r-panel);
+  box-shadow: var(--sh-panel);
+  scrollbar-width: thin;
+}
+
+.sidebar__list {
+  display: flex;
+  gap: 0;
+
+  /* flex: none, and this was a measured bug rather than a precaution.
+   *
+   * A flex item shrinks by default. With the two lists shrinkable, the strip
+   * at 375px sized each list smaller than the links inside it -- the links are
+   * themselves flex: none, so they overflowed their own <ul> -- and the footer
+   * list was then laid out ON TOP of the primary one. Measured before the fix:
+   * the gap between "Demo" and "Account" was -305.1px, i.e. Account sat 305px
+   * to the LEFT of the item it follows, and the strip reported a scrollWidth of
+   * 598px for 720px of content. Two of the six destinations were unreachable
+   * by pointer. */
+  flex: none;
+}
+
+/* In the strip, the Record item and its nested Sessions list sit side by side
+ * so the whole thing stays one row of one height. At 1024px they stack and the
+ * indent returns. */
+.sidebar__item {
+  display: flex;
+  flex: none;
+  gap: 0;
+  min-width: 0;
+}
+
+.sidebar__sub {
+  display: flex;
+  flex: none; /* same failure as .sidebar__list above */
+  gap: 0;
+}
+
+/* The footer list is a second list in the same nav, inside the same panel. It
+ * used to be fenced off with a --line-strong rule; it is fenced off with
+ * whitespace now. Restraint before decoration: a gap says "different group" as
+ * clearly as a line does, and the panel underneath stays one continuous
+ * surface, which is the whole point of collapsing the six boxes into it. */
+.sidebar__list--foot {
+  margin-inline-start: var(--sp-3);
+}
+
+/* ------------------------------------------------------------------ link -- */
+
+.sidebar__link {
+  /* position: relative for the ::before current-marker, and it also contains
+   * the .sr-only span so it cannot escape the scroller above. */
+  position: relative;
+
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+
+  /* 46px, 2px over the WCAG 2.5.5 floor of 44, so a focus offset cannot erode
+   * it back under. */
+  min-height: var(--control-h);
+  padding-inline: var(--sp-3);
+
+  /* No border, no fill, no shadow. A row on a panel is identified by being a
+   * row on a panel; a boundary is for a control that has to be told apart from
+   * the ground it floats on, and these do not float. --r-thumb is here for the
+   * hover and current fills to take, not for a card edge -- there is no edge. */
+  border: none;
+  border-radius: var(--r-thumb);
+  background: none;
+
+  /* Clips the ::before current-rule to the row's own radius, so a 3px bar at a
+   * rounded edge does not poke past the curve. It does NOT touch the focus
+   * outline: an outline is painted outside the border box and is not subject to
+   * the element's own overflow. Only descendants are clipped, and the only
+   * descendant that reaches an edge is that rule. */
+  overflow: hidden;
+
+  /* 10.01:1 on --surface. One step below --text so that the current
+   * destination can BE --text and the difference is a luminance step of
+   * 10.01 -> 16.83 rather than a hue. See THE CURRENT ITEM below. */
+  color: var(--text-body);
+  /* 16px. A destination label is a word a person reads, so it takes the body
+   * floor; --text-meta (14px) is reserved for mono codes and timings and its
+   * own comment says it is never prose. */
+  font-size: var(--text-body-size);
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* One frame, no transition. See the MOTION note in the header.
+ *
+ * --hover is 1.03:1 on --surface and that is not a mistake to be fixed: it is a
+ * whisper by design. Hover is transient pointer feedback, not information -- it
+ * says "the pointer is here", which the pointer already says. The keyboard path
+ * is served by :focus-visible, which is 4.70:1 and unmissable, and the current
+ * destination is carried by three things that are not a fill. Anything louder
+ * here would be a second highlight competing with the real one. */
+.sidebar__link:hover {
+  background: var(--hover);
+  color: var(--text); /* 16.28:1 on --hover */
+}
+
+.sidebar__label {
+  min-width: 0;
+}
+
+/* THE ONE FIGURE. Mono, meta-sized, and it never changes appearance.
+ * margin-inline-start: auto pushes it to the right edge of the 240px rail and
+ * does nothing at all in the strip, where the link is content-width.
+ *
+ * --text-2 is 5.07:1 on --surface and 4.66:1 on the --bg fill the current row
+ * takes, so it clears AA in both states. It does NOT clear AA on --track
+ * (4.15:1), which is why the current row is filled --bg and not --track. */
+.sidebar__figure {
+  margin-inline-start: auto;
+  padding-inline-start: var(--sp-2);
+  color: var(--text-2);
+  font-weight: 400;
+}
+
+/* --------------------------------------------------------------- current -- */
+/* Four carriers, because no single one of them is safe on its own.
+ *
+ *   1. aria-current="page"  -- set by NavLink, for the assistive path
+ *   2. weight 500 -> 600
+ *   3. a tone step, --text-body to --text: 10.01:1 -> 16.83:1 on --surface.
+ *      This is the carrier that survives greyscale and a monochrome print,
+ *      and it is why the rest of the rail is not --text to begin with
+ *   4. a 3px --accent rule along the leading edge -- a SHAPE, present or
+ *      absent, which is the channel a reader with no colour vision reads
+ *
+ * The --bg fill is a fifth, and it is deliberately the weakest: 1.09:1 on
+ * --surface. It is the same step the page ground makes against every panel in
+ * this app, so a reader already knows it means "recessed", but a white panel
+ * cannot carry a row state in a fill and this one does not pretend to. What it
+ * does do is sit BELOW --hover (1.03:1) rather than above it, so the three row
+ * states form one monotonic ladder: surface 100% luminance, hover 96.60%,
+ * current 91.43%.
+ *
+ * The rule is a ::before rather than an inset box-shadow on purpose: base.css
+ * builds the focus ring out of box-shadow, and a box-shadow declared here
+ * would replace the inner --text ring on exactly the item a keyboard user is
+ * most likely to be standing on. */
+.sidebar__link--current {
+  background: var(--bg);
+  color: var(--text); /* 15.46:1 on --bg */
+  font-weight: 600;
+}
+
+/* Hovering the row you are already on tells you nothing, and --hover is LIGHTER
+ * than --bg, so letting the hover rule win here would make the current item
+ * look less selected under the pointer. It holds still instead. */
+.sidebar__link--current:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.sidebar__link--current::before {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 3px;
+  /* --accent is a fill and a stroke and never a text colour. As a 3px rule it
+   * is a non-text indicator at 4.70:1 on --surface and 4.31:1 on --bg, either
+   * side of the 3:1 WCAG 1.4.11 asks -- but it is still only one of four
+   * carriers, because a rule this small is the first thing a glance misses. */
+  background: var(--accent);
+  border-radius: var(--r-full);
+}
+
+/* --------------------------------------------------------------- >=1024 -- */
+/* 240px, not the 200px of Account.css's index, and the difference was measured
+ * rather than preferred. The Record row is the widest thing the rail carries:
+ * a 16px icon, the label, and a seven-character mono figure ("117/146"), inside
+ * 2 x 12px of row padding and now also 2 x 8px of panel padding, which leaves a
+ * 200px row content box at a 240px rail.
+ *
+ * RE-MEASURED IN THE PANEL SHAPE, in the browser, all three catalogs, with the
+ * clearance taken between the label's right edge and the figure's left edge:
+ *
+ *   figure width                 68.8px
+ *   'Запись'  (ru, the long one) 55.0px clearance
+ *   'Record'  (en)               56.7px
+ *   'Yozuv'   (uz)               65.0px
+ *
+ * The old bordered-box shape measured 70.8px for the Russian case in a 214px
+ * row; the panel spends 16px of that on its own inset and gives back the two
+ * 1px borders, and the 15.8px difference is where it went. 55px is still four
+ * fifths of the figure's own width of slack for every future translation of
+ * every label to arrive into, and the rail is the one place in the app where a
+ * collision would show a broken number rather than a broken word, so it keeps
+ * the wider track. At a 200px rail the same row leaves 15px, which is the
+ * measurement that decided 240 over 200 in the first place and still does.
+ *
+ * 1024, not the 960 of Account.css, because the rail is paid for out of the
+ * record's content track and the record has an identifier lane in it. Measured
+ * in this layout, and RE-DERIVED after base.css moved .page from a 16/24px
+ * media query to a flat --pad-x 22px: at a 1440px viewport the page measure
+ * caps at 1120 and 22px of padding each side leaves 1076, so the tracks come
+ * out 240 rail + 48 gutter + 788 content; at 1024 -> 240 + 48 + 692; at 960 it
+ * would be 240 + 48 + 628. 692 still holds an eleven-slot ISO 6346 row (374px
+ * at the 32px slot metric) beside the row's five other columns; 628 starts
+ * making that lane scroll for the commonest format in the database, which is
+ * exactly the case Rack.css sized its slots to avoid. */
+@media (min-width: 1024px) {
+  .sidebar {
+    /* Same treatment as .account__index: the rail follows the record down a
+     * long list rather than scrolling off the top of it.
+     *
+     * The offset is --topbar-h (base.css, derived from --control-h and --sp-3)
+     * plus a gutter, because TopBar is sticky at top: 0 now. Parking the rail
+     * at a bare --sp-5 would slide it under the glass bar and put the rail's
+     * first destination behind the material for the whole of a long record. */
+    position: sticky;
+    top: calc(var(--topbar-h) + var(--sp-4));
+  }
+
+  .sidebar__scroll {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    /* Nothing clips at this width, so the focus ring needs no room reserved for
+     * it and the panel goes back to the 8px inset. */
+    overflow-x: visible;
+    padding: var(--sp-2);
+  }
+
+  .sidebar__list {
+    flex-direction: column;
+  }
+
+  .sidebar__item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* Sessions is a child of Record and the indent says so -- the indent alone.
+   * There used to be a rule down the left of it as well; two signals for one
+   * containment is one more than the fact needs, and the nested <ul> in the
+   * markup is what assistive technology reads in both shapes anyway.
+   *
+   * The indent is padding ON THE ROW rather than a margin on the list, so the
+   * row still spans the full width of the panel. A nested row that is narrower
+   * than its siblings reads as a smaller card inside the panel, which is the
+   * pattern this file just spent six borders getting rid of. */
+  .sidebar__sub {
+    flex-direction: column;
+  }
+
+  .sidebar__sub .sidebar__link {
+    padding-inline-start: calc(var(--sp-3) + var(--sp-4));
+  }
+
+  .sidebar__list--foot {
+    margin-inline-start: 0;
+    margin-top: var(--sp-3);
+  }
+
+  .sidebar__link {
+    width: 100%;
+  }
+
+  /* The rule moves to the leading edge and runs the full height of the row. */
+  .sidebar__link--current::before {
+    inset: 0 auto 0 0;
+    width: 3px;
+    height: auto;
+  }
+}

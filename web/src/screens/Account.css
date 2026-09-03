@@ -1,0 +1,1344 @@
+/* The account area.
+ *
+ * Every foreground/background pair below carries its computed WCAG 2.1 ratio.
+ * There are only two grounds now, and the third is gone on purpose:
+ *   S = --surface #ffffff   panels, and everything a section renders into
+ *   G = --bg      #f5f5f7   the page behind them, and every recessed block
+ *
+ * The old palette had a third, --raised, for inset strips. Its replacement in
+ * the new system, --hover #fbfbfd, is a ROW-HOVER tint and measures 1.03 on
+ * white: as a region fill it is invisible. Recessed blocks here therefore take
+ * --bg, which is 1.09 on --surface -- the separation a recess actually wants --
+ * and --hover is kept strictly for :hover.
+ *
+ * Ratios on G, computed the same way as the ones in tokens.css:
+ *   --text 15.46 | --text-2 4.66 | --alert 5.62 | --accent-text 5.11 |
+ *   --text-3 3.33
+ *
+ * --hairline is 1.17 on white and so never bounds a control here. Anything a
+ * person can operate is bounded in --text-3 (3.62 on S, 3.33 on G), which is
+ * the lightest token that clears the 3:1 of WCAG 1.4.11.
+ *
+ * THE TRAP IS GONE. --text-body used to be declared twice in one :root -- the
+ * colour #424245, then a later alias for var(--text-body-size) -- so the size
+ * won and `color: var(--text-body)` resolved to an invalid 16px. That alias has
+ * been deleted; the eleven font-size call sites in this file now say
+ * --text-body-size, and --text-body is a reachable colour again.
+ *
+ * The secondary tone here stays --text-2, and that is now a choice rather than
+ * the old blockage: nearly all of it is short UI copy on a panel, where 5.07 is
+ * the right step below --text. --text-body is the long-form grey, and the rules
+ * that were actually waiting for it are in Dashboard.css.
+ */
+
+/* ------------------------------------------------------------- shell ----- */
+
+.account {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.account__eyebrow {
+  font-weight: 600;
+  color: var(--text-2); /* 4.66 on G */
+}
+
+.mono.account__eyebrow {
+  letter-spacing: 0.08em;
+}
+
+/* The page's largest title takes the title tracking tier rather than a local
+ * raw value. The system's rule is that a bigger title is more negative, and
+ * this is the biggest one on the screen. */
+.account__title {
+  margin-top: var(--sp-2);
+  font-size: var(--text-3xl);
+  letter-spacing: var(--tracking-title);
+}
+
+.account__whose {
+  margin-top: var(--sp-3);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+}
+
+.mono.account__org {
+  font-size: var(--text-lg);
+  color: var(--text); /* 15.46 on G */
+  overflow-wrap: anywhere; /* a long organisation name must not widen the page */
+  min-width: 0;
+}
+
+.account__role {
+  font-size: var(--text-meta);
+  color: var(--text-2); /* 4.66 on G */
+}
+
+.account__notice {
+  margin-top: var(--sp-4);
+}
+
+.account__actions {
+  margin-top: var(--sp-4);
+}
+
+/* The index is a scrolling strip on a phone and a sticky column on a desk. The
+ * strip scrolls inside itself; the page never does. */
+.account__grid {
+  display: grid;
+  /* Explicitly minmax(0, 1fr), not the implied single column.
+   *
+   * A grid item's automatic minimum size is its max-content width, and the
+   * default single-column track sizes itself to that. The index strip below is
+   * a nowrap flex row of five links: measured at 375px before this line, the
+   * document scrollWidth was 663px. body has overflow-x: clip, so nothing
+   * scrolled -- the right-hand sections were simply cut off and unreachable,
+   * which is the same failure the top bar was fixed for. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+}
+
+/* The strip scrolls inside itself, so the grid item it sits in must be allowed
+ * to be narrower than the strip's content. */
+.account__index {
+  min-width: 0;
+}
+
+.account__index-list {
+  /* Same reason as the rack and sweep lanes: contain absolutely positioned
+   * descendants so they cannot escape this clip and widen the page. */
+  position: relative;
+  display: flex;
+  gap: var(--sp-2);
+  overflow-x: auto;
+  padding-bottom: var(--sp-2);
+  scrollbar-width: thin;
+}
+
+/* Five outlined boxes in a row was the fragmentation pattern applied to a
+ * navigation strip. On the phone layout each destination is a white pill on the
+ * page ground -- no border, because the fill against G is what identifies it --
+ * and on the desktop layout below they collapse into ONE panel of
+ * hairline-divided rows, which is what a column of sibling destinations is. */
+.account__index-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: var(--control-h); /* 46px: over the 44px WCAG 2.5.5 floor */
+  padding-inline: var(--sp-4);
+  border: none;
+  border-radius: var(--r-full);
+  background: var(--surface);
+  color: var(--text); /* 16.83 on S */
+  font-size: var(--text-meta);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.account__index-link:hover {
+  background: var(--hover);
+  color: var(--text); /* 16.28 on --hover */
+}
+
+.account__index-n {
+  color: var(--text-2); /* 5.07 on S */
+}
+
+.account__sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  min-width: 0;
+}
+
+@media (min-width: 960px) {
+  .account__grid {
+    grid-template-columns: 200px minmax(0, 1fr);
+    gap: var(--sp-7);
+    align-items: start;
+  }
+
+  .account__index {
+    position: sticky;
+    top: var(--sp-5);
+  }
+
+  /* One panel, not six pills. overflow: hidden so the rows are clipped by the
+   * panel radius instead of each carrying their own. */
+  .account__index-list {
+    flex-direction: column;
+    gap: 0;
+    overflow: hidden;
+    padding-bottom: 0;
+    background: var(--surface);
+    border-radius: var(--r-panel);
+    box-shadow: var(--sh-card);
+  }
+
+  .account__index-link {
+    width: 100%;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .account__index-link + .account__index-link {
+    border-top: 1px solid var(--hairline);
+  }
+}
+
+/* ------------------------------------------------------------ section --- */
+
+.sect {
+  /* The index links here, and a heading flush against the viewport edge reads
+   * as though the section above it is missing. */
+  scroll-margin-top: var(--sp-5);
+}
+
+.sect__head {
+  margin-bottom: var(--sp-4);
+}
+
+.sect__index {
+  font-weight: 600;
+  color: var(--text-2); /* 4.66 on G */
+}
+
+.mono.sect__index {
+  letter-spacing: 0.08em;
+}
+
+.sect__title {
+  margin-top: var(--sp-1);
+  font-size: var(--text-xl);
+  letter-spacing: var(--tracking-h2);
+}
+
+.sect__lede {
+  margin-top: var(--sp-2);
+  max-width: var(--measure);
+  color: var(--text-2); /* 4.66 on G */
+}
+
+@media (min-width: 660px) {
+  .sect__title {
+    font-size: var(--text-2xl);
+  }
+}
+
+/* ------------------------------------------------------------- basics --- */
+
+.prose {
+  max-width: var(--measure);
+  color: var(--text); /* 16.83 on S */
+}
+
+.prose + .prose,
+.card > .prose:not(:first-child) {
+  margin-top: var(--sp-4);
+}
+
+.prose--lead {
+  font-size: var(--text-lg);
+}
+
+/* A hairline and the space above it, not a 3px accent bar. The bar carried no
+ * information -- it marked a seam, and a seam is what whitespace plus a
+ * hairline is for. The accent is spent on the one thing that wants a person. */
+.prose--rule {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--hairline);
+}
+
+.prose--seam {
+  margin-top: var(--sp-6);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--hairline);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.micro {
+  display: block;
+  margin-bottom: var(--sp-1);
+  font-weight: 600;
+  color: var(--text-2); /* 5.07 on S, 4.66 on G */
+}
+
+.mono.micro {
+  letter-spacing: 0.08em;
+}
+
+/* An empty state says what to do next. "Nothing here" on its own is a dead end.
+ *
+ * A recessed --bg block with no border. The dashed outline it used to carry was
+ * drawn in a token that now measures 1.17 on white -- it was going to be
+ * invisible either way, and the recess says "nothing here yet" without it. */
+.empty {
+  margin-top: var(--sp-4);
+  padding: var(--sp-4);
+  border-radius: var(--r-thumb);
+  background: var(--bg);
+  color: var(--text-2); /* 4.66 on G */
+  /* Prose, so it takes the 16px body floor rather than --text-meta. The type
+   * scale reserves --text-meta (14px) for mono labels, codes and timings and
+   * says in its own comment that it is never a sentence. */
+  font-size: var(--text-body-size);
+  line-height: var(--leading-body);
+}
+
+/* Inside a panel that already has structure of its own, a second filled block
+ * is one box too many: this is the same sentence, set as a quiet line. */
+.empty--inline {
+  padding: 0;
+  background: transparent;
+  color: var(--text-2); /* 5.07 on S */
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--sp-3);
+  border-radius: var(--r-full); /* the pill tier: a chip is a pill */
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+/* An accent fill carrying white, which is what --accent-text is for: computed,
+ * #ffffff on #0066cc is 5.57. --accent #0071e3 would be 4.70 and is reserved
+ * for strokes and rules, where nothing has to be read off it. */
+.chip--plan {
+  background: var(--accent-text);
+  color: #ffffff; /* 5.57 */
+}
+
+/* No border. A filled chip does not need one. The fill is --bg, the same recess
+ * step every other quiet block on this screen makes -- NOT --track, which the
+ * comment here used to name while the rule painted --bg, and not the 8.20 it
+ * quoted for a pair neither half of which was on screen. Computed for what is
+ * actually painted: --text-2 on --bg is 4.66. */
+.chip--quiet {
+  background: var(--bg);
+  color: var(--text-2); /* 4.66 on G */
+  letter-spacing: 0.06em;
+}
+
+/* --------------------------------------------------------------- tag ----- */
+/* THE STATE VOCABULARY, as a tag.
+ *
+ * The five state hues collapsed to tone plus one accent, because measured
+ * greyscale luminance put four of the OLD ones inside 1.3 points of each other
+ * -- one grey to a monochrome display and to most colour-blind readers. The
+ * word and the icon always carried this, and they still do; tone reinforces
+ * them.
+ *
+ * The tag is a --bg chip rather than a bordered outline: `border: 1px solid
+ * currentColor` drew a coloured ring around a list value, which is colour used
+ * as decoration. Every state below is measured against --bg, so the chip reads
+ * the same wherever it is dropped.
+ */
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 2px var(--sp-3);
+  min-height: 26px;
+  border-radius: var(--r-full);
+  /* Stated rather than inherited, so the ratios below hold whatever the tag is
+   * dropped into later. */
+  background: var(--bg);
+  color: var(--text-2); /* 4.66 on G */
+  font-size: var(--text-meta);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.tag[data-state='heard'] {
+  color: var(--state-heard); /* --text-2       4.66 on G -- heard, not settled */
+}
+
+/* Repaired and settled are the same tone deliberately: what separates them is
+ * WHAT CHANGED, which is the word and the icon, not a hue. In the rack the
+ * relationship is drawn as a hairline under the slot with the superseded
+ * character above it; a tag has no slot, so the word does the whole job. */
+.tag[data-state='repaired'] {
+  color: var(--state-repaired); /* --text      15.46 on G */
+}
+
+.tag[data-state='asking'] {
+  color: var(--state-asking); /* --accent-text  5.11 on G -- the one accent, on
+                                 the one state that wants a human */
+}
+
+.tag[data-state='settled'] {
+  color: var(--state-settled); /* --text       15.46 on G */
+  font-weight: 700;
+}
+
+.tag[data-state='flagged'] {
+  color: var(--state-flagged); /* --alert       5.62 on G */
+}
+
+/* ------------------------------------------------------------ switch ----- */
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: var(--control-h);
+  padding-inline: var(--sp-1);
+  border-radius: var(--r-thumb);
+  flex: none;
+}
+
+/* Off is the component grey on a --text-3 ring: --track alone is 1.22 on white
+ * and could not identify a control, and the ring is 3.62, clear of WCAG
+ * 1.4.11's 3:1. 1px rather than the old 2px, because 3.62 does not need
+ * thickness to be seen -- the knob geometry below is re-derived for it. */
+.switch__track {
+  position: relative;
+  width: 46px;
+  height: 26px;
+  border-radius: var(--r-full);
+  background: var(--track);
+  border: 1px solid var(--text-3); /* 3.62 on S */
+}
+
+.switch__knob {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--r-full);
+  background: var(--text-2); /* 4.15 against the --track groove */
+  /* 44px of inner track (46 less a 1px border either side), less 4px either
+   * side, less a 16px knob = 20px of travel. Transform, so the row never
+   * relayouts mid-press. */
+  transition: transform var(--motion-fast) var(--ease-out);
+}
+
+/* --text, not the accent. The skill's default for a toggle-on fill is the
+ * view's one accent, but in this product the accent means "this state wants a
+ * human" -- it belongs to the two consent decisions further down the page, and
+ * a format being switched on is not asking anybody anything. Monochrome carries
+ * it: white on --text is 16.83. */
+.switch[aria-checked='true'] .switch__track {
+  background: var(--text);
+  border-color: var(--text);
+}
+
+.switch[aria-checked='true'] .switch__knob {
+  background: #ffffff; /* 16.83 against the --text track */
+  transform: translateX(20px);
+}
+
+.switch__word {
+  min-width: 3ch;
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-weight: 600;
+  letter-spacing: var(--tracking-code);
+  color: var(--text); /* 16.83 on S */
+}
+
+.switch:disabled .switch__track {
+  border-color: var(--faint);
+  background: var(--hover);
+}
+
+.switch:disabled .switch__word {
+  color: var(--text-3);
+}
+
+/* ---------------------------------------------------------- skeleton ----- */
+
+/* A skeleton, not a spinner: it says "waiting, and this is the shape of what
+ * arrives".
+ *
+ * Static, and that is a change. It used to breathe on a 1200ms infinite
+ * alternate; motion.css BANNED #9 forbids any infinite animation except
+ * rb-quiet and says "grep for it", and this was the only hit in the codebase.
+ * Nothing is lost by removing it: prefers-reduced-motion already collapsed the
+ * breath for the users who ask for that, so a still block was already a shipped
+ * resting state, and the <Loading> wrapper announces the wait through aria-busy
+ * and a live region rather than through movement.
+ *
+ * (motion.css #7 names this breath as "the approved form" while #9 bans it. The
+ * two disagree; whoever owns motion.css should reconcile #7's wording.) */
+.skel {
+  display: block;
+  background: var(--track);
+  border-radius: var(--r-chip);
+}
+
+/* ---------------------------------------------------------------- bar ---- */
+
+/* --track for the groove and --faint for the edge. The fill is what carries the
+ * meaning and it clears 3:1 against the groove at every state below -- 13.78
+ * for --text, 5.01 for --alert, 4.56 for --accent-text, 4.15 for --text-2 --
+ * so the frame does not have to be a hard mid-grey to make the reading legible.
+ */
+.bar {
+  position: relative;
+  height: 14px;
+  border-radius: var(--r-full);
+  background: var(--track);
+  border: 1px solid var(--faint);
+  overflow: hidden;
+}
+
+.bar__fill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: left center;
+  background: var(--text-2); /* 4.15 on --track, when no state is named */
+  /* --motion-slow, the one duration a person is meant to actually perceive. */
+  transition: transform var(--motion-slow) var(--ease-out);
+}
+
+/* Tone from the state vocabulary, keyed on the capture state the caller was
+ * already handing this component. No colour token crosses the TSX boundary. */
+.bar__fill[data-state='heard'] {
+  background: var(--state-heard); /* --text-2       4.15 on --track */
+}
+
+.bar__fill[data-state='repaired'] {
+  background: var(--state-repaired); /* --text      13.78 */
+}
+
+.bar__fill[data-state='asking'] {
+  background: var(--state-asking); /* --accent-text  4.56 */
+}
+
+.bar__fill[data-state='settled'] {
+  background: var(--state-settled); /* --text       13.78 */
+}
+
+.bar__fill[data-state='flagged'] {
+  background: var(--state-flagged); /* --alert       5.01 */
+}
+
+/* No reading is not zero, and drawing it as an empty track would say zero. */
+.bar--noread {
+  height: auto;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-style: dashed;
+}
+
+.bar__noread {
+  color: var(--text); /* 13.78 on --track */
+  font-weight: 600;
+}
+
+.mono.bar__noread {
+  letter-spacing: 0.1em;
+}
+
+/* ---------------------------------------------------------- provenance --- */
+
+.pending {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--hairline);
+  color: var(--text-2); /* 5.07 on S */
+  /* Prose, so it takes the 16px body floor rather than --text-meta. The type
+   * scale reserves --text-meta (14px) for mono labels, codes and timings and
+   * says in its own comment that it is never a sentence. */
+  font-size: var(--text-body-size);
+  line-height: var(--leading-body);
+}
+
+.pending svg {
+  margin-top: 3px;
+}
+
+.pending__endpoint {
+  color: var(--text); /* 16.83 on S */
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------------- 01 profile and team --- */
+
+/* One panel of hairline-divided rows -- the pattern the rest of this file is
+ * being brought round to. */
+.team {
+  display: flex;
+  flex-direction: column;
+}
+
+.team__row {
+  display: grid;
+  gap: var(--sp-3);
+  padding-block: var(--sp-4);
+  border-top: 1px solid var(--hairline);
+}
+
+.team__row:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.team__who {
+  min-width: 0;
+}
+
+.team__name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  font-weight: 600;
+  color: var(--text); /* 16.83 on S */
+  overflow-wrap: anywhere;
+}
+
+.team__email {
+  margin-top: var(--sp-1);
+  color: var(--text-2); /* 5.07 on S */
+  overflow-wrap: anywhere; /* an address must never widen the page */
+}
+
+.team__role {
+  min-width: 0;
+}
+
+.team__select {
+  max-width: 20ch;
+}
+
+.team__role-fixed {
+  display: flex;
+  align-items: center;
+  min-height: var(--control-h);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.team__note {
+  color: var(--text-2); /* 5.07 on S */
+  font-size: var(--text-meta);
+}
+
+/* 46 x 46 and round: an icon control in a row of rows. The border is what
+ * identifies it, so it takes --text-3 (3.62) rather than a hairline. */
+.team__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-h);
+  height: var(--control-h); /* 46 x 46 */
+  border: 1px solid var(--text-3); /* 3.62 on S */
+  border-radius: var(--r-full);
+  background: var(--surface);
+  color: var(--text); /* 16.83 */
+  justify-self: start;
+}
+
+/* Colour changes in one frame, per motion.css BANNED #12. */
+.team__remove:hover {
+  background: var(--hover);
+  color: var(--alert); /* 5.92 on --hover -- the aria-label already says Remove */
+  border-color: var(--alert);
+}
+
+@media (min-width: 660px) {
+  /* auto, not a fixed 46px, for the third track. The remove button is 46 wide
+   * and sizes it, but on the row that cannot be removed the same cell holds a
+   * sentence instead -- at a fixed 46px that sentence wrapped one word per
+   * line. auto takes the wider of the two and the button column is unchanged. */
+  .team__row {
+    /* minmax(18ch, 1fr), not minmax(0, 1fr). With a zero floor the third
+     * column -- which holds a sentence, "You cannot remove yourself." -- won
+     * every squeeze and crushed the identity column to 95px. An email address
+     * in mono at 14px needs about 126px, so overflow-wrap: anywhere did what it
+     * is for and broke it mid-word: "ada@exampl / e.com". Measured on screen,
+     * not inferred.
+     *
+     * 18ch is the floor at which a 15-character address stays on one line; past
+     * that the column still grows with 1fr. The sentence beside it wraps
+     * instead, which is what prose is supposed to do. */
+    grid-template-columns: minmax(18ch, 1fr) 20ch auto;
+    align-items: center;
+    gap: var(--sp-4);
+  }
+
+  .team__note {
+    text-align: right;
+  }
+}
+
+/* A recessed reference block inside the panel: --bg, which is 1.09 on white. */
+.roles {
+  margin-top: var(--sp-5);
+  padding: var(--sp-4);
+  border-radius: var(--r-thumb);
+  background: var(--bg);
+}
+
+.roles__row {
+  display: grid;
+  gap: var(--sp-1);
+  padding-block: var(--sp-2);
+  border-top: 1px solid var(--hairline);
+}
+
+.roles__row:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.roles__name {
+  font-weight: 600;
+  color: var(--text); /* 15.46 on G */
+}
+
+.roles__can {
+  color: var(--text-2); /* 4.66 on G */
+  /* Prose, so it takes the 16px body floor rather than --text-meta. The type
+   * scale reserves --text-meta (14px) for mono labels, codes and timings and
+   * says in its own comment that it is never a sentence. */
+  font-size: var(--text-body-size);
+  line-height: var(--leading-body);
+}
+
+@media (min-width: 560px) {
+  /* THE COLUMNS ARE DEFINED ON THE LIST, AND THE ROWS BORROW THEM.
+   *
+   * This started as a flat `12ch` on each row, measured against the English
+   * role names — Owner, Admin, Operator, eight characters at the longest.
+   * Russian's "Администратор" renders 119px into that 104px column, and with
+   * overflow visible it crossed the 16px gap and touched the description. That
+   * is what the screen actually looked like. `ch` is the width of the digit
+   * zero, a poor proxy for Cyrillic in a proportional face, so the number was
+   * never going to survive translation.
+   *
+   * The obvious repair — minmax(12ch, max-content) on the row — traded the
+   * overflow for a misalignment, because every .roles__row is its OWN grid and
+   * sized its own column: descriptions landed at 799px, 814px and 799px, a 15px
+   * stagger down the list. Measured, not assumed.
+   *
+   * So the track sizing moves up to the <dl> where there is one of it, and the
+   * rows take `subgrid` to share it. Each row keeps its own box, and therefore
+   * its own border-top, while the column fits the longest name in whichever
+   * language is loaded. 12ch stays as the floor so English does not collapse it. */
+  .roles {
+    display: grid;
+    grid-template-columns: minmax(12ch, max-content) minmax(0, 1fr);
+  }
+
+  .roles__row {
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    gap: var(--sp-4);
+    align-items: baseline;
+  }
+}
+
+.invite {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  align-items: stretch;
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--hairline);
+}
+
+.invite__title {
+  font-size: var(--text-lg);
+}
+
+.invite__role {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.invite__role select {
+  max-width: 24ch;
+}
+
+.invite .btn {
+  align-self: flex-start;
+}
+
+/* -------------------------------------------------------- 02 formats ----- */
+
+/* Five sibling rows on ONE panel, divided by hairlines. They used to be five
+ * separately bordered cards with a gap between them, which is the fragmentation
+ * pattern the system names first -- and .team, twenty lines up in this same
+ * file, was already doing it correctly. */
+.fmts {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--sp-5);
+}
+
+.fmt {
+  padding-block: var(--sp-4);
+  border-top: 1px solid var(--hairline);
+}
+
+.fmt:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+/* Enabled is carried by the switch and by the row title's weight. It used to
+ * add a 3px rule down the row's left edge as well; a coloured left-bar on a
+ * list row is the fragmentation pattern in miniature, and weight says the same
+ * thing without drawing anything. */
+.fmt--on .fmt__name {
+  font-weight: 700;
+}
+
+.fmt__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.fmt__id {
+  min-width: 0;
+}
+
+.fmt__name {
+  font-size: var(--text-lg);
+}
+
+.fmt__standard {
+  margin-top: 2px;
+  color: var(--text-2); /* 5.07 on S */
+  overflow-wrap: anywhere;
+}
+
+.fmt__repair {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.fmt__strength {
+  flex: 1 1 24ch;
+  min-width: 0;
+  color: var(--text); /* 16.83 on S */
+  /* Prose, so it takes the 16px body floor rather than --text-meta. The type
+   * scale reserves --text-meta (14px) for mono labels, codes and timings and
+   * says in its own comment that it is never a sentence. */
+  font-size: var(--text-body-size);
+  line-height: var(--leading-body);
+}
+
+.facts {
+  margin-top: var(--sp-4);
+}
+
+.facts__row {
+  display: grid;
+  gap: var(--sp-1);
+  padding-block: var(--sp-2);
+  border-top: 1px solid var(--hairline);
+}
+
+.facts__key {
+  font-size: var(--text-meta);
+  color: var(--text-2); /* 5.07 on S */
+}
+
+.facts__value {
+  color: var(--text); /* 16.83 on S */
+  overflow-wrap: anywhere;
+}
+
+.facts__unknown {
+  color: var(--text-2);
+  font-size: var(--text-meta);
+}
+
+@media (min-width: 520px) {
+  .facts__row {
+    grid-template-columns: 13ch minmax(0, 1fr);
+    gap: var(--sp-4);
+    align-items: baseline;
+  }
+}
+
+/* A list of things that are true is not an action and not a link. It used to be
+ * set entirely in the accent, which spent the interface's one action colour on
+ * decoration and made unclickable text look clickable. Body grey, with the tick
+ * kept quiet at --text-3 -- 3.62, past the 3:1 a meaningful graphic needs. */
+.fmt__measured {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+}
+
+.fmt__measured li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  color: var(--text-2); /* 5.07 on S */
+  font-size: var(--text-meta);
+  line-height: var(--leading-body);
+}
+
+.fmt__measured svg {
+  margin-top: 3px;
+  color: var(--text-3); /* 3.62 on S */
+}
+
+/* Never behind a disclosure control. A caveat somebody has to click to see is a
+ * caveat the product does not really want them to read. */
+.fmt__note {
+  margin-top: var(--sp-4);
+  padding: var(--sp-3);
+  border-radius: var(--r-thumb);
+  background: var(--bg);
+  color: var(--text); /* 15.46 on G */
+  /* Prose, so it takes the 16px body floor rather than --text-meta. The type
+   * scale reserves --text-meta (14px) for mono labels, codes and timings and
+   * says in its own comment that it is never a sentence. */
+  font-size: var(--text-body-size);
+  line-height: var(--leading-body);
+}
+
+.fmt__sensitive {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+  color: var(--text); /* 16.83 on S */
+  /* Prose, so it takes the 16px body floor rather than --text-meta. The type
+   * scale reserves --text-meta (14px) for mono labels, codes and timings and
+   * says in its own comment that it is never a sentence. */
+  font-size: var(--text-body-size);
+  line-height: var(--leading-body);
+}
+
+.fmt__sensitive svg {
+  margin-top: 3px;
+}
+
+/* ----------------------------------------------------- 03 vocabulary ----- */
+
+.vocab__gauge {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-5);
+}
+
+.vocab__count {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+
+/* tabular-nums so the figure does not jump width as it counts, and
+ * letter-spacing 0 rather than --tracking-code: that token holds I/1 and O/0
+ * apart in an IDENTIFIER, where a misread character is the whole product. This
+ * is a quantity, and the tracking pushes a group separator off its digits at
+ * this size -- the same call .pwbreach__count already documents. */
+.mono.vocab__figure {
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  color: var(--text); /* 16.83 on S */
+}
+
+.vocab__of {
+  color: var(--text-2); /* 5.07 on S */
+}
+
+.vocab__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  align-items: stretch;
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--hairline);
+}
+
+.vocab__form .btn {
+  align-self: flex-start;
+}
+
+.field--mono .field__input {
+  font-family: var(--font-mono);
+  letter-spacing: var(--tracking-code);
+}
+
+/* "The pack is full" is a fact the sentence already states. Tinting it spends
+ * an accent on a word that was carrying itself. */
+.vocab__full {
+  color: var(--text-2); /* 5.07 on S */
+  font-size: var(--text-meta);
+  font-weight: 500;
+}
+
+.vocab__list {
+  display: grid;
+  gap: 0;
+  margin-top: var(--sp-5);
+  /* Long packs scroll inside this box rather than turning the section into a
+   * hundred-row page. */
+  max-height: 460px;
+  overflow-y: auto;
+}
+
+@media (min-width: 640px) {
+  .vocab__list {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+}
+
+/* Rows on the panel, not a grid of individually outlined chips. */
+.vocab__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding-left: var(--sp-3);
+  border-top: 1px solid var(--hairline);
+}
+
+.vocab__item:first-child {
+  border-top: none;
+}
+
+.vocab__term {
+  min-width: 0;
+  color: var(--text); /* 16.83 on S */
+  overflow-wrap: anywhere;
+}
+
+.vocab__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--touch-min);
+  height: var(--touch-min); /* 44 x 44 exactly on the WCAG 2.5.5 floor */
+  flex: none;
+  color: var(--text-2); /* 5.07 on S */
+  border-radius: var(--r-full);
+}
+
+.vocab__remove:hover {
+  background: var(--hover);
+  color: var(--alert); /* 5.92 on --hover */
+}
+
+/* -------------------------------------------------------- 04 consent ----- */
+
+.consent .prose--lead {
+  color: var(--text); /* 16.83 on S */
+}
+
+/* Three items on one surface, divided by hairlines -- a rule between columns on
+ * a wide screen, a rule between rows on a narrow one. They used to be three
+ * bordered cards each with its own 3px top bar, three competing edges for three
+ * things that are architecture rather than status. */
+.ledger {
+  display: grid;
+  gap: 0;
+  margin-top: var(--sp-5);
+}
+
+.ledger__item {
+  padding-block: var(--sp-4);
+  border-top: 1px solid var(--hairline);
+}
+
+.ledger__item:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+@media (min-width: 860px) {
+  .ledger {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: var(--sp-5);
+  }
+
+  .ledger__item {
+    padding-block: 0;
+    padding-left: var(--sp-5);
+    border-top: none;
+    border-left: 1px solid var(--hairline);
+  }
+
+  .ledger__item:first-child {
+    padding-left: 0;
+    border-left: none;
+  }
+}
+
+.ledger__kicker {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-weight: 700;
+  color: var(--text); /* 16.83 on S */
+}
+
+/* The one item that is a disclosure rather than a reassurance, and the line a
+ * reader most needs to land on. It takes the accent on the KICKER, which is
+ * text a person reads -- so --accent-text (5.57), never --accent (4.70, and it
+ * fails as text on G). One accent, one line, no bar: the top rule it used to
+ * carry was one of three competing edges and said nothing the word did not. */
+.ledger__item--kept .ledger__kicker {
+  color: var(--accent-text); /* 5.57 on S */
+}
+
+.mono.ledger__kicker {
+  letter-spacing: 0.08em;
+}
+
+.ledger__title {
+  margin-top: var(--sp-2);
+  font-size: var(--text-lg);
+}
+
+.ledger__body {
+  margin-top: var(--sp-2);
+  color: var(--text-2); /* 5.07 on S */
+  /* Prose, so it takes the 16px body floor rather than --text-meta. The type
+   * scale reserves --text-meta (14px) for mono labels, codes and timings and
+   * says in its own comment that it is never a sentence. */
+  font-size: var(--text-body-size);
+  line-height: var(--leading-body);
+}
+
+/* A heading and space, not a white box drawn on a white panel. The group is
+ * already announced as a radiogroup and titled by its own h3; a border around
+ * it was the third edge in a nest of edges. */
+.decide {
+  margin-top: var(--sp-6);
+  min-width: 0;
+}
+
+.decide__legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: var(--text-lg);
+}
+
+.decide__body {
+  margin-top: var(--sp-2);
+  max-width: var(--measure);
+  color: var(--text-2); /* 5.07 on S */
+  /* Prose, so it takes the 16px body floor rather than --text-meta. The type
+   * scale reserves --text-meta (14px) for mono labels, codes and timings and
+   * says in its own comment that it is never a sentence. */
+  font-size: var(--text-body-size);
+  line-height: var(--leading-body);
+}
+
+.decide__control {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+}
+
+.decide__select {
+  max-width: 28ch;
+}
+
+/* Options are rows on the panel, divided by hairlines. Each used to be its own
+ * outlined box with a 2px near-black frame and a tinted fill when selected -- a
+ * stack of cards for a set of siblings, which is the pattern this pass exists
+ * to remove. The native radio is what identifies the control; the label is the
+ * target, and the whole row is the label. */
+.radio {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  /* The inline padding is bled back out with a matching negative margin so the
+   * hover tint reaches a little past the text -- a row tint that stops exactly
+   * at the first glyph reads as a highlighter, not as a row. */
+  padding: var(--sp-3);
+  margin-inline: calc(var(--sp-3) * -1);
+  min-height: var(--control-h);
+  border-top: 1px solid var(--hairline);
+  cursor: pointer;
+}
+
+.radio:first-of-type {
+  margin-top: var(--sp-4);
+}
+
+.radio:hover {
+  background: var(--hover);
+}
+
+/* The native dot already carries the state; weight is the second, non-colour
+ * signal for the same thing, which is the rule on this project. */
+.radio:has(.radio__input:checked) .radio__label {
+  font-weight: 700;
+}
+
+/* base.css styles every input as a full-width 46px text box. A radio is not
+ * one, and it keeps the UA's own control so accent-color can tint it.
+ *
+ * --text rather than the accent, for the same reason the switch is: the accent
+ * in this product means "wants a human", and it is spent on the state tag
+ * beside the heading. */
+.radio__input {
+  width: 20px;
+  min-width: 20px;
+  height: 20px;
+  min-height: 20px;
+  margin: 3px 0 0; /* optical: aligns the dot with the label's cap height */
+  padding: 0;
+  flex: none;
+  border: none;
+  background: none;
+  accent-color: var(--text);
+}
+
+.radio__text {
+  display: block;
+  min-width: 0;
+}
+
+.radio__label {
+  display: block;
+  font-weight: 600;
+  color: var(--text); /* 16.83 on S */
+}
+
+.radio__detail {
+  display: block;
+  margin-top: var(--sp-1);
+  color: var(--text-2); /* 5.07 on S, 4.91 on --hover */
+  /* Prose, so it takes the 16px body floor rather than --text-meta. The type
+   * scale reserves --text-meta (14px) for mono labels, codes and timings and
+   * says in its own comment that it is never a sentence. */
+  font-size: var(--text-body-size);
+  line-height: var(--leading-body);
+}
+
+/* A recessed note, with the accent bar gone. The scope claim is the sentence
+ * and the icon; a 3px rule down its edge was decoration competing with the two
+ * decisions above it. */
+.consent__scope {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  margin-top: var(--sp-5);
+  padding: var(--sp-4);
+  border-radius: var(--r-thumb);
+  background: var(--bg);
+  color: var(--text); /* 15.46 on G */
+  font-size: var(--text-meta);
+  line-height: var(--leading-body);
+}
+
+.consent__scope svg {
+  margin-top: 3px;
+}
+
+.consent__scope code {
+  color: var(--text);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* ---------------------------------------------------------- 05 usage ----- */
+
+.usage__reading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.usage__figure {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2) var(--sp-3);
+}
+
+.usage__figure .mono {
+  font-size: var(--text-3xl);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0; /* a quantity, not an identifier -- see .vocab__figure */
+  color: var(--text); /* 16.83 on S */
+  line-height: var(--leading-tight);
+}
+
+.usage__of {
+  color: var(--text-2); /* 5.07 on S */
+  font-size: var(--text-body-size);
+}
+
+.usage__of .mono {
+  font-size: var(--text-body-size);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2);
+}
+
+.usage__note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  color: var(--text-2); /* 5.07 on S */
+  font-size: var(--text-meta);
+}
+
+/* Three figures, no tiles. They were tinted boxes, which is a fill standing in
+ * for a boundary that whitespace already draws -- and the tint measured 1.03 on
+ * white, so the boxes were not visible as boxes anyway. */
+.counts {
+  display: grid;
+  gap: var(--sp-4) var(--sp-6);
+  margin-top: var(--sp-5);
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.counts__cell {
+  min-width: 0; /* a long figure widens its own column, never the page */
+}
+
+.counts__key {
+  color: var(--text-2); /* 5.07 on S */
+  font-size: var(--text-meta);
+}
+
+.mono.counts__value {
+  margin-top: var(--sp-1);
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0; /* a quantity, not an identifier -- see .vocab__figure */
+  color: var(--text); /* 16.83 on S */
+  line-height: var(--leading-tight);
+}

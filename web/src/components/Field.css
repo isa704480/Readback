@@ -1,0 +1,114 @@
+/* A labelled form field.
+ *
+ * Fields render on --surface #ffffff inside a panel. Every ratio below is
+ * WCAG 2.1 against --surface unless a second ground is named.
+ */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* Every field has one. Never a placeholder standing in for a label: a
+ * placeholder disappears the moment someone types, which is exactly when they
+ * are most likely to need it. */
+.field__label {
+  font-size: var(--text-body-size);
+  font-weight: 500;
+  color: var(--text); /* 16.83 */
+}
+
+/* Required is marked in words as well as with the mark, because a lone
+ * asterisk means nothing to a screen reader that skips punctuation.
+ *
+ * Grey, not accent. The asterisk is neither a link nor an action, and the one
+ * accent in a form belongs to the control that submits it; an accent-coloured
+ * mark beside a label reads as something to click. */
+.field__required {
+  margin-left: var(--sp-1);
+  color: var(--text-2); /* 5.07 */
+  font-weight: 600;
+}
+
+.field__row {
+  position: relative;
+  display: flex;
+}
+
+.field__input {
+  /* 16px exactly. Anything smaller and iOS Safari zooms the viewport on focus,
+   * leaving the user pinching back out of a form they were mid-way through. */
+  font-size: var(--text-body-size);
+  min-height: var(--control-h);
+}
+
+.field__input--reveal {
+  /* Room for the show/hide control, which is a full 44px target. */
+  padding-right: 52px;
+}
+
+/* Error state is a heavier border AND the message below AND aria-invalid.
+ * --alert is 6.12 on --surface, past the 3:1 WCAG 1.4.11 asks of a control
+ * boundary -- but it is never the only signal, because in greyscale it flattens
+ * into the greys around it, so the doubled border width and the message below
+ * carry the same fact.
+ *
+ * The border colour changes in one frame rather than easing, per motion.css
+ * BANNED #12: an intermediate value between --text-3 and --alert is a state
+ * this vocabulary does not have. */
+.field__input[aria-invalid='true'] {
+  border-color: var(--alert); /* 6.12 */
+  border-width: 2px;
+}
+
+.field__reveal {
+  position: absolute;
+  right: 1px;
+  top: 1px;
+  bottom: 1px;
+  width: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-2); /* 5.07 */
+  background: transparent;
+  /* --r-chip, matching the radius base.css gives the input this sits inside. */
+  border-radius: 0 var(--r-chip) var(--r-chip) 0;
+  min-height: var(--touch-min);
+}
+
+.field__reveal:hover {
+  color: var(--text); /* 16.28 on --hover */
+  background: var(--hover);
+}
+
+/* Sits between the input and the hint. The password strength meter goes here. */
+.field__slot:empty {
+  display: none;
+}
+
+.field__hint {
+  /* Prose, so it takes the 16px body floor rather than --text-meta. The type
+   * scale reserves --text-meta (14px) for mono labels, codes and timings and
+   * says in its own comment that it is never a sentence. */
+  font-size: var(--text-body-size);
+  line-height: var(--leading-body);
+  color: var(--text-2); /* 5.07 on --surface, 4.66 on --bg */
+}
+
+/* Below the field it belongs to, never collected at the top of the form. A
+ * message at the top is a message the person has already scrolled past. */
+.field__error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  font-size: var(--text-meta);
+  line-height: var(--leading-body);
+  font-weight: 500;
+  color: var(--alert); /* 6.12 on --surface, 5.62 on --bg */
+}
+
+.field__error svg {
+  margin-top: 2px; /* optical: aligns the triangle with the cap height */
+}

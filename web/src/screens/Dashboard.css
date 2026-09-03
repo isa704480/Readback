@@ -1,0 +1,817 @@
+/* The record.
+ *
+ * Every colour is a token from tokens.css and every colour declaration carries
+ * its computed WCAG 2.1 ratio against the surface it actually sits on. Two
+ * backgrounds are in play, not the three the warm palette had -- the page
+ * ground and the recessed blocks are now the same colour:
+ *   S = --surface #ffffff  panels, session panels, rows
+ *   G = --bg      #f5f5f7  the page behind them, and every recessed block
+ *                          (.sess__none, .stamp, .rec__facts). 1.09:1 on S.
+ *
+ * Ratios on G, computed here rather than borrowed:
+ *   --text 15.46 | --text-body 9.20 | --text-2 4.66 | --alert 5.62 |
+ *   --accent-text 5.11 | --text-3 3.33 | --text-4 2.03
+ * and on S: --text-body 10.01.
+ *
+ * THE 375px RULE, restated because this screen is the densest thing in the app:
+ * the only element permitted to scroll horizontally is .slot-strip, which
+ * already does it inside its own lane. Every grid track here is minmax(0, ...)
+ * or 1fr and never the implied 1fr, because a grid item's automatic minimum
+ * size is its max-content width -- the failure Account.css records at document
+ * scrollWidth 663px in a 375px viewport, and TopBar.css records at 473px.
+ *
+ * --accent appears on this stylesheet as a FILL ONLY, three times: .held__cap,
+ * .held__mark--spoke and the flagged row bar. At 4.70:1 on surface it is over
+ * the 3:1 a meaningful graphic needs and under the 4.5:1 text needs, which is
+ * exactly the split --accent and --accent-text exist to keep.
+ */
+
+/* ---------------------------------------------------------------- shell -- */
+
+/* The 240px navigation rail is NOT drawn here. components/Sidebar.tsx owns it
+ * and it belongs in Shell beside <Outlet />, because it spans Live, Record,
+ * Formats and Demo and a rail mounted inside one screen does not exist on the
+ * other three. See the block comment in Dashboard.tsx. This screen is the
+ * content column and sizes itself to whatever track it is given. */
+.record {
+  display: grid;
+  /* Explicitly minmax(0, 1fr), never the implied 1fr. See the note above. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+}
+
+.record__main {
+  min-width: 0;
+}
+
+/* ----------------------------------------------------------------- head -- */
+
+.record__head {
+  min-width: 0;
+}
+
+.record__eyebrow {
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-2); /* 4.66:1 on G */
+}
+
+/* The screen's H1. --tracking-title is the token for it: the system's iron rule
+   is that a bigger title takes more negative tracking, and this is the biggest
+   type on the screen after the headline figure. Named token, not the -0.02em
+   this used to hard-code. */
+.record__title {
+  margin-top: var(--sp-2);
+  font-size: var(--text-3xl);
+  letter-spacing: var(--tracking-title);
+}
+
+.record__lede {
+  margin-top: var(--sp-3);
+  color: var(--text-2); /* 4.66:1 on G */
+}
+
+/* A. The replay disclosure is a CAPTION, not a toast: it is always there, so it
+   never interrupts. It appears only when EVERY visible session is a replay --
+   over a mixed list it would mislabel the live rows, which is worse than no
+   banner, and the per-row stamp does that job instead.
+
+   It is a quiet white panel, not an outlined coloured box. The old treatment
+   was a full accent border plus accent body text, which after the palette swap
+   read as the same blue as every primary button -- an interface shouting a
+   caption. The icon and the words carry the kind; nothing here needs a hue. */
+.record__replay {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface);
+  border-radius: var(--r-card);
+  box-shadow: var(--sh-card);
+  /* --text-body, at last. This is a two-line caption a person reads, so it wants
+     the design system's long-body grey rather than the summary grey. It could
+     not have it: tokens.css declared --text-body twice inside one :root, second
+     as the 16px size, so the later declaration won and `color: var(--text-body)`
+     computed to an invalid `color: 16px`. That alias is deleted and the token is
+     the colour again. 10.01:1 on S, against --text-2's 5.07. */
+  color: var(--text-body); /* 10.01:1 on S */
+  font-size: var(--text-body-size); /* prose takes the 16px floor, never --text-meta */
+  line-height: var(--leading-body);
+}
+
+.record__replay svg {
+  margin-top: 2px;
+}
+
+.record__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+.record__waiting {
+  color: var(--text-2); /* 4.66:1 on G */
+}
+
+.record__sessions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  min-width: 0;
+}
+
+/* ------------------------------------------------------------- headline -- */
+
+/* A panel: panel radius, panel shadow, no border. The edge is the shadow. */
+.headline {
+  background: var(--surface);
+  border-radius: var(--r-panel);
+  box-shadow: var(--sh-panel);
+  padding: var(--sp-5);
+  min-width: 0;
+}
+
+/* The fraction is the large element and the percentage is small, and that
+   ordering is the argument rather than a layout preference: a percentage is the
+   quotable, screenshotable, over-claimable form and survives being copied out
+   of context, while a fraction cannot be quoted without its denominator. */
+/* .mono is doubled into the selector on purpose, and it is not a typo.
+   main.tsx imports styles/base.css AFTER ./App, so base.css is injected last
+   and `.mono { font-size: var(--text-meta) }` beats any single-class rule in a
+   component stylesheet. Measured: the fraction rendered at 14px until this was
+   raised to 0,2,0. Account.css hit the same thing and solved it the same way
+   (.mono.account__org). */
+/* TRACKING. This is a 40px number, so it takes NEGATIVE tracking like any other
+   display type -- it used to carry --tracking-code (+0.02em), which is the
+   identifier token and belongs on things a reader has to compare character by
+   character. Nobody compares "117 / 146" against another number glyph by
+   glyph. tabular-nums stays, and here it is load-bearing rather than
+   defensive: the figure re-renders as sessions land. */
+.mono.headline__figure {
+  font-size: var(--text-4xl);
+  line-height: var(--leading-tight);
+  font-weight: 600;
+  color: var(--text); /* 16.83:1 on S */
+  letter-spacing: var(--tracking-h2); /* -0.02em at 40px */
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 660px) {
+  .mono.headline__figure {
+    font-size: var(--text-5xl);
+    letter-spacing: var(--tracking-title); /* -0.03em at 48px: bigger, more negative */
+  }
+}
+
+/* The definition, in full, always visible. Not a tooltip: the screen has to
+   define the number the same way ck_capture_silent_means_rung0 does. */
+.headline__definition {
+  margin-top: var(--sp-2);
+  color: var(--text); /* 16.83:1 on S */
+}
+
+.headline__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2) var(--sp-4);
+  margin-top: var(--sp-3);
+}
+
+.mono.headline__percent {
+  font-size: var(--text-lg);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2); /* 5.07:1 on S */
+}
+
+.headline__window {
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2); /* 5.07:1 on S */
+}
+
+/* n < 20: a sentence, so it takes the 16px body floor rather than --text-meta,
+   whose own comment reserves it for mono labels, codes and timings. */
+.headline__smalln {
+  color: var(--text-2); /* 5.07:1 on S */
+  font-size: var(--text-body-size);
+}
+
+.headline__retention {
+  margin-top: var(--sp-2);
+  color: var(--text-2); /* 5.07:1 on S */
+  font-size: var(--text-body-size);
+}
+
+/* Two supporting figures on one line at BODY size. Never a second hero. */
+.headline__figures {
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--hairline);
+  color: var(--text); /* 16.83:1 on S */
+  font-variant-numeric: tabular-nums;
+}
+
+.headline--empty {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  /* Same box, same position, and a floor close to the height the fraction
+     occupies, so the screen does not jump when the first row lands. */
+  min-height: 168px;
+}
+
+.headline__empty-title {
+  font-size: var(--text-xl);
+  letter-spacing: var(--tracking-h2);
+  color: var(--text); /* 16.83:1 on S */
+}
+
+.headline__empty-body {
+  margin-top: var(--sp-3);
+  color: var(--text-2); /* 5.07:1 on S */
+}
+
+/* ------------------------------------------------------------ held line -- */
+/* Silence is an event, not an absence: events.py emits silence.held every time
+ * the decider declines to speak and carries the gate that stopped it. This is a
+ * rendering of decisions that already exist, which is why it needs no metaphor.
+ *
+ * Nothing here changes size, flashes, enters or leaves the layout, or moves
+ * anything else. A mark appears BY EXISTING -- there is no entrance animation
+ * on it at all any more. The fade it used to run was an opacity keyframe on
+ * asynchronously rendered content, which styles/motion.css bans by name and for
+ * a measured reason: a re-render mid-animation can strand the element at
+ * opacity 0, and a mark that is in the DOM but invisible is this figure lying
+ * about how quiet the call was. */
+
+.held {
+  margin: 0;
+  min-width: 0;
+}
+
+.held__say {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2) var(--sp-4);
+}
+
+.held__gate {
+  color: var(--text); /* 16.83:1 on S */
+  min-width: 0;
+}
+
+.held__count {
+  color: var(--text-2); /* 5.07:1 on S */
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.held__line {
+  position: relative;
+  height: 22px;
+  margin-top: var(--sp-2);
+  /* A mark sitting on the right end must not be able to widen anything. */
+  overflow: hidden;
+}
+
+/* The axis. Structure, and the whole figure is aria-hidden with everything it
+   says repeated in the sentence above it and in the caption below, so it takes
+   structure weight: --faint, 1.51:1 on S. */
+.held__line::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  margin-top: -1px;
+  height: 2px;
+  background: var(--faint);
+}
+
+/* One per silence.held. Short and quiet -- outside the foveal path. --text-4 at
+   full opacity rather than --text-2 at 0.6: the same quietness, without an
+   alpha whose composite ratio nobody has measured. 2.21:1 on S, and this is
+   decoration inside an aria-hidden figure. */
+.held__mark {
+  position: absolute;
+  top: 50%;
+  margin-top: -5px;
+  margin-left: -2px;
+  width: 2px;
+  height: 10px;
+  background: var(--text-4);
+}
+
+/* One per spoken question. The ONLY thing on this component that ever changes
+   shape, which is what makes an interruption legible without a legend: measured
+   at 0.20 spoken questions per identifier, the honest silhouette of a working
+   session is a long quiet texture with an occasional tall mark in it.
+   The accent, as a fill: 4.70:1 on S, and twice the height and 1.5x the width
+   of a quiet mark, so the shape carries it in greyscale too. */
+.held__mark--spoke {
+  margin-top: -10px;
+  width: 3px;
+  height: 20px;
+  background: var(--accent);
+}
+
+/* The presence cap: the socket is open. A fill, not a state. */
+.held__cap {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  margin-top: -3px;
+  width: 6px;
+  height: 6px;
+  background: var(--accent); /* 4.70:1 on S */
+}
+
+/* The spec asks for this caption in mono --text-meta. It is set in --font-ui at
+   the body size instead, and the house rule is why: tokens.css reserves
+   --text-meta for "mono labels, codes and timings" and says in its own comment
+   that it is "never a sentence", and Account.css and App.css both restate that
+   where a rule overrode it. This caption is a sentence. */
+.held__caption {
+  margin-top: var(--sp-2);
+  color: var(--text-2); /* 5.07:1 on S */
+}
+
+.held--rest {
+  padding: var(--sp-4);
+  background: var(--surface);
+  border-radius: var(--r-card);
+  box-shadow: var(--sh-card);
+}
+
+/* -------------------------------------------------------------- session -- */
+
+/* A session is a composite object -- its own header, its own held-line figure,
+   its own list of rows -- so it stays a panel of its own rather than being
+   folded into a single list with the other sessions. The captures INSIDE it are
+   the sibling same-kind items, and those are one unified list of hairline-
+   divided rows, which is where the fragmentation rule actually bites. */
+.sess {
+  background: var(--surface);
+  border-radius: var(--r-panel);
+  box-shadow: var(--sh-panel);
+  padding: var(--sp-5);
+  min-width: 0;
+}
+
+.sess__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2) var(--sp-4);
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--hairline);
+  margin-bottom: var(--sp-4);
+}
+
+.sess__title {
+  font-size: var(--text-meta);
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text); /* 16.83:1 on S */
+}
+
+.sess__facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--text-2); /* 5.07:1 on S */
+  font-variant-numeric: tabular-nums;
+  min-width: 0;
+}
+
+/* C. The state word for a session with no ended_at. No duration is computed:
+   now minus started_at on a session abandoned three days ago is a fabricated
+   number. The word is the carrier; it is not tinted. */
+.sess__open {
+  color: var(--text-2); /* 5.07:1 on S */
+}
+
+.sess__list-label {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text); /* 16.83:1 on S */
+}
+
+.sess__list-n {
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2); /* 5.07:1 on S */
+}
+
+/* E. Zero captures is a result, not a blank. Not an error, not a dash, not an
+   empty row: 71 of the spec's 217 sessions produced no capture, and a
+   non-identifier fixture MUST open no row.
+
+   Recessed with --bg (1.09:1 on the panel), not --hover. --hover #fbfbfd is
+   1.03:1 and is a row-hover tint; a region painted with it is not a region. */
+.sess__none {
+  margin-top: var(--sp-4);
+  padding: var(--sp-4);
+  background: var(--bg);
+  border-radius: var(--r-thumb);
+}
+
+.sess__none-title {
+  color: var(--text); /* 15.46:1 on G */
+}
+
+.sess__none-note {
+  margin-top: var(--sp-1);
+  color: var(--text-2); /* 4.66:1 on G */
+}
+
+/* ----------------------------------------------------------------- stamp -- */
+
+.stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 2px var(--sp-2);
+  background: var(--bg);
+  border-radius: var(--r-full); /* a tag takes the pill tier */
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  letter-spacing: var(--tracking-code);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2); /* 4.66:1 on G */
+}
+
+/* 5, discharged on screen: it is simulated for the demo, and it says so. Not
+   dismissible, so it cannot be cleared away before a screenshot. A sentence
+   with an icon, so it drops the pill and the mono and takes body type -- and it
+   is NOT tinted. "This is an example" is a fact about the row, not an action,
+   and the interface's one accent is reserved for the state that wants a human. */
+.stamp--example {
+  color: var(--text-body); /* 9.20:1 on G — the long-body grey, reachable now
+                              that tokens.css's duplicate declaration is gone.
+                              See the note on .record__replay. */
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-thumb);
+  font-family: var(--font-ui);
+  letter-spacing: normal;
+  font-size: var(--text-body-size);
+  line-height: var(--leading-body);
+}
+
+/* ------------------------------------------------------------------ row -- */
+
+.rec__list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  min-width: 0;
+}
+
+/* ONE PANEL, HAIRLINE DIVIDERS.
+ *
+ * These rows used to be cards: each one carried its own 2-4px coloured left
+ * border in one of five hues, its own border-style per state, and its own
+ * 6px radius on a full-bleed row where a radius does nothing. Two of the
+ * five hues collapsed to the same blue when the palette went cool, so the
+ * colour half of that signal could no longer tell repaired from asking at all.
+ *
+ * The pattern half (solid / double / dashed / dotted) was there for the
+ * printable export, and it goes too -- because the thing that actually survives
+ * a monochrome print is the STATE WORD, which every row already carries beside
+ * its icon in .rec__state, and which is legible in a way a 2px dotted rule is
+ * not. State now reads as weight and tone on that word.
+ *
+ * The one bar left is flagged. See below.
+ *
+ * The row has no entrance animation. It used to fade in from opacity 0, on
+ * asynchronously rendered content, which styles/motion.css bans by name: a
+ * re-render mid-animation can strand the row at opacity 0 and a capture that
+ * exists in the DOM is then invisible on screen. A row appears by existing. */
+.rec {
+  position: relative;
+  min-width: 0;
+  padding: var(--sp-3) 0 var(--sp-3) var(--sp-4);
+  border-top: 1px solid var(--hairline);
+}
+
+.rec:first-child {
+  border-top: none;
+}
+
+/* Flagged, and only flagged, keeps a bar. It is the one outcome that means a
+   human has to look at this row, so it is the one allowed to be findable
+   without being read. --alert #b3350a is 6.12:1 on S; as a graphic it needs
+   3:1. The left padding above is constant across every state, so a row that
+   becomes flagged gains a bar without its text moving. */
+.rec[data-state='flagged']::before {
+  content: '';
+  position: absolute;
+  inset: var(--sp-3) auto var(--sp-3) 0;
+  width: 3px;
+  border-radius: var(--r-full);
+  background: var(--state-flagged);
+}
+
+/* Below 900px the row is a stacked card: the identifier takes its own line and
+   the meta wraps beneath it. A wrapping flex row rather than a second grid,
+   because the DOM must not change between breakpoints. */
+.rec__head {
+  /* The nearest positioned ancestor for the toggle's stretched hit area. */
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  min-height: 48px;
+}
+
+.rec__head > .rec__id {
+  flex: 1 0 100%;
+}
+
+.rec__head > .rec__toggle {
+  margin-left: auto;
+}
+
+/* The identifier keeps its own scroll lane AND sits above the stretched hit
+   area, so a 22-character IBAN can still be dragged sideways and reached by
+   keyboard. It is the one element on this screen allowed to scroll. */
+.rec__id {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+/* The record is a dense table, not the live instrument, so the slot metrics are
+   pulled back to the phone-sized ones at every width. Rack.css declares them on
+   `.rack, .slot-strip` precisely so a strip outside a rack can be re-scaled. */
+.rec .slot-strip {
+  --slot-w: 24px;
+  --slot-h: 40px;
+  --slot-gap: 2px;
+  --slot-fs: var(--text-body-size);
+}
+
+.rec__none {
+  color: var(--text-2); /* 5.07:1 on S */
+}
+
+.rec__none-note {
+  color: var(--text-2);
+  font-size: var(--text-body-size);
+}
+
+.rec__format,
+.rec__asked,
+.rec__latency,
+.rec__when {
+  color: var(--text-2); /* 5.07:1 on S */
+  font-variant-numeric: tabular-nums;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* The state word is UI type, not mono: a word is not machine output. It is the
+   carrier now that the coloured left border is gone, so it takes the row's
+   state in tone and weight -- exactly the vocabulary the rack uses, because a
+   state must not mean two different things on two screens. */
+.rec__state {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--text-meta);
+  font-weight: 600;
+  min-width: 0;
+  color: var(--text-2); /* 5.07:1 on S */
+}
+
+.rec[data-state='heard'] .rec__state {
+  color: var(--state-heard); /* #6e6e73 5.07:1 on S */
+  font-weight: 500;
+}
+
+.rec[data-state='repaired'] .rec__state,
+.rec[data-state='settled'] .rec__state {
+  color: var(--state-settled); /* #1d1d1f 16.83:1 on S */
+}
+
+.rec[data-state='asking'] .rec__state {
+  color: var(--state-asking); /* #0066cc 5.57:1 on S */
+}
+
+.rec[data-state='flagged'] .rec__state {
+  color: var(--state-flagged); /* #b3350a 6.12:1 on S */
+}
+
+/* A real <button>, not a div with a handler. The visible box is 48x48 and its
+   ::after stretches the pointer target across the whole row header -- so the
+   target is the row, and the strip above still takes its own clicks. */
+.rec__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 48px;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-full);
+  background: none;
+  color: var(--text-2); /* 5.07:1 on S */
+  cursor: pointer;
+  justify-self: start;
+}
+
+.rec__toggle::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.rec__toggle:hover {
+  color: var(--text); /* 16.83:1 on S */
+}
+
+.rec__chevron {
+  transition: opacity var(--motion-fast) var(--ease-out);
+}
+
+.rec__toggle[aria-expanded='true'] .rec__chevron {
+  /* The open state is carried by aria-expanded and by the panel's presence.
+     No rotation: this screen has no transforms. */
+  opacity: 0.55;
+}
+
+/* THE DESKTOP ROW, AND ONE MEASURED DEPARTURE FROM THE SPEC.
+ *
+ * The spec lays the row out as six columns left to right: identifier, format,
+ * outcome, asked, settled in, when. Implemented literally, with the spec's own
+ * 240px rail inside the existing --page-max of 1120px, the content column is
+ * 784px and the row's track space is 714px. Measured in the browser at 1280px
+ * viewport: the five meta columns and the 48px control take 570px of it and the
+ * identifier track resolves to 144px, against an 11-character ISO 6346 strip of
+ * 294px and a 22-character IBAN of 586px. The product's output would have been
+ * the narrowest column on the screen and the only one that always scrolled.
+ *
+ * So the identifier keeps line one of the row to itself and the five meta
+ * columns sit on line two, still as GRID TRACKS -- which is the whole point of
+ * a table: format, outcome, asked, settled-in and when line up vertically down
+ * the list and stay scannable. Reading order is unchanged. Measured after:
+ * identifier lane 654px, ISO and IBAN both fit without scrolling.
+ *
+ * Every track is minmax(0, X) or 1fr and never the implied 1fr. */
+@media (min-width: 900px) {
+  .rec__head {
+    display: grid;
+    grid-template-columns:
+      minmax(0, 5rem)
+      minmax(0, 10.5rem)
+      minmax(0, 8rem)
+      minmax(0, 4.5rem)
+      minmax(0, 1fr)
+      48px;
+    grid-template-areas:
+      'id     id    id    id      id   toggle'
+      'format state asked latency when toggle';
+    gap: var(--sp-2) var(--sp-3);
+    align-items: center;
+  }
+
+  .rec__head > .rec__id {
+    grid-area: id;
+  }
+
+  .rec__format {
+    grid-area: format;
+  }
+
+  .rec__state {
+    grid-area: state;
+  }
+
+  .rec__asked {
+    grid-area: asked;
+  }
+
+  .rec__latency {
+    grid-area: latency;
+  }
+
+  .rec__when {
+    grid-area: when;
+  }
+
+  .rec__head > .rec__toggle {
+    grid-area: toggle;
+    margin-left: 0;
+    align-self: center;
+  }
+}
+
+/* --------------------------------------------------------- L3 disclosure -- */
+/* In place, inside the row. Not a modal and not a route: the team leader is
+   comparing rows, and a modal or a navigation loses the scroll position --
+   the comparison IS the task. */
+
+.rec__detail {
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* Recessed with --bg, 1.09:1 on the panel. No entrance animation: this block
+   arrives from a fetch, and an opacity keyframe on async content is the failure
+   motion.css bans. It opens by existing, under a row the reader just clicked. */
+.rec__facts {
+  margin-top: var(--sp-3);
+  padding: var(--sp-4);
+  background: var(--bg);
+  border-radius: var(--r-thumb);
+}
+
+.rec__caveat {
+  margin-bottom: var(--sp-3);
+  color: var(--text-body); /* 9.20:1 on G; see .record__replay. */
+}
+
+.rec__unknown {
+  font-family: var(--font-ui);
+  letter-spacing: normal;
+  color: var(--text-2); /* 4.66:1 on G */
+}
+
+.rec__questions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  font-family: var(--font-ui);
+  font-size: var(--text-body-size);
+  letter-spacing: normal;
+  font-variant-numeric: tabular-nums;
+  color: var(--text); /* 15.46:1 on G */
+}
+
+.rec__ruled {
+  overflow-wrap: anywhere;
+}
+
+.rec__id-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+}
+
+.rec__uuid {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+/* A control, so its boundary is --text-3 (3.62:1 on S) and never --hairline:
+   that is 1.17:1, under the 3:1 WCAG 1.4.11 asks of anything identifying an
+   interactive component. --text-3 is the token that keeps that job; panel edges
+   no longer share it. Pill tier, like every other button in the system. */
+.rec__copy {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: var(--control-h); /* 46px, 2px over the 44px floor */
+  padding-inline: var(--sp-4);
+  border: 1px solid var(--text-3);
+  border-radius: var(--r-full);
+  background: var(--surface);
+  color: var(--text); /* 16.83:1 on S */
+  font-family: var(--font-ui);
+  font-size: var(--text-meta);
+  letter-spacing: normal;
+  cursor: pointer;
+}
+
+.rec__copy:hover {
+  background: var(--hover); /* the row-hover tint, which is what this is */
+}
+
+/* ------------------------------------------------------------ the empty -- */
+
+.record__empty {
+  min-width: 0;
+}
+
+.record__example {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+}

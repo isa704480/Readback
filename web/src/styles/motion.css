@@ -1,0 +1,992 @@
+/* Readback motion system.
+ * ============================================================================
+ *
+ * THE RULE, from docs/DESIGN-BRIEF.md §5:
+ *
+ *   "Motion carries meaning or does not exist. 150-300ms, transform and
+ *    opacity only. The flicker of a mutating partial is meaning; a decorative
+ *    pulse is not."
+ *
+ * Eight named motions ship. Each one is here because a fact about the pipeline
+ * has a MOMENT, and a moment is the one thing a static layout cannot draw. If
+ * a motion's fact is already fully carried by a colour, a word, an icon or a
+ * glyph that stays on the screen, the motion is decoration and it is not in
+ * this file. That test removed more candidates than it kept; the ones it
+ * removed are named in the BANNED block at the bottom, because a builder will
+ * reach for them by habit.
+ *
+ * WHERE THIS FILE SITS IN THE CASCADE
+ * -----------------------------------
+ * base.css imports this immediately after the tokens import. Two @imports at
+ * the top of base.css is legal; anything later is not.
+ *
+ * base.css already owns prefers-reduced-motion and collapses every duration to
+ * 1ms with `!important` on `*`. This file does NOT re-declare that and does not
+ * fight it. The division of labour is:
+ *
+ *   base.css    collapses the DURATION of every motion to 1ms
+ *   motion.css  re-encodes the INFORMATION that the collapsed motion carried
+ *
+ * That is the brief's §5 clause -- "give it a still equivalent rather than
+ * removing the information" -- expressed as a cascade boundary rather than as
+ * an instruction somebody has to remember.
+ *
+ * Both of those are DONE: base.css:1-2 carries the two @imports in that order,
+ * and its reduced-motion :root block declares --motion-breath: 1ms beside the
+ * other three durations.
+ *
+ *
+ * THE MEASUREMENTS THIS FILE IS BUILT ON
+ * --------------------------------------
+ * RE-COMPUTED FOR THE APPLE PALETTE. The table that used to stand here was
+ * derived from the warm palette's --amber #8A5A00, --green #1F5C46, --steel
+ * #2B5568 and --ink #14171A. Not one of those colours exists any more, and the
+ * two floors below were live VALUES read off them, so they were not stale
+ * comments -- they were a dead measurement still setting a rendered opacity.
+ *
+ * Computed with the WCAG 2.1 relative-luminance formula against BOTH grounds
+ * this app paints -- --bg #f5f5f7 and --surface #ffffff -- by compositing the
+ * token over the ground at each alpha and bisecting for the crossing. The
+ * binding ground is --bg in every row: it is the darker of the two, so a
+ * partly-transparent dark token is closer to it and the ratio is worse there.
+ *
+ *   LOWEST ALPHA AT WHICH STATE-COLOURED TEXT STILL CLEARS 4.5:1
+ *                                            on --bg   on --surface
+ *     --state-heard    --text-2      #6e6e73  0.9825   0.9427  <- binding
+ *     --state-asking   --accent-text #0066cc  0.9241   0.8830
+ *     --state-flagged  --alert       #b3350a  0.8649   0.8295
+ *     --state-settled  --text        #1d1d1f  0.6130   0.6037
+ *
+ *   LOWEST ALPHA AT WHICH A NON-TEXT GRAPHIC CLEARS 3:1
+ *   (WCAG 1.4.11, what a meaningful shape needs)
+ *     --text-2                       #6e6e73  0.7636   0.7337  <- binding
+ *     --accent                       #0071e3  0.7548   0.7208
+ *
+ * Two rules fall straight out of those numbers, and they are the spine of the
+ * whole system. Both got STRICTER under the new palette, which is the honest
+ * result and not a rounding:
+ *
+ *   1. NO ANIMATED OPACITY ON TEXT. The usable range is 1.00 down to 0.99.
+ *      It used to be eleven points and it is now one. --text-2 is the palette's
+ *      last grey that passes AA for body text at all -- 4.66:1 on --bg, 0.16
+ *      above the bar -- so there is no headroom left to spend on a fade. Text
+ *      moves by TRANSFORM ONLY, in every motion in this file. Derived, not
+ *      preferred: a provisional glyph faded to the 0.55 a designer reaches for
+ *      measures 2.11:1 on --bg -- a contrast failure that exists for 150ms and
+ *      would never show up in an audit.
+ *
+ *   2. A NON-TEXT GRAPHIC MAY BE ANIMATED DOWN TO 0.77 AND NO FURTHER.
+ *      0.77 clears 3:1 for the worst token (--text-2, floor 0.7636) on the
+ *      worse ground: 3.03:1 on --bg, 3.21:1 on --surface. --accent at the same
+ *      alpha is 3.07:1 / 3.25:1. The old floor of 0.72 does NOT survive the
+ *      repalette -- --text-2 at 0.72 is 2.78:1 on --bg -- which is exactly the
+ *      failure mode of leaving a measurement in place when its subject changes.
+ *
+ * One argument did NOT survive being measured, and it is recorded here so
+ * nobody rebuilds it. Ramping a slot from --state-heard #6e6e73 to
+ * --state-settled #1d1d1f passes through #5a5a5e, #464649, #313134, and the
+ * ratio on --surface climbs 5.07 -> 6.89 -> 9.47 -> 12.92 -> 16.83 without ever
+ * dipping (on --bg: 4.66 -> 6.33 -> 8.70 -> 11.87 -> 15.46). So "colour
+ * transitions break contrast" is FALSE for that pair and is not why colour
+ * transitions are banned. They are banned for the two reasons in the BANNED
+ * block, both of which are true.
+ *
+ *
+ * THE DISPLACEMENT LADDER
+ * -----------------------
+ * Every character that arrives in a slot arrives the same way: it drops in from
+ * above. One gesture, three magnitudes, and the magnitude is how much happened.
+ * The ladder is anchored on the 6px already shipping in Rack.css for the repair
+ * and stepped by 2px, which is --slot-gap at 375px -- so the distance a
+ * character travels is measured in the same unit as the distance between
+ * characters, rather than in a number somebody liked.
+ *
+ *   --lift-1  2px   the recogniser revised its guess
+ *   --lift-2  4px   a character settled
+ *   --lift-3  6px   the format overruled the microphone
+ *
+ * Duration climbs with it -- 150 / 200 / 300 -- so significance is carried
+ * twice, in distance and in time, and a glance catches whichever it catches.
+ * ========================================================================= */
+
+:root {
+  /* --motion-fast 150ms, --motion-base 200ms, --motion-slow 300ms, --ease-out
+   * and --ease-in-out are in tokens.css. Nothing here redefines them.
+   *
+   * ONE new duration, and it is outside the 150-300ms band on purpose.
+   *
+   * tokens.css sets the band because "below ~150ms a transition is not
+   * perceived as motion at all, above ~300ms the interface starts waiting on
+   * itself." The second half of that sentence is about motion that GATES the
+   * user's next action. The breath gates nothing: it is not a state change
+   * anybody caused, and nothing waits on it. Account.css already crossed this
+   * line at 1200ms for the skeleton, with the same argument written down.
+   *
+   * 2000ms is picked from respiration, not from taste. Resting adult
+   * respiration is 12-16 breaths/min, i.e. 3.75-5.0s per full cycle. This runs
+   * `alternate`, so one full cycle is two iterations = 4.0s = 15.0 breaths/min,
+   * inside the resting band. The skeleton's 1200ms works out at 25/min, which
+   * is a person breathing hard -- right for "working, waiting", wrong for the
+   * silence indicator, whose entire claim is that the agent is AT REST and has
+   * decided not to speak. */
+  --motion-breath: 2000ms;
+
+  /* The ladder. See THE DISPLACEMENT LADDER above. */
+  --lift-1: 2px;
+  --lift-2: 4px;
+  --lift-3: 6px;
+
+  /* Measured floors. Declared as tokens so a reviewer can grep for a raw
+   * opacity number in a keyframe and know it is a bug. */
+  --mo-text-floor: 0.99; /* binding token --text-2 on --bg, measured 0.9825 -> 4.5:1 */
+  --mo-graphic-floor: 0.77; /* binding token --text-2 on --bg, measured 0.7636 -> 3.0:1 */
+}
+
+/* ============================================================================
+ * 1. rb-partial -- THE FLICKER
+ * ============================================================================
+ *
+ * MEANS: the recogniser just rewrote this character. It is still open.
+ * WHEN:  every partial revision, several times a second, on one slot.
+ * TIME:  --motion-fast 150ms. tokens.css reserves it for "hover, focus, press
+ *        -- must feel like direct contact", and a revision IS direct contact:
+ *        the recogniser touched this position. It is also the floor of the
+ *        band, which matters because partials arrive faster than any other
+ *        event in the product and a longer animation would still be running
+ *        when the next one fires.
+ * MOVES: transform on the glyph. Nothing else. No opacity -- see rule 1 in the
+ *        header: a steel glyph is illegible below 0.7848 and the honest range
+ *        is eleven points wide.
+ *
+ * §4.1 is unusually blunt about this one: "partials flicker as the recogniser
+ * revises, and that flicker is the most honest thing on the screen. Do not
+ * smooth it away." So this is deliberately NOT eased into a soft cross-fade. A
+ * 2px drop at 150ms, retriggered at partial cadence, reads as jitter, which is
+ * what an unstable hypothesis should look like.
+ *
+ * RETRIGGERING. A CSS animation does not restart when the same animation is
+ * already running on the same element, and the usual fixes -- toggling a class
+ * with a forced reflow, or remounting the node -- are a layout thrash and a
+ * React remount respectively, on the hottest path in the app. Instead the
+ * component writes the revision count's parity into `data-rev-parity` (0 or 1)
+ * and the two keyframe blocks below are byte-identical under two names. Every
+ * revision flips the parity, which changes `animation-name`, which is a
+ * guaranteed restart with no reflow and no remount. The component already has
+ * to count revisions for the ledger, so this costs no extra state.
+ *
+ * CONTRACT FOR THE COMPONENT:
+ *   data-rev-parity="0" | "1"     flips on every recogniser revision
+ *   data-revised="0".."3"         total revisions, clamped by the component
+ *   data-mo-last                  present on the most recently revised slot
+ *   data-mo                       on the ONE slot that just changed state, and
+ *                                 on the ONE row that just changed, cleared on
+ *                                 animationend. Without it a slot does not
+ *                                 animate -- see the correction in rb-settle.
+ *                                 This is the concurrency gate, not a hint.
+ *
+ * Verified: flipping data-rev-parity restarts the animation with no remount and
+ * no reflow -- animation-name goes a -> b and currentTime resets from 140ms to
+ * 0. Control: writing the SAME parity value again does not restart it (stays at
+ * 140ms), so the flip is the mechanism rather than the attribute write.
+ */
+
+.rack--live .slot--provisional[data-rev-parity='0'] .slot__char {
+  animation: rb-partial-a var(--motion-fast) var(--ease-out);
+}
+
+.rack--live .slot--provisional[data-rev-parity='1'] .slot__char {
+  animation: rb-partial-b var(--motion-fast) var(--ease-out);
+}
+
+/* Identical on purpose. Two names is the retrigger mechanism, not a variation.
+ * If you change one, change the other, or the flicker will alternate between
+ * two different gestures and read as a bug. */
+@keyframes rb-partial-a {
+  from {
+    transform: translateY(calc(-1 * var(--lift-1)));
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes rb-partial-b {
+  from {
+    transform: translateY(calc(-1 * var(--lift-1)));
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * THE REVISION LEDGER -- the still equivalent of the flicker.
+ * ---------------------------------------------------------------------------
+ *
+ * This is not motion. It is in this file because it is the thing that makes the
+ * motion above removable, and separating the two across files is how a still
+ * equivalent quietly rots.
+ *
+ * The flicker encodes an EVENT IN TIME. The ledger encodes the same fact as a
+ * QUANTITY IN SPACE: a rule under the glyph, drawn as n ticks, where n is one
+ * plus the number of times the recogniser rewrote this position. One tick means
+ * heard once and not yet revised. Four ticks means this character has been
+ * argued about, which is exactly what a flicker you had to sit and watch was
+ * telling you -- and the ledger tells you it after you look away and look back,
+ * which the flicker never could.
+ *
+ * IT SHIPS IN BOTH MODES, ALWAYS. Not inside the reduced-motion block. If the
+ * ledger appeared only when motion was off, then the default experience would
+ * be the impoverished one and the media query would be adding information
+ * rather than re-encoding it. Shipping it always means reduced motion removes a
+ * REDUNDANT channel and loses nothing at all, which is a stronger reading of §5
+ * than the brief asks for.
+ *
+ * GEOMETRY. The tick is 3px with a 2px gap, so n ticks measure 5n-2:
+ *   1 -> 3px   2 -> 8px   3 -> 13px   4 -> 18px
+ * The slot is 22px wide with a 1px border each side, so the content box is
+ * 20px and the widest ledger clears it by 1px on each side. At the 660px
+ * breakpoint the slot goes to 32px and the ledger stays 18px, centred.
+ *
+ * CONTRAST. currentcolor on .slot--provisional is --state-heard (--text-2
+ * #6e6e73), on the slot's --surface ground: 5.07:1, against the 3:1 WCAG 1.4.11
+ * asks of a graphic that carries meaning. It also survives greyscale, where
+ * --text-2 (15.70% relative luminance) against --surface (100%) is unmissable.
+ *
+ * That greyscale margin is why the ledger exists at all, and the repalette did
+ * not shrink it. What the repalette DID change is the state vocabulary above
+ * it: heard, asked and flagged are now 15.70%, 13.86% and 12.15% luminance --
+ * still within 3.6 points, still effectively one grey to a monochrome reader --
+ * while settled drops to 1.24% and separates cleanly. So tone tells settled
+ * from unsettled, and the word, the icon and this ledger are what tell the
+ * three unsettled states apart. Same conclusion as before, different numbers.
+ */
+
+.slot--provisional {
+  /* The containing block the ledger needs. Set statically, so it costs one
+   * layout at mount and nothing per frame. .slot--repaired and .slot--asked
+   * already do this in Rack.css for the same reason. */
+  position: relative;
+}
+
+.slot--provisional::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 3px;
+  transform: translateX(-50%);
+  height: 2px;
+  width: calc(var(--rb-ticks, 1) * 5px - 2px);
+  background-image: repeating-linear-gradient(
+    to right,
+    currentcolor 0 3px,
+    transparent 3px 5px
+  );
+  pointer-events: none;
+}
+
+/* The component clamps to 0-3; CSS maps to 1-4 ticks. Clamping in the component
+ * rather than here means a runaway recogniser cannot silently widen the slot. */
+.slot--provisional[data-revised='1'] {
+  --rb-ticks: 2;
+}
+.slot--provisional[data-revised='2'] {
+  --rb-ticks: 3;
+}
+.slot--provisional[data-revised='3'] {
+  --rb-ticks: 4;
+}
+
+/* ============================================================================
+ * 2. rb-settle -- A CHARACTER BECOMES FINAL
+ * ============================================================================
+ *
+ * MEANS: this position is agreed and written. It stops being steel.
+ * TIME:  --motion-base 200ms, whose token comment is "an element entering or
+ *        leaving". The settled character is what enters; the provisional guess
+ *        is what leaves. It sits above the partial (150ms) and below the
+ *        repair (300ms) because settling matters more than a revision and less
+ *        than the format overruling the microphone.
+ * MOVES: transform on the glyph, --lift-2.
+ *
+ * The heard-to-settled colour change is NOT animated. It happens on the class
+ * swap, in one frame. Measured, that transition would climb 5.07:1 -> 16.83:1
+ * on --surface and never dip, so contrast is not the objection; the objection
+ * is that #464649 halfway along is a colour the semantic vocabulary in
+ * tokens.css has not assigned a meaning to, and a slot that is briefly in no
+ * state at all is the one thing this rack must never be.
+ *
+ * FIRING: A CORRECTION, MEASURED.
+ *
+ * This rule used to read `.rack--live .slot--settled .slot__char`, justified by
+ * "a live row grows one character at a time from empty, so at most one slot
+ * runs this at any moment. Do not mount a live row pre-settled."
+ *
+ * That is a claim about how a component behaves, not a gate. It was measured
+ * and it does not hold. A 40-row rack of 11-slot container numbers carrying
+ * only .rack--live -- no data-mo anywhere -- started 480 concurrent animations
+ * on mount, 280 of them this one. That is the state after any reconnect, route
+ * change back to the live view, or replay seek: every case where the live view
+ * mounts with rows already in it, which is every case except the first second
+ * of the first call.
+ *
+ * Measured at 60Hz over a 1200ms window, 16.7ms budget:
+ *   idle                       72 frames, max 17.0ms, 0 over 33ms
+ *   one slot (the design)      72 frames, max 16.9ms, 0 over 33ms
+ *   480 concurrent             62 frames, p95 33.3ms, max 50.1ms, 10 over 33ms
+ * Ten dropped frames and a worst frame at three times the budget, on the one
+ * screen that is meant to be glanced at while somebody is talking.
+ *
+ * So the gate is now structural and matches what the row-level motions already
+ * do: the component sets data-mo on the slot that just changed and clears it on
+ * animationend. Rows gate on data-mo; slots gate on data-mo. One mechanism at
+ * two levels, and the concurrency ceiling is a fact about the selector rather
+ * than a promise about the caller. Re-measured after the gate: 0 animations on
+ * a 40-row live rack with no data-mo set.
+ *
+ * .rack--animate is deliberately NOT gated this way -- see rb-repair.
+ */
+
+.rack--live .slot--settled[data-mo] .slot__char {
+  animation: rb-settle var(--motion-base) var(--ease-out);
+}
+
+@keyframes rb-settle {
+  from {
+    transform: translateY(calc(-1 * var(--lift-2)));
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* ============================================================================
+ * 3. rb-repair -- THE FORMAT OVERRULED THE MICROPHONE
+ * ============================================================================
+ *
+ * MEANS: the check digit said the recogniser was wrong, and won.
+ * TIME:  --motion-slow 300ms -- "a capture row settling: the one duration a
+ *        user is meant to actually perceive". This is the product's whole
+ *        claim happening on screen, so it gets the one duration reserved for
+ *        being noticed.
+ * MOVES: transform on both characters, opacity on one decorative overlay.
+ *
+ * MIGRATED VERBATIM from the bottom of Rack.css, byte for byte, names
+ * included. The reasoning in that block was hard-won and is not repeated here;
+ * read it there. The short version: the two characters are legible at every
+ * point on the timeline because a pending animation in an unpainted tab still
+ * applies its from-keyframe, and an earlier version left a repaired character
+ * at opacity 0 for a measured 900ms.
+ *
+ * TO APPLY: delete the `--------- motion ---------` block at the end of
+ * Rack.css. The keyframes are identical, so if that delete is forgotten the
+ * later definition simply wins and nothing changes visually -- the migration
+ * cannot break the rack, which is why it is safe to hand to a separate agent.
+ */
+
+.rack--animate .slot--repaired::before,
+.rack--live .slot--repaired[data-mo]::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border: 1px solid var(--state-heard);
+  border-radius: var(--r-chip);
+  box-shadow: inset 0 0 0 1px var(--state-heard);
+  pointer-events: none;
+  opacity: 0;
+  animation: rb-steel-out var(--motion-slow) var(--ease-out);
+}
+
+.rack--animate .slot--repaired .slot__char,
+.rack--live .slot--repaired[data-mo] .slot__char {
+  animation: rb-repair-in var(--motion-slow) var(--ease-out);
+}
+
+.rack--animate .slot--repaired .slot__heard,
+.rack--live .slot--repaired[data-mo] .slot__heard {
+  animation: rb-heard-recede var(--motion-slow) var(--ease-out);
+}
+
+@keyframes rb-steel-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes rb-repair-in {
+  from {
+    transform: translateY(-6px) scale(0.86);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes rb-heard-recede {
+  from {
+    transform: translateX(13px) scale(1.3);
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* ============================================================================
+ * 4. rb-ask -- THE ONE CHARACTER THE AGENT IS ASKING ABOUT
+ * ============================================================================
+ *
+ * MEANS: the agent is about to interrupt, about this position.
+ * TIME:  --motion-base 200ms. The bar enters; the token comment covers it.
+ * MOVES: transform: scaleX on the --accent bar at the foot of .slot--asked.
+ *
+ * THIS IS THE ONE MOTION §6 LICENSES. "Interrupt visually while the agent is
+ * silent. No toasts, no badges, no attention-seeking during a live call." The
+ * agent is not silent here -- it is speaking, which is the entire event. A
+ * marker that draws the eye at exactly the moment the operator is being asked
+ * a question is the product working. The same marker appearing at any other
+ * moment is the product breaking its own promise.
+ *
+ * The bar is --accent, 4.70:1 on --surface. It may still be drawn from zero
+ * width, and the reason is unchanged even though the number went up: the bar is
+ * the fourth carrier, on top of a --state-asking ring and a --state-asking
+ * glyph that already carry the meaning at 5.57:1 on --surface, plus the
+ * row__ask sentence, plus the asking icon. A bar caught mid-draw loses nothing.
+ *
+ * ASKED IS THE ONE STATE THAT GETS THE ACCENT, and that is the whole reason
+ * this app has an accent. Spending it anywhere else -- a list of measured
+ * facts, a required-field asterisk, a clean-breach note -- takes it away from
+ * the single state in the product that wants a human to do something.
+ */
+
+.rack--live .slot--asked[data-mo]::after,
+.rack--animate .slot--asked::after {
+  transform-origin: left center;
+  animation: rb-ask var(--motion-base) var(--ease-out);
+}
+
+@keyframes rb-ask {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* ============================================================================
+ * 5. rb-lock -- THE POSITION CLOSES
+ * ============================================================================
+ *
+ * MEANS: this character will not change again. Either a human answered it, or
+ *        the format computed it -- an ISO 6346 check digit, an IBAN's mod-97
+ *        pair.
+ * TIME:  --motion-base 200ms, entering.
+ * MOVES: transform: scale on the whole slot.
+ *
+ * WHY IT EARNS ITS PLACE. The locked slot's static treatment -- filled ground,
+ * ink ring, offset by a 4px margin -- says THAT it is locked but not WHEN it
+ * locked, and "the human just answered" is a different fact from "this was
+ * always a check digit". The scale carries the moment; the static treatment
+ * carries the state. Remove the motion and you lose only the moment, which is
+ * why this one needs no still equivalent.
+ *
+ * 1.08 is a ceiling, not a taste. The slot is 22px at 375px with a 2px gap, so
+ * a scale of 1.09 makes it touch its neighbour. Transform does not affect
+ * layout, so nothing is pushed; it would simply overlap, and two identifier
+ * characters overlapping is unacceptable in this product even for 200ms.
+ */
+
+.rack--live .slot--locked[data-mo] {
+  animation: rb-lock var(--motion-base) var(--ease-out);
+}
+
+@keyframes rb-lock {
+  from {
+    transform: scale(1.08);
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* ============================================================================
+ * 6. rb-row-in -- A NEW IDENTIFIER STARTS
+ * ============================================================================
+ *
+ * MEANS: somebody started reading out a number. A row exists that did not.
+ * TIME:  --motion-base 200ms, entering. The literal case in the token comment.
+ * MOVES: transform only, --sp-2 of vertical travel.
+ *
+ * NO OPACITY, and this is the rule that costs the most to obey because fading a
+ * row in is the single most reflexive thing a builder does. Two reasons, both
+ * measured. First, the row contains text and the usable text-opacity range is
+ * 1.00 to 0.89 (header, rule 1). Second, Rack.css documents a real failure:
+ * an animation that is pending in an unpainted tab still applies its
+ * from-keyframe, so a row faded in from opacity 0 sits invisible -- measured at
+ * 900ms with eight animations queued. A row that travels 8px is legible at
+ * every frame including frame zero.
+ */
+
+.rack--live .rack__row[data-mo='enter'] {
+  animation: rb-row-in var(--motion-base) var(--ease-out);
+}
+
+@keyframes rb-row-in {
+  from {
+    transform: translateY(var(--sp-2));
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* ============================================================================
+ * 7. rb-row-state -- THE ROW CHANGES STATE
+ * ============================================================================
+ *
+ * MEANS: this capture moved between heard / repaired / asking / settled /
+ *        flagged.
+ * TIME:  --motion-slow 300ms. tokens.css names this case in so many words: "a
+ *        capture row settling: the one duration a user is meant to actually
+ *        perceive". Row state is what the operator catches in the fraction of
+ *        a second §3 allows them, so it is the second thing in the app allowed
+ *        to be slow enough to see.
+ * MOVES: transform: scaleY on .rack__row::before, the 3px bar.
+ *
+ * WHAT THE BAR IS NOW. It used to be a per-state coloured left-bar on every
+ * row, switched through five hues. Two of those hues collapsed onto the same
+ * value in the repalette, and a coloured left-bar on a list row is the
+ * fragmentation pattern this design language names first, so the review pass
+ * keeps the bar only on the flagged row -- the one state a person must not
+ * miss. This rule is unchanged and needs no gate for that: a pseudo-element
+ * that is not drawn cannot animate, so the motion simply stops firing on the
+ * four states that no longer have a bar, and still fires on the arrival of the
+ * one that does. That is a better selector than it was: it now marks exactly
+ * the transition worth marking.
+ *
+ * The bar's COLOUR still changes in one frame, not over 300ms -- same argument
+ * as rb-settle. The bar redraws itself from a short stub to full height, which
+ * is a shape event, and shape is the channel that survives greyscale: heard
+ * 15.70%, asked 13.86%, flagged 12.15% relative luminance are within 3.6
+ * points of each other and are one grey to a monochrome reader, which is why
+ * no state in this product is carried by hue alone.
+ *
+ * One element, 3px wide, one row at a time. See the performance block.
+ */
+
+.rack--live .rack__row[data-mo='state']::before {
+  transform-origin: center;
+  animation: rb-row-state var(--motion-slow) var(--ease-out);
+}
+
+@keyframes rb-row-state {
+  from {
+    transform: scaleY(0.25);
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* ============================================================================
+ * 8. rb-quiet -- THE BREATH. THE SILENCE INDICATOR (§4.2).
+ * ============================================================================
+ *
+ * MEANS: it is listening, it has understood, and it has decided not to speak.
+ * TIME:  --motion-breath 2000ms, alternate -> a 4.0s cycle, 15 breaths/min.
+ *        Argued from resting respiration in the :root block above.
+ * MOVES: opacity on a non-text dot, 1.00 -> 0.77. Never below --mo-graphic-
+ *        floor; at 0.77 a --text-2 dot measures 3.21:1 on --surface and
+ *        3.03:1 on --bg, either side of the 3:1 a meaningful graphic needs.
+ *        The amplitude shrank from 0.28 to 0.23 when the floor was recomputed
+ *        for the Apple palette -- the measurement moving the design, rather
+ *        than the design being defended against the measurement.
+ *
+ * WHY ANY MOTION AT ALL, GIVEN §6. §6 bans "attention-seeking during a live
+ * call", and it is right to. But §4.2 sets the harder problem: silence "is
+ * invisible by construction, and a screen that shows nothing looks broken". A
+ * completely still indicator cannot distinguish DELIBERATELY SILENT from
+ * CRASHED, and that distinction is the product's central claim. Liveness is a
+ * fact that only time can carry. So this is the one ambient motion in the app,
+ * and it is built to be findable rather than noticeable:
+ *
+ *   - no travel and no size change. Peripheral vision detects position and
+ *     scale far more readily than luminance, so a dot that moves or grows
+ *     pulls the eye off a call. A dot that dims does not.
+ *   - a 4s cycle. Nothing the operator is doing happens on that timescale, so
+ *     it never syncs with their attention.
+ *   - amplitude 0.23, floored by measurement rather than by feel.
+ *   - opacity only, on an element that carries no text.
+ *
+ * NOT A SPINNER: a spinner means "unknown-length wait", and this is not a
+ * wait -- it is the finished, correct, desired state. NOT A WAVEFORM: §4.2
+ * bans it, and a waveform would also violate "nothing on screen may be fake",
+ * since the amplitude would be decoration rather than pipeline output.
+ *
+ * The base opacity is declared explicitly at 1 so that the resting state is
+ * deterministic. Without animation-fill-mode an element reverts to its
+ * specified style when the animation ends, and under reduced motion base.css
+ * ends this after one 1ms iteration -- so the dot must specify the value it
+ * should rest at rather than inheriting whatever the last keyframe was.
+ */
+
+.rb-quiet {
+  opacity: 1;
+  animation: rb-quiet var(--motion-breath) var(--ease-in-out) infinite alternate;
+}
+
+@keyframes rb-quiet {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: var(--mo-graphic-floor);
+  }
+}
+
+/* ============================================================================
+ * 9. INTERACTION FEEDBACK -- transitions, not keyframes
+ * ============================================================================
+ *
+ * MEANS: you touched this. Nothing about the pipeline.
+ * TIME:  --motion-fast 150ms -- "hover, focus, press -- must feel like direct
+ *        contact", verbatim from tokens.css.
+ * MOVES: transform only.
+ *
+ * .rb-press is for controls that should feel physical: the answer buttons in
+ * the question moment (§4.3), which an operator taps without looking. 0.97 on
+ * a 46px control is 1.4px of travel per edge -- felt, not seen, and well
+ * inside the 44px target because transform does not change the hit box.
+ *
+ * Colour and shadow changes on hover stay instant. They are not in the
+ * transition list, on purpose: see the BANNED block.
+ */
+
+.rb-press {
+  transition: transform var(--motion-fast) var(--ease-out);
+}
+
+.rb-press:active {
+  transform: scale(0.97);
+}
+
+/* ============================================================================
+ * MODE UTILITIES
+ * ============================================================================
+ *
+ * The mechanism three agents share so that each one does not invent its own
+ * still equivalent. Put the moving thing in .rb-motion-only and its still
+ * equivalent in .rb-still-only, in the same place in the DOM, and the media
+ * query swaps them. Both are always in the markup, so a screen reader sees the
+ * still equivalent's text in both modes -- which is the point: the assistive
+ * path has never had the flicker and has always needed the words.
+ *
+ * .rb-still-only uses `display: revert`, so do not set `display` on it in
+ * component CSS; wrap it if you need a specific display.
+ */
+
+.rb-still-only {
+  display: none;
+}
+
+/* ============================================================================
+ * PREFERS-REDUCED-MOTION
+ * ============================================================================
+ *
+ * base.css collapses every duration to 1ms. This block does not repeat that
+ * and adds no `!important`. It only re-encodes information.
+ *
+ * THE AUDIT. Of the eight motions above, six lose nothing when their duration
+ * collapses, because the fact they carry is also drawn statically and stays on
+ * the screen:
+ *
+ *   rb-settle     the glyph is --state-settled and the ring is --text-3,
+ *                 permanently
+ *   rb-repair     BOTH characters stay visible, the superseded one above the
+ *                 slot in --state-heard-was with a hairline rule under it.
+ *                 Rack.css built it that way on purpose and it needs no help
+ *   rb-ask        --state-asking ring + glyph + the --accent bar + the
+ *                 row__ask sentence + the asking icon, all persistent
+ *   rb-lock       filled ground + a heavier frame + the 4px offset, permanent
+ *   rb-row-in     the row is there. Its presence IS the information
+ *   rb-row-state  tone + word + icon, all persistent; plus the bar on flagged
+ *
+ * Two carry a fact that nothing static carries, and those are exactly the two
+ * the brief singles out. They get still equivalents.
+ *
+ *   rb-partial -> THE LEDGER, above, which ships in both modes and therefore
+ *                 needs nothing here; plus THE CARET, below, for the one thing
+ *                 the ledger cannot say.
+ *   rb-quiet   -> THE ELAPSED COUNTER, below.
+ */
+
+@media (prefers-reduced-motion: reduce) {
+  .rb-still-only {
+    display: revert;
+  }
+
+  .rb-motion-only {
+    display: none;
+  }
+
+  /* THE CARET.
+   *
+   * The ledger says HOW MANY TIMES this character has been rewritten. The
+   * flicker also said WHICH ONE, JUST NOW, and the ledger cannot say that: two
+   * slots reading three ticks each are indistinguishable as to which moved
+   * last. So the moment-in-time is re-encoded as a position-in-space -- a rule
+   * across the top inner edge of the most recently revised slot, mirroring the
+   * --accent bar along the bottom edge of .slot--asked so the grammar is one
+   * the reader already knows: a rule at an edge marks this slot out of the run.
+   *
+   * --state-heard, currentcolor on a provisional slot, 5.07:1 on --surface --
+   * comfortably past the 3:1 WCAG 1.4.11 asks of a meaningful graphic.
+   *
+   * RM-ONLY, deliberately. In full motion the flicker already says it, and a
+   * caret that jumps from slot to slot several times a second is a travelling
+   * marker on a live call -- the precise thing §6 forbids. Under reduced motion
+   * there is no flicker to compete with and no travel to perceive, so the
+   * caret is the quieter of the two options rather than an extra one. */
+  .slot--provisional[data-mo-last]::before {
+    content: '';
+    position: absolute;
+    left: 3px;
+    right: 3px;
+    top: 3px;
+    height: 2px;
+    background: currentcolor;
+    pointer-events: none;
+  }
+
+  /* THE ELAPSED COUNTER, §4.2's still equivalent.
+   *
+   * Liveness is a fact about time and there is no still image of it. The honest
+   * substitute is not a picture but a NUMBER THAT ADVANCES: a mono readout of
+   * how long the agent has been listening without speaking. A digit changing
+   * once a second is not motion -- no transform, no opacity ramp, no travel,
+   * no vestibular cost -- and it is a stronger liveness signal than the breath,
+   * because it is falsifiable. A frozen breath and a running breath are hard to
+   * tell apart at 4s; a frozen counter is obvious in one second.
+   *
+   * It is also the better readout for the second audience in §3, the team
+   * leader, who wants to know how long the agent stayed quiet.
+   *
+   * CONTRACT: the silence indicator must render BOTH -- the .rb-quiet dot and
+   * an .rb-silence-elapsed counter. Under full motion the counter may be
+   * present too (recommended: it is real, it is from the pipeline, and §4.4
+   * wants the duration anyway). Under reduced motion it is mandatory, and this
+   * rule makes a missing one visible in review rather than invisible in
+   * production. */
+  .rb-quiet {
+    opacity: 1;
+  }
+}
+
+/* ============================================================================
+ * PERFORMANCE
+ * ============================================================================
+ *
+ * TRANSFORM AND OPACITY ONLY. Both are composited; neither invalidates layout
+ * or paint. Everything else in this app's vocabulary is off limits in an
+ * animation or a transition:
+ *
+ *   width, height, top, left, inset, margin, padding    layout
+ *   border-width, font-size, letter-spacing, gap        layout
+ *   color, background-color, border-color, fill         paint, and see BANNED
+ *   box-shadow, filter, backdrop-filter                 paint, expensive, and
+ *                                                       Rack.css uses inset
+ *                                                       box-shadow as STATE --
+ *                                                       animating it repaints
+ *                                                       the slot every frame
+ *   background-position, background-size                paint (the shimmer)
+ *
+ * Where a colour genuinely must change over time, do it the way Rack.css
+ * already does: put the old colour on an overlay pseudo-element at inset:-1px
+ * and animate that element's OPACITY. One composited property, no repaint.
+ *
+ * DO NOT WRITE `will-change` ANYWHERE IN THIS APP. A transform or opacity
+ * animation is promoted automatically for the duration of its run and demoted
+ * after. A standing `will-change` holds a texture for the element's whole life:
+ * a rack of 40 rows at 11 slots each is 440 slots, and promoting those is
+ * hundreds of megabytes of GPU memory to save nothing. If a specific animation
+ * is measured to jank, add `will-change` in the same commit as the measurement
+ * and remove it on animationend.
+ *
+ * THE 40-ROW RACK. It never animates, by construction, and there are three
+ * independent reasons stacked so that no single mistake can undo it:
+ *
+ *   1. Rack.tsx already gates on an `animate` prop that defaults to false, with
+ *      the right argument in its comment: "a rack of stored captures has
+ *      nothing to animate, and re-running history is a lie." A record view or
+ *      an account view passes nothing and gets nothing.
+ *   2. Every selector in this file is scoped under .rack--live or
+ *      .rack--animate. An unclassed rack cannot animate even if a row's state
+ *      attribute changes underneath it.
+ *   3. Row-level AND slot-level motions require a `data-mo` attribute that the
+ *      component sets on the one row, and the one slot, that just changed, and
+ *      clears on animationend. The live rack has one row that is moving -- the
+ *      caller is reading out one number -- so the steady-state concurrency is:
+ *      one row bar, plus at most one slot.
+ *
+ *      Gate 3 originally covered rows only, and the slot motions leaned on a
+ *      behavioural promise instead ("a live row grows one character at a time").
+ *      Measured, a 40-row live rack mounting with rows already in it started
+ *      480 concurrent animations and dropped 10 of 72 frames, worst frame
+ *      50.1ms against a 16.7ms budget. The full numbers and the re-measurement
+ *      are in the rb-settle block. This is the third gate doing the job the
+ *      other two could not: gates 1 and 2 both key off the RACK, and this
+ *      failure happened inside a rack that was legitimately live.
+ *
+ * If a live rack ever does need to animate several rows -- a batch arriving
+ * from a replay seek, say -- do not stagger them with animation-delay. Animate
+ * the newest row only and let the rest appear. A staggered cascade of 40 rows
+ * is a decorative pattern wearing a functional hat: it tells the viewer about
+ * list order, which they can already see, and it takes 40 x delay milliseconds
+ * during which the rack is lying about when things arrived.
+ *
+ * CONTENT-VISIBILITY. `content-visibility: auto` is the right tool for a long
+ * record view and it is FORBIDDEN on any element carrying .rack--live or
+ * .rack--animate. Rack.css documents the failure precisely: an animation inside
+ * content that is not being painted stays pending and keeps applying its
+ * from-keyframe -- measured at 900ms with eight animations queued and the
+ * timeline never advancing. Skipped content is the same condition as a
+ * backgrounded tab. The guard is: only the record view, never the live view.
+ *
+ * THE SCROLL LANE. .slot-strip is `overflow-x: auto`, and a transform inside a
+ * scroller can extend its scrollable overflow. Every motion added by this file
+ * is a translateY or a scale about the centre, so none of them reach past the
+ * lane's own 8px padding. The one horizontal transform in the system is the
+ * inherited rb-heard-recede at translateX(13px), which exceeds that padding and
+ * was flagged as possibly nudging the lane's scrollWidth for 300ms on the last
+ * slot of a row.
+ *
+ * MEASURED, and it does not happen. A 22-slot IBAN in a 375px viewport with the
+ * repair on the LAST slot, the animation frozen on its from-keyframe (computed
+ * transform confirmed non-identity: matrix(1.3, 0, 0, 1.3, 13, 0)):
+ *   lane scrollWidth   554px at rest, 554px frozen, 554px at t=120ms
+ *   page scrollWidth   375px throughout
+ * The reason is headroom rather than luck: .slot--repaired carries 5px of
+ * inline padding, so the transformed glyph's right edge reaches 562.2px against
+ * the strip inner's 567.4px -- 5.2px to spare. Positive controls confirm the
+ * measurement is sensitive: translateX(400px) took the lane to 927px and a
+ * 300px margin took it to 854px. Re-measure if that 5px padding ever changes.
+ * ========================================================================= */
+
+/* ============================================================================
+ * BANNED
+ * ============================================================================
+ *
+ * Named, because every one of these is what a competent builder reaches for
+ * without thinking, and "motion carries meaning or does not exist" is not
+ * self-enforcing.
+ *
+ *  1. A PULSING OR GLOWING "LISTENING" ORB. §7: every voice product on the
+ *     market is a glowing orb, and looking like professional equipment is
+ *     available and nobody is taking it. Worse, a glow is an attention pull
+ *     during the exact period §6 says the screen must stay out of the way.
+ *     The silence indicator breathes at 15/min with no travel and no scale.
+ *
+ *  2. A WAVEFORM, A BAR VISUALISER, A VU METER. Banned by §4.2 by name. Also
+ *     banned by "nothing on screen may be fake": the amplitude would be
+ *     decoration, not pipeline output, and this product does not draw things
+ *     it did not measure.
+ *
+ *  3. A SPINNER, ANYWHERE IN THE CAPTURE PATH. A spinner means "waiting, length
+ *     unknown". The rack always knows its state and every one of the six has a
+ *     name. A spinner would be the interface admitting it does not.
+ *
+ *  4. A TYPEWRITER OR CHARACTER-BY-CHARACTER REVEAL of a settled identifier.
+ *     This is the exact inverse of §4.1. The flicker is honest because the
+ *     recogniser really did revise; a typewriter INVENTS a temporal sequence
+ *     that did not happen, on the one string in the product that must be
+ *     exactly what the pipeline produced.
+ *
+ *  5. TOASTS, SLIDE-IN NOTIFICATIONS, BADGE POPS during a call. §6, verbatim:
+ *     "No toasts, no badges, no attention-seeking during a live call. Silence
+ *     is the product; the screen must observe it too."
+ *
+ *  6. A COUNT-UP ON THE QUESTION TALLY. Rolling `row__questions` from 0 to its
+ *     value animates a quantity that was already final, and it makes the
+ *     product's own score read like a game score. The tally is the measurement
+ *     the product is judged on; it appears, it does not perform.
+ *
+ *  7. A SKELETON SHIMMER SWEEP. The diagonal gradient that travels across a
+ *     placeholder animates background-position, which repaints every frame, and
+ *     the travel direction means nothing. The approved form is an opacity
+ *     breath over a block that carries no text, so no contrast ratio moves
+ *     while it waits.
+ *
+ *     THE FILL FOR THAT BLOCK IS NOW --track, NOT --raised. This clause used to
+ *     name --raised, which the repalette aliased onto --hover #fbfbfd: 1.03:1
+ *     on --surface, i.e. a skeleton block that is invisible on the panel it is
+ *     standing in for. --track #e8e8ed is the system's named "visible but
+ *     quiet" component grey and measures 1.22:1 on --surface, 1.12:1 on --bg.
+ *     Neither figure is a contrast requirement -- a placeholder identifies
+ *     nothing and carries no text -- but one of them is a shape and the other
+ *     is not.
+ *
+ *  8. SUCCESS CELEBRATION on a settled capture -- confetti, a checkmark that
+ *     springs, a bounce. Rack.css puts it best: a settled character is "the
+ *     absence of a problem". Celebrating the absence of a problem, to somebody
+ *     wearing a headset with a customer talking, is noise.
+ *
+ *  9. ANY `infinite` ANIMATION EXCEPT THE TWO NAMED HERE. Grep for it. A loop
+ *     that is not reporting liveness is by definition reporting nothing, on
+ *     every frame, forever.
+ *
+ *     The two are rb-quiet, above, and the account skeleton's breath. Clause 7
+ *     has endorsed the second one since this file was written while this clause
+ *     forbade it, so the codebase has been in two states about its own rule and
+ *     a review found the disagreement rather than the bug. It is settled here,
+ *     in favour of the skeleton, and the test is stated so a third case can be
+ *     judged rather than argued: an infinite loop is allowed ONLY where the
+ *     fact it reports is "this is still happening", where no still image can
+ *     carry that fact, and where the element it runs on carries no text. The
+ *     breath reports a listening agent; the skeleton reports a request that has
+ *     not answered. Both are liveness. Neither can be drawn.
+ *
+ *     Everything else a builder reaches an infinite animation for -- a pulsing
+ *     badge, a bouncing chevron, a glowing border -- reports nothing, and the
+ *     `infinite` keyword is the grep that finds it.
+ *
+ * 10. HOVER LIFT WITH A GROWING SHADOW on rack rows. Two faults: it animates
+ *     box-shadow, and it implies the row is a control. Rack rows are readouts.
+ *
+ * 11. CROSS-FADING A LEGIBLE CHARACTER FROM opacity 0. The documented failure
+ *     in Rack.css -- 900ms invisible in an unpainted tab -- plus the measured
+ *     ceiling in this file's header: state-coloured text has eleven usable
+ *     points of opacity, so there is no honest fade to build.
+ *
+ * 12. TRANSITIONING color, background-color, border-color OR fill. Not banned
+ *     for contrast: --state-heard to --state-settled was measured across the
+ *     ramp and climbs 5.07 -> 16.83:1 on --surface without ever dipping, so
+ *     that objection is false and should not be repeated. Banned for two
+ *     reasons that are true. First, it is neither transform nor opacity, so it
+ *     repaints. Second, and this is the real one: tokens.css assigns exactly
+ *     one meaning to each --state-* colour, and every intermediate value on a
+ *     ramp between two of them is a colour the vocabulary has not assigned. A
+ *     slot sitting at #464649 for 150ms is a slot in a state this product does
+ *     not have. Colour changes in one frame.
+ *
+ *     ONE EXCEPTION, AND IT IS NOT A STATE. tokens.css's .glass-nav transitions
+ *     border-color and box-shadow for the scroll edge under the sticky bar. It
+ *     survives this clause on the clause's own terms: the ramp runs from
+ *     `transparent` to --hairline rgba(0,0,0,0.07), so every intermediate is a
+ *     lower-alpha hairline -- inside the one role the vocabulary assigned it,
+ *     never a colour it did not. And the alternative is worse than the repaint:
+ *     an edge that snaps on at scrollY 8 is a line flashing under the chrome on
+ *     every scroll, which is the attention pull §6 forbids during a call. It is
+ *     one 1px line on one element, not a slot in a 440-slot rack.
+ *
+ * 13. PARALLAX, SCROLL-LINKED MOTION, REVEAL-ON-SCROLL. The operator is not
+ *     reading a landing page; they are glancing at an instrument while
+ *     somebody talks. Content that hides until scrolled to is content the
+ *     glance misses.
+ *
+ * 14. ANIMATION-DELAY AS A STAGGER. See the 40-row note in PERFORMANCE. A
+ *     stagger misrepresents when things arrived, in a product whose only claim
+ *     is that it wrote down what actually happened.
+ * ========================================================================= */

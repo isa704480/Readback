@@ -1,0 +1,526 @@
+/* The capture rack.
+ *
+ * Every colour here is a token from tokens.css and every ratio in a comment was
+ * computed with the WCAG 2.1 relative-luminance formula against the surface it
+ * actually sits on. Two backgrounds are in play inside this component, not the
+ * three the warm palette had -- the page ground and the recessed lane are now
+ * the same colour:
+ *   S = --surface #ffffff  the panel
+ *   G = --bg      #f5f5f7  the page, and the recessed lane (1.09:1 on S)
+ *
+ * STATE IS NOT A HUE HERE ANY MORE.
+ * The four old state colours measured 8.0 to 9.3 in greyscale luminance -- one
+ * grey to a monochrome display, to a greyscale print and to most colour-blind
+ * readers. They are replaced by tone, weight and shape:
+ *   empty        --state-empty      no glyph at all
+ *   provisional  --state-heard      #6e6e73, 5.07 on S -- heard, not settled
+ *   settled      --state-settled    #1d1d1f, 16.83 on S, weight 600
+ *   repaired     --state-repaired   #1d1d1f, plus the superseded character
+ *                                   stacked above it under a hairline
+ *   asked        --state-asking     #0066cc, 5.57 on S -- the one accent, spent
+ *                                   on the one state that wants a human
+ *   locked       --state-settled    plus a heavier frame
+ * The word and the icon beside every row still carry the state on their own;
+ * tone is the redundant channel, not the load-bearing one.
+ */
+
+/* Slot metrics are declared on both, not on .rack alone: a SlotStrip is used
+ * outside the panel (the landing page explains the check digit with one), and
+ * scoping these to .rack left that strip with no width, no height and no gap.
+ *
+ * 22px + 2px is not arbitrary. Eleven ISO 6346 slots plus the offset check
+ * digit come to 266px, and a 375px viewport leaves 296px once the page gutter,
+ * the panel padding and the lane inset are taken out, so the commonest row in
+ * the rack reads without being scrolled. A 22-character IBAN never will, which
+ * is what the lane's own scrollbar is for. */
+.rack,
+.slot-strip {
+  --slot-w: 22px;
+  --slot-h: 46px;
+  --slot-gap: 2px;
+  /* --text-body-size, not --text-body: tokens.css currently declares
+   * --text-body twice, once as a colour and once as this size, and the size
+   * declaration only wins by being second. This file names the size token it
+   * actually means so the day that duplicate is resolved nothing here changes. */
+  --slot-fs: var(--text-body-size); /* 16px */
+}
+
+@media (min-width: 660px) {
+  .rack,
+  .slot-strip {
+    --slot-w: 32px;
+    --slot-h: 52px;
+    --slot-gap: var(--sp-1);
+    --slot-fs: var(--text-lg); /* 19px */
+  }
+}
+
+/* A panel, so it takes the panel tier of both scales: --r-panel and --sh-panel,
+ * and NO border. The shadow is the edge. A 1px mid-grey outline round the one
+ * surface this product is about was the loudest line on the screen. */
+.rack {
+  background: var(--surface);
+  border-radius: var(--r-panel);
+  box-shadow: var(--sh-panel);
+  padding: var(--sp-4);
+  min-width: 0;
+}
+
+@media (min-width: 660px) {
+  .rack {
+    padding: var(--sp-5);
+  }
+}
+
+/* ------------------------------------------------------------------ head -- */
+
+.rack__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--hairline); /* structure, never a control edge */
+}
+
+/* .rack__tick is gone. It was an 18x3 accent bar whose own comment admitted it
+ * marked the top of the instrument "the way a bezel does" -- i.e. it carried no
+ * information. Restraint: the title is the title. */
+
+.rack__title {
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text); /* 16.83:1 on S */
+}
+
+.rack__meta {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2); /* 5.07:1 on S */
+}
+
+.rack__none {
+  padding: var(--sp-5) 0 var(--sp-2);
+  color: var(--text-2); /* 5.07:1 on S */
+}
+
+/* ------------------------------------------------------------------ rows -- */
+
+.rack__rows {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+/* One panel, hairline-divided rows. There is no per-state coloured left bar any
+ * more: five bars in five hues collapsed to three once the palette went cool
+ * (repaired and asking were the same blue), and a bar that cannot tell two
+ * states apart is decoration. The state word, the icon and the row's tone carry
+ * it. The one exception is flagged, below.
+ *
+ * The --sp-3 left padding is held constant across every state so that a row
+ * changing state live does not reflow its own text sideways. */
+.rack__row {
+  position: relative;
+  min-width: 0; /* a flex child defaults to min-width:auto, i.e. its widest
+                   content -- the failure that pushed the top bar off 375px */
+  padding: var(--sp-4) 0 var(--sp-4) var(--sp-3);
+  border-top: 1px solid var(--hairline);
+}
+
+.rack__row:first-child {
+  border-top: none;
+  padding-top: var(--sp-4);
+}
+
+/* Flagged keeps a bar, and only flagged. It is the one state that means a human
+ * has to look, so it is the one state allowed to be findable without reading.
+ * --alert #b3350a is 6.12:1 on S, far over the 3:1 a meaningful graphic needs.
+ *
+ * styles/motion.css animates .rack__row[data-mo='state']::before with a scaleY.
+ * With the other four bars deleted that motion now fires only on a row entering
+ * or leaving flagged -- which is the row state most worth seeing turn. */
+.rack__row[data-state='flagged']::before {
+  content: '';
+  position: absolute;
+  inset: var(--sp-4) auto var(--sp-4) 0;
+  width: 3px;
+  border-radius: var(--r-full);
+  background: var(--state-flagged);
+}
+
+.row__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  flex-wrap: wrap;
+  min-width: 0;
+  margin-bottom: var(--sp-2);
+}
+
+.row__format {
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-2); /* 5.07:1 on S */
+}
+
+/* The state word and its icon. The colour used to arrive as an inline custom
+ * property from CAPTURE_STATES; it is decided here instead, because the state
+ * vocabulary is now tone-and-weight rather than a token per hue, and weight is
+ * not something a `color:` variable can carry. lib/api.ts still owns the word
+ * and the icon, which are the carriers that survive greyscale. */
+.row__state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-left: auto;
+  font-size: var(--text-meta);
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--text-2); /* 5.07:1 on S */
+}
+
+.rack__row[data-state='heard'] .row__state {
+  color: var(--state-heard); /* #6e6e73 5.07:1 on S */
+}
+
+.rack__row[data-state='repaired'] .row__state,
+.rack__row[data-state='settled'] .row__state {
+  color: var(--state-settled); /* #1d1d1f 16.83:1 on S */
+  font-weight: 600;
+}
+
+.rack__row[data-state='asking'] .row__state {
+  color: var(--state-asking); /* #0066cc 5.57:1 on S */
+}
+
+.rack__row[data-state='flagged'] .row__state {
+  color: var(--state-flagged); /* #b3350a 6.12:1 on S */
+  font-weight: 600;
+}
+
+/* ----------------------------------------------------------------- slots -- */
+
+/* The recessed lane. --bg is 1.09:1 on --surface: it can suggest a region,
+ * which is all it does, and it never delimits anything interactive. The
+ * hairline round it is 1.17:1 -- structure, at structure weight. */
+.slot-strip {
+  /* A scroll lane has to be a containing block, not just a clip. An
+   * absolutely positioned descendant whose containing block is an ancestor of
+   * the scroller is NOT clipped by it -- the .sr-only spans in the sweep table
+   * escaped to x=449.6 in a 375px viewport and dragged the page scrollWidth to
+   * 450. position: relative is what makes the promise below true. */
+  position: relative;
+  overflow-x: auto; /* a 22-character IBAN does not fit 375px. It scrolls inside
+                       this lane; the page never scrolls sideways. */
+  overscroll-behavior-x: contain;
+  padding: var(--sp-2);
+  background: var(--bg);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-thumb);
+}
+
+.slot-strip__inner {
+  display: flex;
+  align-items: stretch;
+  gap: var(--slot-gap);
+  width: max-content;
+}
+
+.slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  min-width: var(--slot-w);
+  height: var(--slot-h);
+  border-radius: var(--r-chip);
+  background: var(--surface);
+  border: 1px solid var(--faint); /* 1.51:1 on S -- structure. The character is
+                                     the carrier at 16.83:1, not the frame. */
+  font-family: var(--font-mono);
+  font-size: var(--slot-fs);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: var(--tracking-code); /* O/0 and I/1 sit too close at 0 and
+                                           reintroduce by eye the confusions the
+                                           checksum just removed */
+  color: var(--text); /* 16.83:1 on S */
+
+  /* THE IDENTIFIER RULE, typographic half. The behavioural half is in Rack.tsx.
+   *
+   * Plex Mono is monospaced, so its figures are already tabular and this
+   * changes nothing today -- which is the point of writing it down. The slot
+   * grid is a fixed-width column of characters that a reader compares
+   * vertically, and it stays that way only for as long as the figures are the
+   * same width. Declaring it means the day someone adds a Cyrillic-capable
+   * fallback to --font-mono (as --font-ui just gained one) the columns cannot
+   * silently go proportional.
+   *
+   * lining-nums for the matching reason: an old-style figure set would drop 3,
+   * 4, 7 and 9 below the baseline and turn a container number into something
+   * that reads as though it had been typeset rather than measured. */
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* Empty: the format knows the position is coming, and NOTHING is drawn inside
+ * it -- there is no glyph to grey out. The dashed edge is the whole treatment,
+ * in --state-empty (--faint, 1.51:1 on S, 1.38:1 on the lane). That is
+ * structure weight, not the 3:1 a meaningful graphic asks for, and it is a
+ * deliberate reading of the state vocabulary: an unfilled position is the
+ * absence of information, the empty box beside eleven filled ones is legible as
+ * a gap in the run, and the strip's readout says "blank" at that position for
+ * anyone who cannot see the gap. prefers-contrast: more raises it, at the end
+ * of this file. */
+.slot--empty {
+  background: transparent;
+  border-style: dashed;
+  border-color: var(--state-empty);
+}
+
+/* Heard, not settled. Tone alone: one step down the grey ramp from a settled
+ * character, at a weight that has not yet been earned. */
+.slot--provisional {
+  color: var(--state-heard); /* #6e6e73 5.07:1 on S */
+}
+
+/* Settled. The quietest slot in the rack, which is correct -- a settled
+ * character is the absence of a problem -- but the heaviest, which is also
+ * correct: it is the only one that is finished. */
+.slot--settled {
+  color: var(--state-settled); /* #1d1d1f 16.83:1 on S */
+  font-weight: 600;
+}
+
+/* Quietly repaired, and this is the state the whole vocabulary was rebuilt for.
+ *
+ * A hue cannot express a relationship. What happened here is not "this slot is
+ * green", it is "the format overruled the microphone, and here is both halves
+ * of that": the superseded character on top in --state-heard-was, a hairline
+ * under it, and what was actually written below in --state-repaired at weight
+ * 600. The reader sees the change, not a colour standing for one.
+ *
+ * Shown rather than swapped, because an interface that silently replaces a
+ * character the caller said is doing the thing this product exists to stop. */
+.slot--repaired {
+  position: relative;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding-inline: 3px;
+  color: var(--state-repaired); /* #1d1d1f 16.83:1 on S */
+  font-weight: 600;
+}
+
+/* The character that came out of the microphone. --state-heard-was is --text-4
+ * #aeaeb2, 2.21:1 on S: below the AA floor, and deliberately so -- it is a
+ * struck record of something that is no longer true, sitting directly above the
+ * character that replaced it, and the pair is what carries the meaning. The
+ * accessible equivalent is not the colour: readoutFor() in Rack.tsx speaks
+ * "position n, heard X, wrote Y" for every repaired slot, and
+ * prefers-contrast: more lifts this to --text-2 (5.07:1) at the end of the
+ * file. */
+.slot__heard {
+  align-self: stretch;
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--faint); /* the hairline that joins the two */
+  font-size: 11px;
+  line-height: 1;
+  text-align: center;
+  color: var(--state-heard-was); /* #aeaeb2 2.21:1 on S */
+  text-decoration: none; /* the <s> element is semantic; the strike itself is
+                            gone. The stack and the rule say "replaced" without
+                            a second mark over an already-quiet character. */
+}
+
+/* Needs one thing from you. The one place in the rack the accent is spent, on
+ * the one state that wants a human. --state-asking is #0066cc, the value that
+ * passes as text (5.57:1 on S); the frame and the foot bar are strokes and take
+ * --accent #0071e3 at 4.70:1, which is a fill ratio, not a text one. */
+.slot--asked {
+  position: relative;
+  overflow: hidden;
+  color: var(--state-asking); /* #0066cc 5.57:1 on S */
+  font-weight: 600;
+  border-color: var(--accent); /* #0071e3 4.70:1 on S */
+}
+
+.slot--asked::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 4px;
+  background: var(--accent);
+}
+
+/* Locked by the format. --text plus a heavier frame, set apart from the body of
+ * the code with a gap and a filled ground, the way a check digit is boxed off
+ * on the container itself. The 2px of ring is drawn as an inset shadow so the
+ * box does not change size and the strip stays aligned. */
+.slot--locked {
+  margin-left: 4px;
+  background: var(--bg);
+  border-color: var(--text); /* 16.83:1 on S */
+  box-shadow: inset 0 0 0 1px var(--text);
+  color: var(--text); /* 15.46:1 on the --bg fill */
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------ row footer -- */
+
+.row__ask {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+  color: var(--state-asking); /* #0066cc 5.57:1 on S */
+  /* Prose, so it takes the 16px body floor rather than --text-meta. The type
+   * scale reserves --text-meta (14px) for mono labels, codes and timings and
+   * says in its own comment that it is never a sentence. */
+  font-size: var(--text-body-size);
+  line-height: var(--leading-body);
+}
+
+.row__ask svg {
+  margin-top: 2px;
+}
+
+.row__foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-3);
+  margin-top: var(--sp-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--leading-snug);
+  color: var(--text-2); /* 5.07:1 on S */
+}
+
+.row__questions {
+  color: var(--text); /* 16.83:1 -- the number of interruptions is the product's
+                         own score, so it is not greyed out */
+}
+
+.row__note {
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------------- legend -- */
+
+.rack__legend {
+  display: grid;
+  gap: var(--sp-3);
+  margin: var(--sp-4) 0 0;
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--hairline);
+}
+
+@media (min-width: 760px) {
+  .rack__legend {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-3) var(--sp-5);
+  }
+}
+
+.legend__item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+/* The legend samples are short: they are a key, not part of the readout, and
+ * matching the rack's slot height would make them read as a sixth row. 38px
+ * rather than the old 34px because the repaired sample now stacks two
+ * characters -- 11px superseded + 2px + 1px rule + 2px + 16px written + 2px of
+ * border is 34px exactly, and a key should not sit on its own floor. */
+.legend__sample {
+  --slot-h: 38px;
+  --slot-fs: var(--text-body-size);
+
+  flex: none;
+}
+
+.legend__text {
+  min-width: 0;
+}
+
+.legend__term {
+  font-size: var(--text-meta);
+  font-weight: 600;
+  color: var(--text); /* 16.83:1 on S */
+}
+
+.legend__def {
+  margin: 0;
+  /* Prose, so it takes the 16px body floor rather than --text-meta. The type
+   * scale reserves --text-meta (14px) for mono labels, codes and timings and
+   * says in its own comment that it is never a sentence. */
+  font-size: var(--text-body-size);
+  line-height: var(--leading-body);
+  color: var(--text-2); /* 5.07:1 on S */
+}
+
+/* ------------------------------------------------------- higher contrast -- */
+/* Two treatments in this file sit under the AA text floor on purpose, and both
+ * are re-encodings of something the readout also says. When a reader has asked
+ * the operating system for more contrast, they stop being quiet:
+ *   the empty slot's edge   --faint  1.51 -> --text-3 3.62 on S
+ *   the superseded char     --text-4 2.21 -> --text-2 5.07 on S
+ * Nothing moves and nothing is added; only the tone changes. */
+@media (prefers-contrast: more) {
+  .slot--empty {
+    border-color: var(--text-3); /* 3.62:1 on S, 3.33:1 on the lane */
+  }
+
+  .slot__heard {
+    color: var(--text-2); /* 5.07:1 on S */
+    border-bottom-color: var(--text-3);
+  }
+
+  .slot {
+    border-color: var(--text-3); /* 3.62:1 on S */
+  }
+}
+
+/* --------------------------------------------------------------- motion -- */
+/* MIGRATED. The repair animation -- rb-steel-out / rb-repair-in /
+ * rb-heard-recede, plus the .rack--animate .slot--repaired rules that drive
+ * them -- lives in styles/motion.css, alongside the other seven motions and the
+ * measurements they are derived from. The argument that produced it is
+ * preserved there in full.
+ *
+ * It moved because a still equivalent that lives in a different file from the
+ * motion it replaces is a still equivalent that quietly rots: motion.css owns
+ * both halves and its prefers-reduced-motion block audits all eight motions in
+ * one place.
+ *
+ * This file keeps the STATE that the repair animates over -- the stacked pair
+ * and the hairline between them -- because that is state, not motion, and it is
+ * what remains on screen when the 300ms is over or was never allowed to run.
+ *
+ * TWO NOTES FOR WHOEVER OWNS motion.css NEXT, both consequences of the state
+ * vocabulary landing here:
+ *   1. rb-heard-recede is `translateX(13px) scale(1.3)`, tuned to the repaired
+ *      slot's OLD side-by-side geometry. The pair is stacked now, so that
+ *      travel is along the wrong axis; it wants to be a translateY of about
+ *      9px. It fires only under .rack--animate and .rack--live[data-mo], and
+ *      the only caller of either today is the landing page's demo rack.
+ *   2. motion.css:235 and :698 still describe currentcolor on
+ *      .slot--provisional as "--steel, 7.72:1 on surface". It is --text-2
+ *      #6e6e73 now, computed 5.07:1 on surface -- still well over the 3:1 that
+ *      block is arguing for, so the argument survives and only the number is
+ *      wrong.
+ *
+ * motion.css also adds two rules that key off classes defined here:
+ * .slot--provisional gets position: relative plus a ::after revision ledger,
+ * and .slot--asked's ::after bar gains a scaleX entrance. Grep rb- there. */

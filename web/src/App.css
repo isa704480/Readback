@@ -1,0 +1,352 @@
+/* ══════════════════════════════════════════════════════════════════════════
+ * App.css — the shell, and the four primitives every screen shares.
+ *
+ * WHAT THIS FILE USED TO BE.
+ * It opened with a :root of forty custom properties: a second, complete design
+ * system declaring --surface, --accent, --ink, --muted, --line, --line-strong,
+ * --red, --amber, --sp-1..9, --r-md/lg/xl, --shadow-sm/md, --text-meta/body/lg/
+ * 2xl/3xl, --leading-*, --tracking-*, --touch-min, --font-ui, --font-mono, plus
+ * a prefers-color-scheme: dark palette and `color-scheme: light dark` -- all
+ * under names styles/tokens.css already declares.
+ *
+ * MEASURED, in the built bundle rather than assumed: main.tsx evaluates ./App
+ * (and therefore this file) before ./styles/base.css, so in dist/assets/
+ * index-*.css this file's :root landed at byte 21998 and tokens.css's at 26893.
+ * The later declaration wins, so tokens.css already won every name the two
+ * shared and the whole block was dead weight -- with nine exceptions, the names
+ * tokens.css never declares, which stayed live and off-system:
+ *
+ *   --canvas #f5f5f7      read once, by a body rule base.css already overrode
+ *   --accent-ink #0066cc  read once, by .auth__foot a
+ *   --r-xl 1.75rem        28px -- ABOVE the hero tier (26px); not a tier at all
+ *   --shadow-md           read once, on a .skip-link base.css also owns
+ *   --tracking-display    -0.022em on a title base.css already tracks
+ *   --ease / --dur        a second easing vocabulary beside tokens.css's four
+ *   --green / --blur      read by nothing
+ *
+ * The dark block was worse than dead. tokens.css has no dark palette and every
+ * ratio in this codebase is computed against #f5f5f7 and #ffffff, so on a
+ * dark-OS machine only the four dark values tokens.css does NOT redeclare
+ * survived, on a page that stayed white. Computed: .auth__foot's link took
+ * --accent-ink #409cff, which is 2.60:1 on --bg -- an AA failure produced
+ * entirely by a theme the app does not have. `color-scheme: light dark` also
+ * handed the UA licence to paint scrollbars and the pre-paint canvas dark
+ * around a light-only interface. tokens.css now states `color-scheme: light`.
+ *
+ * So the :root is gone, both media blocks are gone, and every rule below reads
+ * styles/tokens.css. Class names are unchanged; no screen needed editing.
+ *
+ * Grounds in play, and every ratio below is WCAG 2.1 against the one named:
+ *   S = --surface #ffffff   the panels this file draws
+ *   G = --bg      #f5f5f7   the page behind them
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────────── shell ── */
+/* body, :focus-visible and .skip-link used to be declared here as well as in
+ * base.css. base.css is emitted later and set every property this file set, so
+ * all three copies were inert; they are deleted rather than kept in sync. One
+ * component, one stylesheet. */
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.shell__main {
+  flex: 1;
+  padding-block: var(--sp-6) var(--sp-8);
+}
+
+@media (min-width: 660px) {
+  .shell__main {
+    padding-block: var(--sp-8) var(--sp-9);
+  }
+}
+
+/* Bare-branch content box: carries #main on routes with no rail. */
+.shell__plain {
+  min-width: 0;
+}
+
+/* Focused by script on every route change (App.tsx useRouteFocus). A
+ * programmatic focus must not draw a ring around the whole page; keyboard users
+ * still get :focus-visible on everything inside it. */
+.shell__plain:focus {
+  outline: none;
+}
+
+/* The selection tint is the one place --accent appears in this file, and it is
+ * a FILL. Computed: 22% of #0071e3 over white composites to #c7e0f9, and --text
+ * on that is 12.39. */
+::selection {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+/* Suspense placeholder: a quiet 2px bar, no spinner, no skeleton grid.
+ *
+ * THE INFINITE ANIMATION IS DELIBERATE AND IT IS THE THIRD CASE.
+ * styles/motion.css BANNED #9 forbids every `infinite` animation and then
+ * states the test that admits one: the loop is allowed only where the fact it
+ * reports is "this is still happening", where no still image carries that fact,
+ * and where the element carries no text. That clause names two survivors --
+ * rb-quiet and the account skeleton -- and Account.css:461 claims the skeleton
+ * was "the only hit in the codebase". It was not; this bar is the second, and
+ * it passes the same test for the same reason. It reports a code-split chunk
+ * that has not answered, it is aria-hidden, and it carries no text.
+ *
+ * NOT the accent. It used to travel as a #0071e3 gradient, which spent the
+ * interface's one accent on a progress bar; in this product the accent means
+ * "this state wants a human" and a route that is still fetching wants nothing.
+ * --text-3 is 3.33 on G -- past the 3:1 a meaningful graphic needs, and this
+ * one is not even that, since the wait is also announced by the screen it
+ * replaces. Duration and easing come from tokens.css rather than from a local
+ * 1.1s and a fifth ease: --motion-sheet is 400ms, and 3x it is 1200ms, the same
+ * cycle the account skeleton's breath uses. */
+.screen-loading {
+  height: 2px;
+  margin-inline: auto;
+  max-width: 12rem;
+  border-radius: var(--r-full);
+  background: linear-gradient(90deg, transparent, var(--text-3), transparent);
+  animation: screen-loading calc(var(--motion-sheet) * 3) var(--ease-in-out) infinite;
+}
+
+@keyframes screen-loading {
+  from {
+    transform: translateX(-60%);
+    opacity: 0.4;
+  }
+
+  to {
+    transform: translateX(60%);
+    opacity: 1;
+  }
+}
+
+/* base.css's prefers-reduced-motion block collapses every animation-duration to
+ * 1ms, which would leave this bar stuttering at one end. It holds still
+ * instead, and the wait is carried by the absent screen. */
+@media (prefers-reduced-motion: reduce) {
+  .screen-loading {
+    animation: none;
+  }
+}
+
+/* The scope line: a footnote at the end of every signed-in screen, saying that
+ * the interface speaks three languages and the recogniser listens in one.
+ *
+ * It is a SENTENCE, so it takes the 16px body floor and --leading-body. It used
+ * to be set at --text-meta, and the type scale reserves that size for mono
+ * labels, codes and timings -- Account.css, Dashboard.css, Rack.css and
+ * Field.css all restate the rule where a local rule had broken it. This was the
+ * last place in the app still breaking it. */
+.shell__scope {
+  margin-block-start: var(--sp-8);
+  padding-block-start: var(--sp-4);
+  border-top: 1px solid var(--hairline);
+  font-size: var(--text-body-size);
+  line-height: var(--leading-body);
+  color: var(--text-2); /* 4.66 on G */
+  overflow-wrap: anywhere;
+}
+
+/* ──────────────────────────────────────────────────────── primitives ── */
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.stack--tight {
+  gap: var(--sp-4);
+}
+
+/* THE SECTION PANEL. One .card holds one numbered section of the account
+ * screen, each with its own heading outside it -- the same composite-object
+ * case Dashboard.css argues for .sess, not the sibling-items case the
+ * unified-panel rule is about. The rows INSIDE it (.team, .fmts, .ledger,
+ * .vocab__list) are already one surface with hairline dividers.
+ *
+ * Panel tier of both scales, at every width. It used to take --r-lg (18px, the
+ * card tier) and then swap to --r-xl at 660px -- 28px, which is not a tier at
+ * all: the ladder is thumb 12 / sheet 16 / card 18 / panel 22 / hero 26, and
+ * 28 sat above the top of it. A radius is semantic, not responsive: .rack,
+ * .sess, .headline and .sidebar__scroll are all --r-panel + --sh-panel at every
+ * width, and this is the same kind of surface as those. Only the padding still
+ * steps with the viewport, because padding is not a tier. */
+.card {
+  background: var(--surface);
+  border-radius: var(--r-panel);
+  box-shadow: var(--sh-panel);
+  padding: var(--sp-5);
+}
+
+@media (min-width: 660px) {
+  .card {
+    padding: var(--sp-6);
+  }
+}
+
+/* ──────────────────────────────────────────────────────────── auth ── */
+
+.auth {
+  width: 100%;
+  /* 432px. A sign-in form is one column of fields, and neither --max-read
+   * (720px) nor --measure (68ch) is a form width -- both are reading measures.
+   * This is the one raw length in the file and it is a layout decision, not a
+   * radius, a shadow or a colour. */
+  max-width: 27rem;
+  margin-inline: auto;
+}
+
+/* Weight and size, no local tracking. base.css already runs the iron rule --
+ * bigger title, more negative -- and gives every h1 --tracking-title (-0.03em);
+ * this used to override it with -0.022em from a token that no longer exists. */
+.auth__title {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+}
+
+/* The lede. NO letter-spacing: the negative-tracking rule is for titles, and
+ * this rule used to hand a 19px sentence --tracking-title, i.e. -0.03em -- the
+ * H1 value, on body copy. */
+.auth__sub {
+  margin-top: var(--sp-3);
+  color: var(--text-2); /* 4.66 on G */
+  font-size: var(--text-lg);
+}
+
+.auth__foot {
+  margin-top: var(--sp-6);
+  text-align: center;
+  color: var(--text-2); /* 4.66 on G */
+  font-size: var(--text-body-size);
+}
+
+/* The swap link sits INSIDE a sentence, so it takes base.css's greyscale link
+ * treatment -- underline plus offset, --text-body at 9.20 on G -- rather than
+ * the accent it used to carry. base.css states the policy: linkness is carried
+ * by the underline, and the one accent stays spent on the asked state. Here
+ * that also removed the last reader of --accent-ink, which on a dark-OS machine
+ * was resolving to #409cff at 2.60:1 on this white page.
+ *
+ * The hit area is extended rather than boxed, which is the .link-hit mechanism
+ * from base.css applied in place. It used to set min-height plus
+ * `line-height: var(--touch-min)`, which opens a 44px line box in the middle of
+ * a paragraph -- exactly what base.css's .link-hit comment exists to stop. The
+ * ::after is out of flow, so the pointer target reaches 44px on both axes and
+ * the sentence's leading is untouched. */
+.auth__foot a {
+  position: relative;
+}
+
+.auth__foot a::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 100%;
+  min-width: var(--touch-min);
+  height: var(--touch-min);
+  transform: translate(-50%, -50%);
+}
+
+/* ───────────────────────────────────────────────────────── notices ── */
+/* A notice is a single interrupting message, not a sibling in a list, so it is
+ * a panel -- and it is the one in this app that has to read on BOTH grounds:
+ * .auth, .record__empty and .account render it on G, and two on the consent
+ * card render it on S. On G it takes the treatment Dashboard.css already
+ * settled on for exactly this shape -- a quiet white panel at the card tier --
+ * because a recessed --bg block would vanish there and a --hover tint measures
+ * 1.03. On S it recesses instead; see the rule after this one.
+ *
+ * NO TINT, AND NO HUE EXCEPT ONE. Both variants used to be a color-mix tinted
+ * box with matching coloured text: --red for error and --amber for offline. The
+ * palette collapse aliased --amber to --accent-text, so an OFFLINE notice was
+ * rendering as a blue-tinted box in exactly the blue of the primary button --
+ * an interface shouting a status in its action colour, and a tinted background
+ * on plain content, which the system names as colour-as-decoration. The icon
+ * and the sentence carry the kind; every notice states its cause and its fix.
+ *
+ * --alert survives on error alone, because tokens.css reserves it for the one
+ * state a person must not miss and Field.css already sets inline errors in it.
+ * offline, timeout and rate-limited spend no colour at all -- the argument
+ * Auth.css made for .notice--wait, now true of all three, so that file's
+ * override is gone with it. */
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface);
+  border-radius: var(--r-card);
+  box-shadow: var(--sh-card);
+  color: var(--text); /* 16.83 on S */
+  font-size: var(--text-body-size);
+  line-height: var(--leading-body);
+}
+
+/* INSIDE A PANEL IT RECESSES INSTEAD OF LIFTING, and this was decided by
+ * looking at it rather than by reasoning about it. A white panel floating on a
+ * white panel is legible -- the contact shadow does draw it -- but it is the
+ * only block in this app that does that, and every other quiet region inside a
+ * panel steps DOWN to --bg: .sess__none, .rec__facts, .roles, .fmt__note,
+ * .consent__scope, .pwbreach. --bg is 1.09 on --surface, the same step the page
+ * ground makes against every panel, so a reader already knows what it means.
+ * Two grounds, two treatments, one class.
+ *
+ * It sets the fill and nothing else, deliberately: adding `color` here would
+ * make it (0,2,0) and outrank .notice--error's (0,1,0), quietly stripping the
+ * alert tone off the one notice that must not lose it. --text reads 15.46 on
+ * this ground and --alert 5.62; both are inherited from the rules below. */
+.card .notice {
+  background: var(--bg);
+  box-shadow: none;
+}
+
+.notice--error {
+  color: var(--alert); /* 6.12 on S, 5.62 on the recessed --bg inside a panel */
+}
+
+.notice svg {
+  flex: none;
+  margin-top: 3px; /* optical: aligns the glyph with the cap height at 16px */
+}
+
+/* ───────────────────────────────────────────────────────── account ── */
+/* A key/value pair inside the record's L3 disclosure. One list, hairline
+ * dividers, no box per row. */
+
+.kv {
+  display: grid;
+  gap: var(--sp-1);
+  padding-block: var(--sp-4);
+  border-top: 1px solid var(--hairline);
+}
+
+.kv:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.kv__key {
+  font-size: var(--text-meta);
+  color: var(--text-2); /* 4.66 on G -- .kv renders inside .rec__facts */
+}
+
+/* Machine output, so it takes the same three lines base.css gives `code` and
+ * `.mono`: the mono face, --text-meta, and --tracking-code, which holds O/0 and
+ * I/1 apart in an identifier. It used to set a one-off 0.9375rem (15px), a size
+ * the scale does not contain, and --tracking-code as -0.005em from a token that
+ * no longer exists -- tokens.css's is +0.02em, the opposite sign, which is the
+ * value that does the separating. */
+.kv__value {
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  letter-spacing: var(--tracking-code);
+  font-variant-numeric: tabular-nums;
+  color: var(--text); /* 15.46 on G */
+  overflow-wrap: anywhere;
+}

@@ -1,0 +1,148 @@
+/* The language switcher.
+ *
+ * IT RENDERS ON THE GLASS BAR, AND THAT DECIDES EVERY COLOUR HERE.
+ * This component lives inside .topbar__nav, so its ground is not a known
+ * colour: it is 0.72 x --bg plus 0.28 x whatever has scrolled underneath.
+ * TopBar.css computes that composite for every ground the app can put there and
+ * the answer is that --text-2 falls to 2.58:1 under a filled button or a dark
+ * block, and --text-3 to 1.84:1. Both fail. --text-body #424245 holds 5.09:1
+ * against the worst of them and 9.42:1 against the commonest, which is why the
+ * bar's own secondary text is set in it -- the skill's "raise contrast for text
+ * on glass" rule, arrived at by measurement.
+ *
+ * So the chevron, the honesty note and the select's boundary are all
+ * --text-body. Elsewhere in the app a control boundary is --text-3 (3.62 on
+ * --surface); here that token is unusable at any weight, and a border is judged
+ * against BOTH sides -- its own white fill and the glass behind it.
+ *
+ * The three ratios this header used to quote -- 7.34 for --muted and 17.22 for
+ * --ink -- were the warm palette's, carried over unrecomputed. --muted resolved
+ * to --text-2 #6e6e73, which is 5.07 on --surface, not 7.34; --ink to --text
+ * #1d1d1f, 16.83, not 17.22. Both aliases are gone and the numbers below were
+ * computed against what is actually painted.
+ */
+
+/* display:contents so the two pieces below become direct children of
+ * .topbar__nav, which is a wrapping flex row. That is what lets the honesty
+ * note take a row of its own instead of forcing the switcher's flex item to be
+ * as wide as a sentence -- the exact mechanism that pushed this bar off a 375px
+ * screen once before. The element carries no box of its own, so nothing is lost
+ * by taking it out of the box tree. */
+.lang {
+  display: contents;
+}
+
+.lang__control {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+}
+
+.lang__select {
+  /* base.css sets `select { width: 100% }` for form fields. In a top bar that
+   * is exactly the overflow this component must not cause, so the width is
+   * handed back to the content. */
+  width: auto;
+
+  /* Smaller on the owner's instruction, and --touch-min is the floor it stops
+   * at. 44px is WCAG 2.5.5's minimum target, not a style preference, so the
+   * control loses the 2px of headroom --control-h was carrying and nothing
+   * else: 46px -> 44px. min-width keeps the OTHER axis over the floor too,
+   * which a short label like "English" would otherwise decide for us.
+   *
+   * The visible weight comes off the type instead, where there is real room:
+   * --text-meta is 14px against the 16px this used to take. A language name is
+   * chrome, not content, and it was set at body size while sitting next to
+   * 14px meta text. */
+  min-height: var(--touch-min);
+  min-width: var(--touch-min);
+  font-size: var(--text-meta);
+
+  /* Room on the right for the chevron drawn over the top. Tightened with the
+   * type: the chevron is 18px and --sp-2 clears it at this size. */
+  padding: 0 calc(var(--sp-2) + 18px) 0 var(--sp-2);
+
+  /* The native arrow is replaced so the control matches the icon set. The
+   * <select> keeps every one of its behaviours; only the arrow is redrawn. */
+  appearance: none;
+
+  background: var(--surface);
+  /* 10.01:1 against the select's own white fill, 5.09:1 against the worst glass
+   * ground the app can produce -- clear of WCAG 1.4.11's 3:1 on both sides. */
+  border: 1px solid var(--text-body);
+  /* --r-thumb (12px), the tier --r-md aliased to. .topbar__link is a pill now,
+   * so this no longer matches it and does not need to: a select with a chevron
+   * is a box, and 12px is the box tier. */
+  border-radius: var(--r-thumb);
+  color: var(--text); /* 16.83:1 on S, 8.55:1 through the worst glass */
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+
+  /* An identifier is never in here, but a language name is not a code either:
+   * it stays in the UI face rather than the mono one. */
+  font-family: var(--font-ui);
+}
+
+/* The option LIST is deliberately not in the app's face, and this is a
+ * measured decision rather than a stylistic one.
+ *
+ * The three endonyms -- English, Oʻzbekcha, Русский -- are in the DOM whatever
+ * language is selected. With --font-ui on them, the Cyrillic in "Русский" and
+ * the U+02BB in "Oʻzbekcha" pulled the IBM Plex Sans cyrillic AND latin subsets
+ * on EVERY page load, English included: measured at 5 extra font files for an
+ * English reader who will never see a Cyrillic glyph rendered in that face.
+ *
+ * A native dropdown is drawn by the platform anyway -- on Windows and Android
+ * the list is an OS widget and never used the web font to begin with -- so
+ * naming system-ui here costs nothing visually and stops the download. The
+ * CLOSED select still uses --font-ui above, so the selected language is the
+ * only one that can pull a subset, which is the correct bill. */
+.lang__select option {
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+/* --hover, which is the token for exactly this. It used to say --raised, and
+ * tokens.css's note on that alias claimed both its callers wanted --bg; that
+ * was right for App.css's notice, which is a REGION, and wrong here, because a
+ * control :hover is what --hover is named for. */
+.lang__select:hover {
+  background: var(--hover);
+}
+
+/* :focus-visible is global in base.css (a 3px --accent outline plus a 2px
+ * --text ring) and applies here unchanged. Nothing is overridden. */
+
+.lang__chevron {
+  position: absolute;
+  right: var(--sp-2);
+  color: var(--text-body); /* 5.09:1 through the worst glass ground */
+  pointer-events: none; /* the click belongs to the select underneath */
+}
+
+/* The honesty line. flex-basis 100% puts it on its own row inside
+ * .topbar__nav, so its length can never widen the bar. */
+.lang__note {
+  flex: 1 0 100%;
+  min-width: 0;
+  margin: 0;
+  /* Mono, because this is a statement about the machine rather than prose the
+   * reader is meant to linger on, and --text-meta is the mono size. */
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  line-height: var(--leading-snug);
+  color: var(--text-body); /* 5.09:1 through the worst glass ground, 9.42:1
+                              through the commonest */
+  /* Long words in Russian and Uzbek must break rather than push the row. */
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 660px) {
+  /* On a wide bar the note sits inline after the control instead of claiming a
+   * whole row, and is allowed to shrink. */
+  .lang__note {
+    flex: 0 1 auto;
+    max-width: 30ch;
+  }
+}

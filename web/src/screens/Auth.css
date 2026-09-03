@@ -1,0 +1,21 @@
+.auth__form {
+  margin-top: var(--sp-5);
+}
+
+/* .notice--wait has no rule any more, and that is the finished version of the
+ * argument this file started.
+ *
+ * It used to be amber-outlined and amber-texted, then -- once amber and red had
+ * both collapsed onto the same two-token split -- a single `color: var(--text)`
+ * override, on the grounds that a rate limit is not a refusal, it is a wait, so
+ * it should be the one notice on these screens that spends no colour at all.
+ *
+ * That is now true of offline and timeout as well. App.css's .notice is a quiet
+ * white panel in --text with no tint, and --alert is spent only on
+ * .notice--error, which is the state tokens.css reserves it for. The override
+ * would have set the colour the base rule already sets, so it is deleted rather
+ * than kept as a restatement.
+ *
+ * Offline, timeout, unauthorized and rate-limited stay distinct where they were
+ * always actually distinct: in the message and the icon noticeSkin() picks, not
+ * in the hue. */

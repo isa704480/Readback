@@ -1,0 +1,493 @@
+[
+  {
+    "case": "baseline",
+    "verdict": "accepted (not fatal)",
+    "connected": true,
+    "close_code": 1000,
+    "error": null,
+    "frames": [
+      {
+        "type": "Begin",
+        "id": "73d2e309-2eed-4593-9f00-c24db7a9fec1",
+        "expires_at": 1788286647,
+        "configuration": {
+          "model": "universal-3-5-pro",
+          "mode": "balanced",
+          "api_version": "2025-05-12",
+          "speaker_labels": false,
+          "redact_pii": false,
+          "filter_profanity": false,
+          "domain": null,
+          "voice_focus": null
+        }
+      },
+      {
+        "type": "Termination",
+        "audio_duration_seconds": 1,
+        "session_duration_seconds": 0
+      }
+    ]
+  },
+  {
+    "case": "CONTROL bogus param",
+    "verdict": "accepted (not fatal)",
+    "connected": true,
+    "close_code": 1000,
+    "error": null,
+    "frames": [
+      {
+        "type": "Begin",
+        "id": "5da97171-0a92-4ec0-80a4-f9d3ab7fbce9",
+        "expires_at": 1788286655,
+        "configuration": {
+          "model": "universal-3-5-pro",
+          "mode": "balanced",
+          "api_version": "2025-05-12",
+          "speaker_labels": false,
+          "redact_pii": false,
+          "filter_profanity": false,
+          "domain": null,
+          "voice_focus": null
+        }
+      },
+      {
+        "type": "Termination",
+        "audio_duration_seconds": 1,
+        "session_duration_seconds": 1
+      }
+    ]
+  },
+  {
+    "case": "end_of_turn_confidence_threshold",
+    "verdict": "accepted (not fatal)",
+    "connected": true,
+    "close_code": 1000,
+    "error": null,
+    "frames": [
+      {
+        "type": "Begin",
+        "id": "f6d29ef0-6136-49cc-8cfc-227ded3c938c",
+        "expires_at": 1788286663,
+        "configuration": {
+          "model": "universal-3-5-pro",
+          "mode": "balanced",
+          "api_version": "2025-05-12",
+          "speaker_labels": false,
+          "redact_pii": false,
+          "filter_profanity": false,
+          "domain": null,
+          "voice_focus": null
+        }
+      },
+      {
+        "type": "Termination",
+        "audio_duration_seconds": 1,
+        "session_duration_seconds": 0
+      }
+    ]
+  },
+  {
+    "case": "format_turns",
+    "verdict": "accepted (not fatal)",
+    "connected": true,
+    "close_code": 1000,
+    "error": null,
+    "frames": [
+      {
+        "type": "Begin",
+        "id": "1477c4c0-f3ae-49bc-9c02-19556a92a260",
+        "expires_at": 1788286671,
+        "configuration": {
+          "model": "universal-3-5-pro",
+          "mode": "balanced",
+          "api_version": "2025-05-12",
+          "speaker_labels": false,
+          "redact_pii": false,
+          "filter_profanity": false,
+          "domain": null,
+          "voice_focus": null
+        }
+      },
+      {
+        "type": "Termination",
+        "audio_duration_seconds": 1,
+        "session_duration_seconds": 0
+      }
+    ]
+  },
+  {
+    "case": "mode=balanced",
+    "verdict": "accepted (not fatal)",
+    "connected": true,
+    "close_code": 1000,
+    "error": null,
+    "frames": [
+      {
+        "type": "Begin",
+        "id": "cabf6e13-4b77-4c27-8b62-3714bf8bdf2f",
+        "expires_at": 1788286679,
+        "configuration": {
+          "model": "universal-3-5-pro",
+          "mode": "balanced",
+          "api_version": "2025-05-12",
+          "speaker_labels": false,
+          "redact_pii": false,
+          "filter_profanity": false,
+          "domain": null,
+          "voice_focus": null
+        }
+      },
+      {
+        "type": "Termination",
+        "audio_duration_seconds": 1,
+        "session_duration_seconds": 0
+      }
+    ]
+  },
+  {
+    "case": "mode=max_accuracy",
+    "verdict": "accepted (not fatal)",
+    "connected": true,
+    "close_code": 1000,
+    "error": null,
+    "frames": [
+      {
+        "type": "Begin",
+        "id": "a33ce2c0-c858-4397-9d8c-3f94ef975e99",
+        "expires_at": 1788286687,
+        "configuration": {
+          "model": "universal-3-5-pro",
+          "mode": "max_accuracy",
+          "api_version": "2025-05-12",
+          "speaker_labels": false,
+          "redact_pii": false,
+          "filter_profanity": false,
+          "domain": null,
+          "voice_focus": null
+        }
+      },
+      {
+        "type": "Termination",
+        "audio_duration_seconds": 1,
+        "session_duration_seconds": 0
+      }
+    ]
+  },
+  {
+    "case": "mode=min_latency",
+    "verdict": "accepted (not fatal)",
+    "connected": true,
+    "close_code": 1000,
+    "error": null,
+    "frames": [
+      {
+        "type": "Begin",
+        "id": "d1cf5b54-cffe-4cc5-a56f-1d353d9e3484",
+        "expires_at": 1788286695,
+        "configuration": {
+          "model": "universal-3-5-pro",
+          "mode": "min_latency",
+          "api_version": "2025-05-12",
+          "speaker_labels": false,
+          "redact_pii": false,
+          "filter_profanity": false,
+          "domain": null,
+          "voice_focus": null
+        }
+      },
+      {
+        "type": "Termination",
+        "audio_duration_seconds": 1,
+        "session_duration_seconds": 0
+      }
+    ]
+  },
+  {
+    "case": "max_turn_silence",
+    "verdict": "accepted (not fatal)",
+    "connected": true,
+    "close_code": 1000,
+    "error": null,
+    "frames": [
+      {
+        "type": "Begin",
+        "id": "d9a7d7fd-0898-4cff-82b3-e535359683b5",
+        "expires_at": 1788286703,
+        "configuration": {
+          "model": "universal-3-5-pro",
+          "mode": "balanced",
+          "api_version": "2025-05-12",
+          "speaker_labels": false,
+          "redact_pii": false,
+          "filter_profanity": false,
+          "domain": null,
+          "voice_focus": null
+        }
+      },
+      {
+        "type": "Termination",
+        "audio_duration_seconds": 1,
+        "session_duration_seconds": 1
+      }
+    ]
+  },
+  {
+    "case": "min_turn_silence",
+    "verdict": "accepted (not fatal)",
+    "connected": true,
+    "close_code": 1000,
+    "error": null,
+    "frames": [
+      {
+        "type": "Begin",
+        "id": "2295adc1-0d42-46dc-88cc-3cd2dbafa306",
+        "expires_at": 1788286711,
+        "configuration": {
+          "model": "universal-3-5-pro",
+          "mode": "balanced",
+          "api_version": "2025-05-12",
+          "speaker_labels": false,
+          "redact_pii": false,
+          "filter_profanity": false,
+          "domain": null,
+          "voice_focus": null
+        }
+      },
+      {
+        "type": "Termination",
+        "audio_duration_seconds": 1,
+        "session_duration_seconds": 0
+      }
+    ]
+  },
+  {
+    "case": "vad_threshold",
+    "verdict": "accepted (not fatal)",
+    "connected": true,
+    "close_code": 1000,
+    "error": null,
+    "frames": [
+      {
+        "type": "Begin",
+        "id": "eb7d6bae-4342-496e-8241-c444f655ac5e",
+        "expires_at": 1788286719,
+        "configuration": {
+          "model": "universal-3-5-pro",
+          "mode": "balanced",
+          "api_version": "2025-05-12",
+          "speaker_labels": false,
+          "redact_pii": false,
+          "filter_profanity": false,
+          "domain": null,
+          "voice_focus": null
+        }
+      },
+      {
+        "type": "Termination",
+        "audio_duration_seconds": 1,
+        "session_duration_seconds": 0
+      }
+    ]
+  },
+  {
+    "case": "prompt",
+    "verdict": "CLOSED 1008",
+    "connected": true,
+    "close_code": 1008,
+    "error": "ConnectionClosedError: received 1008 (policy violation) See Error message for details; then sent 1008 (policy violation) See Error message for details",
+    "frames": [
+      {
+        "type": "Error",
+        "error_code": 1008,
+        "error": "Unauthorized Connection: Too many concurrent sessions"
+      }
+    ]
+  },
+  {
+    "case": "voice_focus",
+    "verdict": "CLOSED 1008",
+    "connected": true,
+    "close_code": 1008,
+    "error": "ConnectionClosedError: received 1008 (policy violation) See Error message for details; then sent 1008 (policy violation) See Error message for details",
+    "frames": [
+      {
+        "type": "Error",
+        "error_code": 1008,
+        "error": "Unauthorized Connection: Too many concurrent sessions"
+      }
+    ]
+  },
+  {
+    "case": "continuous_partials",
+    "verdict": "accepted (not fatal)",
+    "connected": true,
+    "close_code": 1000,
+    "error": null,
+    "frames": [
+      {
+        "type": "Begin",
+        "id": "d9dd7ef1-3b07-4152-922e-858c1644f36e",
+        "expires_at": 1788286741,
+        "configuration": {
+          "model": "universal-3-5-pro",
+          "mode": "balanced",
+          "api_version": "2025-05-12",
+          "speaker_labels": false,
+          "redact_pii": false,
+          "filter_profanity": false,
+          "domain": null,
+          "voice_focus": null
+        }
+      },
+      {
+        "type": "Termination",
+        "audio_duration_seconds": 1,
+        "session_duration_seconds": 0
+      }
+    ]
+  },
+  {
+    "case": "include_partial_turns",
+    "verdict": "accepted (not fatal)",
+    "connected": true,
+    "close_code": 1000,
+    "error": null,
+    "frames": [
+      {
+        "type": "Begin",
+        "id": "c4346fa3-df4b-422a-9707-b01715a263f1",
+        "expires_at": 1788286749,
+        "configuration": {
+          "model": "universal-3-5-pro",
+          "mode": "balanced",
+          "api_version": "2025-05-12",
+          "speaker_labels": false,
+          "redact_pii": false,
+          "filter_profanity": false,
+          "domain": null,
+          "voice_focus": null
+        }
+      },
+      {
+        "type": "Termination",
+        "audio_duration_seconds": 1,
+        "session_duration_seconds": 0
+      }
+    ]
+  },
+  {
+    "case": "language_detection",
+    "verdict": "accepted (not fatal)",
+    "connected": true,
+    "close_code": 1000,
+    "error": null,
+    "frames": [
+      {
+        "type": "Begin",
+        "id": "c102ed1c-1151-4e3b-ace1-9cd125dcd860",
+        "expires_at": 1788286757,
+        "configuration": {
+          "model": "universal-3-5-pro",
+          "mode": "balanced",
+          "api_version": "2025-05-12",
+          "speaker_labels": false,
+          "redact_pii": false,
+          "filter_profanity": false,
+          "domain": null,
+          "voice_focus": null
+        }
+      },
+      {
+        "type": "Termination",
+        "audio_duration_seconds": 1,
+        "session_duration_seconds": 0
+      }
+    ]
+  },
+  {
+    "case": "keyterms_prompt (JSON array)",
+    "verdict": "accepted (not fatal)",
+    "connected": true,
+    "close_code": 1000,
+    "error": null,
+    "frames": [
+      {
+        "type": "Begin",
+        "id": "3389b550-278e-4f7c-b504-ab03ce30d7f4",
+        "expires_at": 1788286765,
+        "configuration": {
+          "model": "universal-3-5-pro",
+          "mode": "balanced",
+          "api_version": "2025-05-12",
+          "speaker_labels": false,
+          "redact_pii": false,
+          "filter_profanity": false,
+          "domain": null,
+          "voice_focus": null
+        }
+      },
+      {
+        "type": "Termination",
+        "audio_duration_seconds": 1,
+        "session_duration_seconds": 0
+      }
+    ]
+  },
+  {
+    "case": "keyterms_prompt (repeated)",
+    "verdict": "CLOSED 3006",
+    "connected": true,
+    "close_code": 3006,
+    "error": "ConnectionClosedError: received 3006 (registered) See Error message for details; then sent 3006 (registered) See Error message for details",
+    "frames": [
+      {
+        "type": "Error",
+        "error_code": 3006,
+        "error": "User Input Validation Error: Invalid 'keyterms_prompt': Value error, Invalid JSON array"
+      }
+    ]
+  },
+  {
+    "case": "keyterms_prompt (over 100)",
+    "verdict": "CLOSED 3006",
+    "connected": true,
+    "close_code": 3006,
+    "error": "ConnectionClosedError: received 3006 (registered) See Error message for details; then sent 3006 (registered) See Error message for details",
+    "frames": [
+      {
+        "type": "Error",
+        "error_code": 3006,
+        "error": "User Input Validation Error: Invalid 'keyterms_prompt': Value error, Max 100 items"
+      }
+    ]
+  },
+  {
+    "case": "UpdateConfiguration mid-session",
+    "verdict": "accepted (not fatal)",
+    "connected": true,
+    "close_code": 1000,
+    "error": null,
+    "frames": [
+      {
+        "type": "Begin",
+        "id": "6bd65ac9-e9b0-45bc-84a2-0f5be470277c",
+        "expires_at": 1788286781,
+        "configuration": {
+          "model": "universal-3-5-pro",
+          "mode": "balanced",
+          "api_version": "2025-05-12",
+          "speaker_labels": false,
+          "redact_pii": false,
+          "filter_profanity": false,
+          "domain": null,
+          "voice_focus": null
+        }
+      },
+      {
+        "type": "Termination",
+        "audio_duration_seconds": 1,
+        "session_duration_seconds": 1
+      }
+    ]
+  }
+]

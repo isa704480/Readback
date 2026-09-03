@@ -1,0 +1,940 @@
+{
+ "schema": "readback.fixture/1",
+ "name": "iso_clean_single_turn",
+ "description": "ISO 6346 container number dictated in NATO, cleanly, in one turn. Four words mutate across partials before settling.",
+ "notes": [
+  "The baseline. If this one does not round-trip, nothing else means anything.",
+  "One word per spoken character, which is the day-1 (A) assumption. If words-per-spelled-character comes back below 0.6 the corpus needs a BLOCK-regime sibling of every fixture here."
+ ],
+ "truth": {
+  "format": "iso6346",
+  "value": "MSKU4158005",
+  "spoken": "container number mike sierra kilo uniform four one five eight zero zero five"
+ },
+ "expect": {
+  "contains_identifier": true,
+  "normalised": "MSKU4158005",
+  "checksum_valid_as_heard": true,
+  "turns": 1,
+  "mutating_words": [
+   "sarah",
+   "keno",
+   "for",
+   "ate"
+  ],
+  "solver_action": "ACCEPT",
+  "solver_top": "MSKU4158005"
+ },
+ "frames": [
+  {
+   "emit_ms": 1462,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "container",
+    "end_of_turn_confidence": 0.123,
+    "words": [
+     {
+      "text": "container",
+      "start": 1200,
+      "end": 1372,
+      "confidence": 0.893,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 1855,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "container number",
+    "end_of_turn_confidence": 0.051,
+    "words": [
+     {
+      "text": "container",
+      "start": 1200,
+      "end": 1372,
+      "confidence": 0.893,
+      "word_is_final": false
+     },
+     {
+      "text": "number",
+      "start": 1479,
+      "end": 1765,
+      "confidence": 0.944,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 2219,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "container number mike",
+    "end_of_turn_confidence": 0.213,
+    "words": [
+     {
+      "text": "container",
+      "start": 1200,
+      "end": 1372,
+      "confidence": 0.893,
+      "word_is_final": true
+     },
+     {
+      "text": "number",
+      "start": 1479,
+      "end": 1765,
+      "confidence": 0.944,
+      "word_is_final": false
+     },
+     {
+      "text": "mike",
+      "start": 1941,
+      "end": 2129,
+      "confidence": 0.895,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 2514,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "container number mike sarah",
+    "end_of_turn_confidence": 0.108,
+    "words": [
+     {
+      "text": "container",
+      "start": 1200,
+      "end": 1372,
+      "confidence": 0.893,
+      "word_is_final": true
+     },
+     {
+      "text": "number",
+      "start": 1479,
+      "end": 1765,
+      "confidence": 0.944,
+      "word_is_final": true
+     },
+     {
+      "text": "mike",
+      "start": 1941,
+      "end": 2129,
+      "confidence": 0.895,
+      "word_is_final": false
+     },
+     {
+      "text": "sarah",
+      "start": 2245,
+      "end": 2424,
+      "confidence": 0.986,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 2883,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "container number mike sarah keno",
+    "end_of_turn_confidence": 0.038,
+    "words": [
+     {
+      "text": "container",
+      "start": 1200,
+      "end": 1372,
+      "confidence": 0.893,
+      "word_is_final": true
+     },
+     {
+      "text": "number",
+      "start": 1479,
+      "end": 1765,
+      "confidence": 0.944,
+      "word_is_final": true
+     },
+     {
+      "text": "mike",
+      "start": 1941,
+      "end": 2129,
+      "confidence": 0.895,
+      "word_is_final": true
+     },
+     {
+      "text": "sarah",
+      "start": 2245,
+      "end": 2424,
+      "confidence": 0.986,
+      "word_is_final": false
+     },
+     {
+      "text": "keno",
+      "start": 2534,
+      "end": 2793,
+      "confidence": 0.906,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 3270,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "container number mike sierra keno uniform",
+    "end_of_turn_confidence": 0.032,
+    "words": [
+     {
+      "text": "container",
+      "start": 1200,
+      "end": 1372,
+      "confidence": 0.893,
+      "word_is_final": true
+     },
+     {
+      "text": "number",
+      "start": 1479,
+      "end": 1765,
+      "confidence": 0.944,
+      "word_is_final": true
+     },
+     {
+      "text": "mike",
+      "start": 1941,
+      "end": 2129,
+      "confidence": 0.895,
+      "word_is_final": true
+     },
+     {
+      "text": "sierra",
+      "start": 2245,
+      "end": 2424,
+      "confidence": 0.986,
+      "word_is_final": true
+     },
+     {
+      "text": "keno",
+      "start": 2534,
+      "end": 2793,
+      "confidence": 0.906,
+      "word_is_final": false
+     },
+     {
+      "text": "uniform",
+      "start": 2953,
+      "end": 3180,
+      "confidence": 0.944,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 3660,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "container number mike sierra kilo uniform for",
+    "end_of_turn_confidence": 0.145,
+    "words": [
+     {
+      "text": "container",
+      "start": 1200,
+      "end": 1372,
+      "confidence": 0.893,
+      "word_is_final": true
+     },
+     {
+      "text": "number",
+      "start": 1479,
+      "end": 1765,
+      "confidence": 0.944,
+      "word_is_final": true
+     },
+     {
+      "text": "mike",
+      "start": 1941,
+      "end": 2129,
+      "confidence": 0.895,
+      "word_is_final": true
+     },
+     {
+      "text": "sierra",
+      "start": 2245,
+      "end": 2424,
+      "confidence": 0.986,
+      "word_is_final": true
+     },
+     {
+      "text": "kilo",
+      "start": 2534,
+      "end": 2793,
+      "confidence": 0.906,
+      "word_is_final": true
+     },
+     {
+      "text": "uniform",
+      "start": 2953,
+      "end": 3180,
+      "confidence": 0.944,
+      "word_is_final": false
+     },
+     {
+      "text": "for",
+      "start": 3320,
+      "end": 3570,
+      "confidence": 0.929,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 4004,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "container number mike sierra kilo uniform for one",
+    "end_of_turn_confidence": 0.091,
+    "words": [
+     {
+      "text": "container",
+      "start": 1200,
+      "end": 1372,
+      "confidence": 0.893,
+      "word_is_final": true
+     },
+     {
+      "text": "number",
+      "start": 1479,
+      "end": 1765,
+      "confidence": 0.944,
+      "word_is_final": true
+     },
+     {
+      "text": "mike",
+      "start": 1941,
+      "end": 2129,
+      "confidence": 0.895,
+      "word_is_final": true
+     },
+     {
+      "text": "sierra",
+      "start": 2245,
+      "end": 2424,
+      "confidence": 0.986,
+      "word_is_final": true
+     },
+     {
+      "text": "kilo",
+      "start": 2534,
+      "end": 2793,
+      "confidence": 0.906,
+      "word_is_final": true
+     },
+     {
+      "text": "uniform",
+      "start": 2953,
+      "end": 3180,
+      "confidence": 0.944,
+      "word_is_final": true
+     },
+     {
+      "text": "for",
+      "start": 3320,
+      "end": 3570,
+      "confidence": 0.929,
+      "word_is_final": false
+     },
+     {
+      "text": "one",
+      "start": 3724,
+      "end": 3914,
+      "confidence": 0.964,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 4319,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "container number mike sierra kilo uniform four one five",
+    "end_of_turn_confidence": 0.029,
+    "words": [
+     {
+      "text": "container",
+      "start": 1200,
+      "end": 1372,
+      "confidence": 0.893,
+      "word_is_final": true
+     },
+     {
+      "text": "number",
+      "start": 1479,
+      "end": 1765,
+      "confidence": 0.944,
+      "word_is_final": true
+     },
+     {
+      "text": "mike",
+      "start": 1941,
+      "end": 2129,
+      "confidence": 0.895,
+      "word_is_final": true
+     },
+     {
+      "text": "sierra",
+      "start": 2245,
+      "end": 2424,
+      "confidence": 0.986,
+      "word_is_final": true
+     },
+     {
+      "text": "kilo",
+      "start": 2534,
+      "end": 2793,
+      "confidence": 0.906,
+      "word_is_final": true
+     },
+     {
+      "text": "uniform",
+      "start": 2953,
+      "end": 3180,
+      "confidence": 0.944,
+      "word_is_final": true
+     },
+     {
+      "text": "four",
+      "start": 3320,
+      "end": 3570,
+      "confidence": 0.929,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 3724,
+      "end": 3914,
+      "confidence": 0.964,
+      "word_is_final": false
+     },
+     {
+      "text": "five",
+      "start": 4032,
+      "end": 4229,
+      "confidence": 0.884,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 4691,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "container number mike sierra kilo uniform four one five ate",
+    "end_of_turn_confidence": 0.29,
+    "words": [
+     {
+      "text": "container",
+      "start": 1200,
+      "end": 1372,
+      "confidence": 0.893,
+      "word_is_final": true
+     },
+     {
+      "text": "number",
+      "start": 1479,
+      "end": 1765,
+      "confidence": 0.944,
+      "word_is_final": true
+     },
+     {
+      "text": "mike",
+      "start": 1941,
+      "end": 2129,
+      "confidence": 0.895,
+      "word_is_final": true
+     },
+     {
+      "text": "sierra",
+      "start": 2245,
+      "end": 2424,
+      "confidence": 0.986,
+      "word_is_final": true
+     },
+     {
+      "text": "kilo",
+      "start": 2534,
+      "end": 2793,
+      "confidence": 0.906,
+      "word_is_final": true
+     },
+     {
+      "text": "uniform",
+      "start": 2953,
+      "end": 3180,
+      "confidence": 0.944,
+      "word_is_final": true
+     },
+     {
+      "text": "four",
+      "start": 3320,
+      "end": 3570,
+      "confidence": 0.929,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 3724,
+      "end": 3914,
+      "confidence": 0.964,
+      "word_is_final": true
+     },
+     {
+      "text": "five",
+      "start": 4032,
+      "end": 4229,
+      "confidence": 0.884,
+      "word_is_final": false
+     },
+     {
+      "text": "ate",
+      "start": 4351,
+      "end": 4601,
+      "confidence": 0.934,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 5128,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "container number mike sierra kilo uniform four one five ate zero",
+    "end_of_turn_confidence": 0.167,
+    "words": [
+     {
+      "text": "container",
+      "start": 1200,
+      "end": 1372,
+      "confidence": 0.893,
+      "word_is_final": true
+     },
+     {
+      "text": "number",
+      "start": 1479,
+      "end": 1765,
+      "confidence": 0.944,
+      "word_is_final": true
+     },
+     {
+      "text": "mike",
+      "start": 1941,
+      "end": 2129,
+      "confidence": 0.895,
+      "word_is_final": true
+     },
+     {
+      "text": "sierra",
+      "start": 2245,
+      "end": 2424,
+      "confidence": 0.986,
+      "word_is_final": true
+     },
+     {
+      "text": "kilo",
+      "start": 2534,
+      "end": 2793,
+      "confidence": 0.906,
+      "word_is_final": true
+     },
+     {
+      "text": "uniform",
+      "start": 2953,
+      "end": 3180,
+      "confidence": 0.944,
+      "word_is_final": true
+     },
+     {
+      "text": "four",
+      "start": 3320,
+      "end": 3570,
+      "confidence": 0.929,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 3724,
+      "end": 3914,
+      "confidence": 0.964,
+      "word_is_final": true
+     },
+     {
+      "text": "five",
+      "start": 4032,
+      "end": 4229,
+      "confidence": 0.884,
+      "word_is_final": true
+     },
+     {
+      "text": "ate",
+      "start": 4351,
+      "end": 4601,
+      "confidence": 0.934,
+      "word_is_final": false
+     },
+     {
+      "text": "zero",
+      "start": 4755,
+      "end": 5038,
+      "confidence": 0.936,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 5514,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "container number mike sierra kilo uniform four one five eight zero zero",
+    "end_of_turn_confidence": 0.179,
+    "words": [
+     {
+      "text": "container",
+      "start": 1200,
+      "end": 1372,
+      "confidence": 0.893,
+      "word_is_final": true
+     },
+     {
+      "text": "number",
+      "start": 1479,
+      "end": 1765,
+      "confidence": 0.944,
+      "word_is_final": true
+     },
+     {
+      "text": "mike",
+      "start": 1941,
+      "end": 2129,
+      "confidence": 0.895,
+      "word_is_final": true
+     },
+     {
+      "text": "sierra",
+      "start": 2245,
+      "end": 2424,
+      "confidence": 0.986,
+      "word_is_final": true
+     },
+     {
+      "text": "kilo",
+      "start": 2534,
+      "end": 2793,
+      "confidence": 0.906,
+      "word_is_final": true
+     },
+     {
+      "text": "uniform",
+      "start": 2953,
+      "end": 3180,
+      "confidence": 0.944,
+      "word_is_final": true
+     },
+     {
+      "text": "four",
+      "start": 3320,
+      "end": 3570,
+      "confidence": 0.929,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 3724,
+      "end": 3914,
+      "confidence": 0.964,
+      "word_is_final": true
+     },
+     {
+      "text": "five",
+      "start": 4032,
+      "end": 4229,
+      "confidence": 0.884,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 4351,
+      "end": 4601,
+      "confidence": 0.934,
+      "word_is_final": true
+     },
+     {
+      "text": "zero",
+      "start": 4755,
+      "end": 5038,
+      "confidence": 0.936,
+      "word_is_final": false
+     },
+     {
+      "text": "zero",
+      "start": 5213,
+      "end": 5424,
+      "confidence": 0.986,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 5831,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "container number mike sierra kilo uniform four one five eight zero zero five",
+    "end_of_turn_confidence": 0.202,
+    "words": [
+     {
+      "text": "container",
+      "start": 1200,
+      "end": 1372,
+      "confidence": 0.893,
+      "word_is_final": true
+     },
+     {
+      "text": "number",
+      "start": 1479,
+      "end": 1765,
+      "confidence": 0.944,
+      "word_is_final": true
+     },
+     {
+      "text": "mike",
+      "start": 1941,
+      "end": 2129,
+      "confidence": 0.895,
+      "word_is_final": true
+     },
+     {
+      "text": "sierra",
+      "start": 2245,
+      "end": 2424,
+      "confidence": 0.986,
+      "word_is_final": true
+     },
+     {
+      "text": "kilo",
+      "start": 2534,
+      "end": 2793,
+      "confidence": 0.906,
+      "word_is_final": true
+     },
+     {
+      "text": "uniform",
+      "start": 2953,
+      "end": 3180,
+      "confidence": 0.944,
+      "word_is_final": true
+     },
+     {
+      "text": "four",
+      "start": 3320,
+      "end": 3570,
+      "confidence": 0.929,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 3724,
+      "end": 3914,
+      "confidence": 0.964,
+      "word_is_final": true
+     },
+     {
+      "text": "five",
+      "start": 4032,
+      "end": 4229,
+      "confidence": 0.884,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 4351,
+      "end": 4601,
+      "confidence": 0.934,
+      "word_is_final": true
+     },
+     {
+      "text": "zero",
+      "start": 4755,
+      "end": 5038,
+      "confidence": 0.936,
+      "word_is_final": true
+     },
+     {
+      "text": "zero",
+      "start": 5213,
+      "end": 5424,
+      "confidence": 0.986,
+      "word_is_final": false
+     },
+     {
+      "text": "five",
+      "start": 5554,
+      "end": 5741,
+      "confidence": 0.954,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 7397,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": true,
+    "transcript": "container number mike sierra kilo uniform four one five eight zero zero five",
+    "end_of_turn_confidence": 0.852,
+    "words": [
+     {
+      "text": "container",
+      "start": 1200,
+      "end": 1372,
+      "confidence": 0.893,
+      "word_is_final": true
+     },
+     {
+      "text": "number",
+      "start": 1479,
+      "end": 1765,
+      "confidence": 0.944,
+      "word_is_final": true
+     },
+     {
+      "text": "mike",
+      "start": 1941,
+      "end": 2129,
+      "confidence": 0.895,
+      "word_is_final": true
+     },
+     {
+      "text": "sierra",
+      "start": 2245,
+      "end": 2424,
+      "confidence": 0.986,
+      "word_is_final": true
+     },
+     {
+      "text": "kilo",
+      "start": 2534,
+      "end": 2793,
+      "confidence": 0.906,
+      "word_is_final": true
+     },
+     {
+      "text": "uniform",
+      "start": 2953,
+      "end": 3180,
+      "confidence": 0.944,
+      "word_is_final": true
+     },
+     {
+      "text": "four",
+      "start": 3320,
+      "end": 3570,
+      "confidence": 0.929,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 3724,
+      "end": 3914,
+      "confidence": 0.964,
+      "word_is_final": true
+     },
+     {
+      "text": "five",
+      "start": 4032,
+      "end": 4229,
+      "confidence": 0.884,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 4351,
+      "end": 4601,
+      "confidence": 0.934,
+      "word_is_final": true
+     },
+     {
+      "text": "zero",
+      "start": 4755,
+      "end": 5038,
+      "confidence": 0.936,
+      "word_is_final": true
+     },
+     {
+      "text": "zero",
+      "start": 5213,
+      "end": 5424,
+      "confidence": 0.986,
+      "word_is_final": true
+     },
+     {
+      "text": "five",
+      "start": 5554,
+      "end": 5741,
+      "confidence": 0.954,
+      "word_is_final": true
+     }
+    ]
+   }
+  }
+ ]
+}

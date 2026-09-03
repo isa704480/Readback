@@ -1,0 +1,228 @@
+/* Readback design tokens.
+ *
+ * Every ratio in this file was computed with the WCAG 2.1 relative-luminance
+ * formula, not eyeballed. Two backgrounds matter, so both are quoted:
+ *   S = --surface #FAFAF8 (cards, panels)
+ *   G = --ground  #E3E5E0 (page)
+ * A token is only usable as text where BOTH numbers clear 4.5:1, because a card
+ * can always end up on the page background during a layout change.
+ */
+
+:root {
+  /* -------------------------------------------------------------- ground -- */
+  /* Structure. None of these are ever text. */
+  --ground: #e3e5e0; /* page */
+  --surface: #fafaf8; /* cards, panels. 1.21:1 on ground: separation is by
+                         border and shadow, never by fill alone. */
+  --raised: #f1f2ef; /* subtle raised fill. 1.08:1 on surface, so it can
+                        suggest a region but can never delimit a control. */
+
+  /* ---------------------------------------------------------------- line -- */
+  /* Hairlines. All three sit near 1.5:1, which is below the 3:1 that WCAG
+   * 1.4.11 requires of anything identifying an interactive component. That is
+   * deliberate and it constrains where they may be used: these delimit
+   * NON-interactive structure only. An input or button boundary is drawn in
+   * --muted (7.34:1 on S) instead. See base.css. */
+  --line: #e1e3de; /* 1.24:1 on S -- dividers inside a panel */
+  --line-strong: #cdd0c9; /* 1.49:1 on S -- panel edges, table rules */
+  --line-soft: #c9cdc6; /* 1.54:1 on S -- the same weight on --raised, where
+                            --line disappears entirely */
+
+  /* ------------------------------------------------------- state vocabulary */
+  /* These five carry meaning. The meaning is fixed in the capture rack and it
+   * does not change in a form, a chart, or a marketing page. See the block
+   * headed THE SEMANTIC RULE below. */
+
+  --ink: #14171a; /* SETTLED                   17.22:1 S / 14.18:1 G */
+  --muted: #4e5459; /* secondary text            7.34:1 S /  6.05:1 G */
+  --steel: #2b5568; /* HEARD, NOT SETTLED        7.72:1 S /  6.36:1 G */
+  --green: #1f5c46; /* QUIETLY REPAIRED          7.50:1 S /  6.18:1 G */
+  --amber: #8a5a00; /* NEEDS ONE THING FROM YOU  5.67:1 S /  4.67:1 G */
+  --red: #a3271f; /* FLAGGED                   7.01:1 S /  5.77:1 G */
+
+  --hiviz: #f0b429; /* 1.78:1 S / 1.47:1 G -- NOT A TEXT COLOUR.
+                       Fills, icon strokes and rules only. Where amber text is
+                       wanted the token is --amber (5.67:1). */
+
+  /* Text placed ON a saturated fill. All --surface unless noted. */
+  --on-green: #fafaf8; /*  7.50:1 */
+  --on-steel: #fafaf8; /*  7.72:1 */
+  --on-red: #fafaf8; /*  7.01:1 */
+  --on-amber: #fafaf8; /*  5.67:1 */
+  --on-ink: #fafaf8; /* 17.22:1 */
+  --on-hiviz: #14171a; /*  9.65:1 -- the only legible pairing for hiviz, and the
+                          reason hiviz works as a chip but never as an ink. */
+
+  /* -------------------------------------------------------------- spacing -- */
+  /* Base 4px. Chosen because every step then lands on a whole device pixel at
+   * 1x, 1.5x and 2x DPR -- 1.5x is the default on most Windows desks and
+   * mid-range Android, which is exactly where this runs, and a 6px base would
+   * half-pixel every other step there. */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+  --sp-9: 96px;
+
+  /* ----------------------------------------------------------------- type -- */
+  /* Minor third (1.200) from a 16px base, rounded to whole px:
+   *   16 -> 19.2 -> 23.0 -> 27.6 -> 33.2 -> 39.8 -> 47.8
+   * A minor third is tight enough that a rack of 40 capture rows does not tear
+   * into headline sizes, while still separating six levels. Nothing below 16px
+   * carries prose; --text-meta is mono-only, where Plex Mono's tall x-height
+   * makes 14px read at roughly the size of 15px Archivo. */
+  --text-meta: 14px; /* mono labels, codes, timings. Never a sentence. */
+  --text-body: 16px; /* body floor, and the exact input size iOS needs to not
+                        zoom the viewport on focus */
+  --text-lg: 19px;
+  --text-xl: 23px;
+  --text-2xl: 28px;
+  --text-3xl: 33px;
+  --text-4xl: 40px;
+  --text-5xl: 48px;
+
+  --leading-tight: 1.15; /* headings, where the type is large enough to breathe */
+  --leading-snug: 1.35; /* mono rows: identifiers must not drift apart vertically */
+  --leading-body: 1.55; /* prose */
+
+  /* ARCHIVO DOES NOT COVER CYRILLIC. Measured, not assumed: the Google Fonts
+   * stylesheet for Archivo serves exactly three subsets -- latin, latin-ext and
+   * vietnamese -- and declares no `cyrillic` unicode-range at all. Every
+   * character of the Russian catalog is therefore outside every range Archivo
+   * offers, and the browser falls through to the next family in this list.
+   *
+   * Before the fix that next family was `system-ui`, which means the Russian
+   * interface rendered in Segoe UI on Windows, in SF on macOS and in Roboto on
+   * Android -- three faces, none of them the approved one, chosen by accident.
+   *
+   * IBM Plex Sans is named here because it is the measured fix rather than a
+   * guess: it declares `cyrillic` and `cyrillic-ext`, and it is already this
+   * project's type family (Plex Mono is --font-mono), so the Russian interface
+   * is set in a face that was drawn to sit with the mono the rack uses.
+   *
+   * Verified in the browser by comparing rendered widths of "Русский" at 100px:
+   *   'Archivo'                      140.00  == serif sentinel -> Archivo has
+   *                                             no Cyrillic, it fell through
+   *   'IBM Plex Sans'                153.29
+   *   this stack                     153.29  -> Plex Sans is what renders it
+   *   'Readback' in this stack       180.89  == 'Archivo' alone -> Latin is
+   *                                             still Archivo, unchanged
+   *
+   * UZBEK: A CORRECTION. The first version of this comment claimed Uzbek
+   * renders entirely in Archivo, because Google's stylesheet declares
+   * U+02BB-02BC inside Archivo's `latin` unicode-range. That declaration is
+   * about which SUBSET FILE to fetch and is not a promise that the glyph is in
+   * it. Measured at 100px, the turned comma is 33.31 in 'Archivo' and 33.31 in
+   * plain serif -- identical, i.e. Archivo does NOT carry U+02BB and the
+   * browser falls through for it. In this stack it measures 60.00, the Plex
+   * Sans width. So oʻ and gʻ are Archivo letters with a Plex Sans comma.
+   *
+   * That is not a regression: on the OLD stack the same character measured
+   * 22.23, the system-ui width, so it was always coming from a fallback. The
+   * change is that the fallback is now one deterministic face everywhere
+   * instead of Segoe UI on Windows, SF on macOS and Roboto on Android.
+   *
+   * BYTE COST. Google serves these per subset behind unicode-range, so a file
+   * is fetched only when a character inside its range has to be painted in this
+   * family. Measured by downloading them: Plex Sans cyrillic is 118,048 bytes
+   * across the four weights, latin is 182,848. An English page paints no
+   * Cyrillic in --font-ui, so it needs neither -- but the switcher's <option>
+   * list holds all three endonyms and was pulling both subsets on every load
+   * until the option list was pinned to system-ui. See LanguageSwitcher.css.
+   *
+   * Contrast is unaffected by any of this: a WCAG ratio is a function of the
+   * two colours, and no colour changed. What a face swap could break is the
+   * large-text exemption, which depends on px size and weight -- and nothing
+   * here relies on it, because every text token clears 4.5:1 at body size. See
+   * the ratios quoted throughout this file. */
+  --font-ui: 'Archivo', 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', 'Consolas', monospace;
+
+  /* Anything a machine said is mono. Identifiers are also tracked out slightly:
+   * at 0 tracking, Plex Mono's O/0 and I/1 sit close enough to reintroduce by
+   * eye the confusions the solver just spent a checksum removing. */
+  --tracking-code: 0.02em;
+
+  /* ---------------------------------------------------------------- radii -- */
+  /* Kept under 10px. The capture rack stacks many short rectangles; past about
+   * 10px adjacent corners start reading as separate bubbles rather than rows of
+   * one instrument, and the thing stops looking like equipment. */
+  --r-sm: 3px; /* inputs, chips, code cells */
+  --r-md: 6px; /* buttons, cards */
+  --r-lg: 10px; /* panels, dialogs */
+  --r-full: 999px; /* pills and dots only -- never a button */
+
+  /* --------------------------------------------------------------- motion -- */
+  /* Transform and opacity only. Durations sit in the 150-300ms band: below
+   * ~150ms a transition is not perceived as motion at all, above ~300ms the
+   * interface starts waiting on itself. */
+  --motion-fast: 150ms; /* hover, focus, press -- must feel like direct contact */
+  --motion-base: 200ms; /* an element entering or leaving */
+  --motion-slow: 300ms; /* a capture row settling: the one duration a user is
+                           meant to actually perceive */
+  --ease-out: cubic-bezier(0.2, 0, 0, 1); /* decelerating: arrives, does not bounce */
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* -------------------------------------------------------------- elevation */
+  /* Tinted with the ink hue rather than pure black, so a card edge on --ground
+   * does not read as a grey halo. */
+  --shadow-sm: 0 1px 2px rgb(20 23 26 / 0.06);
+  --shadow-md: 0 2px 4px rgb(20 23 26 / 0.06), 0 4px 12px rgb(20 23 26 / 0.05);
+  --shadow-lg: 0 4px 8px rgb(20 23 26 / 0.06), 0 12px 32px rgb(20 23 26 / 0.08);
+
+  /* --------------------------------------------------------------- layout -- */
+  --measure: 68ch; /* prose column: past ~75ch the eye loses the line return */
+  --page-max: 1120px;
+  --touch-min: 44px; /* WCAG 2.5.5 target floor */
+  --control-h: 46px; /* controls run 2px over the floor so a 1px border and a
+                        focus offset cannot erode it back under 44 */
+}
+
+/* ============================================================================
+ * THE SEMANTIC RULE
+ *
+ * The five state colours mean one thing each, everywhere. A colour that means
+ * "heard, not settled" in the rack and "medium" in a form is two products
+ * sharing a stylesheet.
+ *
+ *   --steel   heard, not settled
+ *   --green   quietly repaired
+ *   --amber   I need one thing from you
+ *   --ink     settled
+ *   --red     flagged
+ *
+ * The password strength meter is the test case, and it is NOT a red-to-green
+ * ramp. Its four segments speak the same vocabulary:
+ *
+ *   weak / breached  -> --red    flagged, the same red as a flagged capture
+ *   fair             -> --amber  needs one thing from you
+ *   good             -> --steel  heard, not settled
+ *   strong           -> --green  settled and quietly correct
+ *
+ * Measured relative luminance: steel 8.0, green 8.4, muted 8.7, red 9.3 (%).
+ * Those four are indistinguishable in greyscale. So the vocabulary above is
+ * necessary but never sufficient -- every state also carries a word and a
+ * shape. See CAPTURE_STATES in src/lib/api.ts, which pairs each state with a
+ * label and an icon for exactly this reason.
+ * ========================================================================= */
+
+:root {
+  --state-heard: var(--steel);
+  --state-repaired: var(--green);
+  --state-asking: var(--amber);
+  --state-settled: var(--ink);
+  --state-flagged: var(--red);
+}
+
+/* The palette is a single committed light instrument. It does not invert: a
+ * dark rack would put --hiviz fills against dark ground where they read as
+ * warning lamps, which is a meaning this vocabulary has not assigned. Declaring
+ * the scheme stops the browser from auto-darkening form controls underneath a
+ * design that has no dark counterpart. */
+:root {
+  color-scheme: light;
+}

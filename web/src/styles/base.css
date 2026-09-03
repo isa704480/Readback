@@ -1,0 +1,373 @@
+@import './tokens.css';
+@import './motion.css';
+
+/* ------------------------------------------------------------------ reset -- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%; /* stop iOS Safari inflating text in landscape */
+}
+
+/* ------------------------------------------------------------- derived --- */
+/* THE BRIDGE IS GONE, AND NO RAW COLOUR LIVES IN THIS FILE ANY MORE.
+ *
+ * --text-long used to be declared here: a local copy of #424245 standing in for
+ * --text-body, which tokens.css was declaring twice in one :root -- the colour
+ * first, a legacy alias for the 16px SIZE second -- so the later declaration
+ * won and `color: var(--text-body)` computed to an invalid `color: 16px`. That
+ * alias has been deleted, its 22 font-size call sites now say --text-body-size,
+ * and --text-body is the long-body grey again. The three rules that read the
+ * bridge (base.css `a`, TopBar.css .topbar__link, Sidebar.css .sidebar__link)
+ * read the token directly; the value is identical, so the edit changed no
+ * pixel. */
+:root {
+  /* Derived, not chosen. The bar is one row of --control-h (46px) inside --sp-3
+   * of block padding, so its height is arithmetic on tokens that already exist
+   * rather than a number read off a screenshot. Measured in the browser to
+   * confirm the arithmetic: .topbar__inner is 70.0px. The header's border box
+   * is 70.8px once the scroll edge draws, and that 0.8px sits inside the --sp-4
+   * gutter its one consumer adds.
+   *
+   * Sidebar.css consumes it to park its sticky rail clear of the sticky nav.
+   * Valid at >=660px, where TopBar.css stops wrapping the nav onto a second
+   * row; the one consumer is gated at >=1024px, so it never reads it in the
+   * two-row shape. */
+  --topbar-h: calc(var(--control-h) + 2 * var(--sp-3));
+}
+
+body {
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--text); /* 15.46:1 on --bg */
+  font-family: var(--font-ui);
+  font-size: var(--text-body-size);
+  line-height: var(--leading-body);
+  -webkit-font-smoothing: antialiased;
+  /* SF ships optical size tables; one line, and large titles stop being the
+   * text-size version of themselves scaled up. */
+  font-optical-sizing: auto;
+  text-rendering: optimizeLegibility;
+
+  /* The 375px rule. Anything wider than the viewport is a bug, not a scroll
+   * region: an overflowing element must scroll inside its own container. */
+  overflow-x: clip;
+}
+
+img,
+svg,
+video,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+svg {
+  flex: none; /* an icon inside a flex row must never be squashed out of square */
+}
+
+/* THE IRON RULE: bigger title, more negative tracking. It used to be one flat
+ * -0.01em across all four levels, which meant the 48px h1 was the LEAST tracked
+ * relative to its size and every screen then hard-coded -0.02em locally to fix
+ * it. The ladder is a token now, so nobody has to. */
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 600;
+  line-height: var(--leading-tight);
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+h1 {
+  letter-spacing: var(--tracking-title); /* -0.03em */
+}
+
+h2 {
+  letter-spacing: var(--tracking-h2); /* -0.02em */
+}
+
+p {
+  text-wrap: pretty; /* no single-word last lines in a measured column */
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+/* Anything a machine said: identifiers, codes, timings, labels. */
+code,
+kbd,
+samp,
+pre,
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  letter-spacing: var(--tracking-code);
+  /* Plex Mono is already fixed-pitch, so this changes no width. It is here for
+   * the figures that CHANGE in place -- the rail's "117/146", the elapsed
+   * counter -- where a proportional fallback (ui-monospace resolving to
+   * something else, or a digit set with a narrow 1) would make the number
+   * twitch sideways once a second on a screen that is watched during a call. */
+  font-variant-numeric: tabular-nums;
+}
+
+/* Links stay greyscale, and that is a decision rather than an omission.
+ * `a` here is every anchor in the app -- nav destinations, card links, the
+ * brand -- not just prose links, so promoting it to --accent-text would put the
+ * one accent on six nav rails at once and break "at most one accent per view".
+ * Linkness is carried by the underline and the offset; the accent stays spent
+ * on the asked state, which is the one thing in this product wanting a human.
+ * --text-body 9.20:1 on --bg, 10.01:1 on --surface. */
+a {
+  color: var(--text-body);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  color: var(--text); /* 15.46:1 on --bg, 16.83:1 on --surface */
+}
+
+/* --------------------------------------------------------------- focus --- */
+/* Two rings, and the reason changed with the palette. --accent #0071e3 now
+ * clears 3:1 on its own -- 4.70:1 on --surface, 4.31:1 on --bg -- so the outer
+ * ring is no longer a decorative one leaning on the inner one for contrast.
+ *
+ * The inner --text ring stays because a focus ring has to hold against the
+ * control's OWN fill, not only against the page. A primary button is filled
+ * --accent, and --accent on --accent is 1.00:1: the outer ring vanishes on
+ * exactly the control a keyboard user is most likely to land on. --text against
+ * --accent is 3.58:1 and holds there, and 16.83:1 / 15.46:1 everywhere else.
+ * The two are contiguous -- the 2px box-shadow spread fills exactly the 2px
+ * outline-offset gap. */
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--text);
+  border-radius: var(--r-chip);
+}
+
+/* Pointer users who click a button should not get the ring; keyboard users
+ * always should. :focus-visible already does this, so the only job here is to
+ * make sure a UA default outline never doubles up underneath. */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ------------------------------------------------------- controls: base --- */
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+}
+
+button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  /* Removes the 300ms tap delay without disabling pinch-zoom on the page. */
+  touch-action: manipulation;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* Every control clears the 44px WCAG 2.5.5 target floor with 2px to spare, so a
+ * 1px border plus a focus offset cannot erode it back under. */
+button,
+[role='button'],
+select {
+  min-height: var(--control-h);
+}
+
+input,
+textarea,
+select {
+  /* Exactly 16px. Below this iOS Safari zooms the viewport on focus and the
+   * user lands on a page they then have to pinch back out of. */
+  font-size: var(--text-body-size);
+  width: 100%;
+  background: var(--surface);
+  color: var(--text);
+  border-radius: var(--r-chip);
+
+  /* The boundary of an interactive control is what identifies it, so WCAG
+   * 1.4.11 wants 3:1 for it. --hairline is 1.17:1 on --surface and cannot do
+   * this job; --text-3 is 3.62:1 on --surface and 3.33:1 on --bg, which clears
+   * it without drawing every field as a hard mid-grey box. This is the ONE
+   * role --text-3 has in this file: a control boundary, never a panel edge. */
+  border: 1px solid var(--text-3);
+}
+
+input,
+select {
+  min-height: var(--control-h);
+  padding: 0 var(--sp-3);
+}
+
+textarea {
+  padding: var(--sp-3);
+  line-height: var(--leading-body);
+  resize: vertical;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-2); /* 5.07:1 on --surface -- placeholders are hints, never
+                           labels; every field in this app has a visible
+                           <label>. */
+  opacity: 1; /* Firefox dims placeholders by default, which breaks the ratio */
+}
+
+/* A disabled field is a recessed region, not a hovered row. --hover (#fbfbfd,
+ * 1.03:1 on --surface) is invisible against the enabled fields beside it and
+ * would leave "disabled" carried by the cursor alone; --bg is 1.09:1 and is the
+ * same step the page ground makes against every panel in the app, so a reader
+ * already knows what it means. --text-2 on --bg is 4.66:1. */
+input:disabled,
+textarea:disabled,
+select:disabled {
+  background: var(--bg);
+  color: var(--text-2);
+  cursor: not-allowed;
+}
+
+/* An identifier field is mono and tracked, same as the rack renders it. */
+input.mono {
+  font-family: var(--font-mono);
+  letter-spacing: var(--tracking-code);
+}
+
+label {
+  display: block;
+  font-weight: 500;
+}
+
+/* ------------------------------------------------------------- utilities -- */
+
+/* One side padding at every width. --pad-x (22px) is the system's figure and
+ * the 16px/24px media query it replaces was two hand-set values doing the job
+ * of one token. At 375px this leaves a 331px content box, which still holds the
+ * eleven-slot ISO 6346 row the rack sizes for (266px at the 22px slot metric).
+ * AppShell.css and Sidebar.css quote the >=1024px track arithmetic this feeds;
+ * both were re-derived against 22px in the same edit. */
+.page {
+  width: 100%;
+  max-width: var(--page-max);
+  margin-inline: auto;
+  padding-inline: var(--pad-x);
+}
+
+.measure {
+  max-width: var(--measure);
+}
+
+/* Visible to a screen reader, absent from the page. Used for the label of a
+ * control whose meaning is otherwise carried by an icon. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* A link inside a sentence cannot be given a 44px box: that opens a 44px line
+ * box in the middle of a paragraph. The hit area is extended instead. The
+ * ::after is invisible and out of flow, so layout is untouched while the
+ * pointer target reaches the floor on both axes. The two prose links on the
+ * account screen measured 52.9x15.2 before this. */
+.link-hit {
+  position: relative;
+}
+
+.link-hit::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 100%;
+  min-width: var(--touch-min);
+  height: var(--touch-min);
+  transform: translate(-50%, -50%);
+}
+
+/* Keyboard users get to the content without tabbing the whole nav. */
+.skip-link {
+  position: absolute;
+  left: var(--sp-4);
+  top: var(--sp-4);
+  z-index: 100;
+  padding: var(--sp-2) var(--sp-4);
+  min-height: var(--control-h);
+  display: inline-flex;
+  align-items: center;
+  background: var(--text);
+  color: #ffffff; /* 16.83:1 on --text */
+  /* A floating action, so the pill tier -- not the thumbnail tier it used to
+   * take. --r-thumb is for thumbnails. */
+  border-radius: var(--r-full);
+  /* App.css used to declare a second .skip-link -- a fixed-position pill in
+   * --accent with --shadow-md. base.css is emitted later and set every property
+   * that copy set except this weight, so the duplicate was inert; the weight is
+   * the only thing worth keeping from it, and one component now has one
+   * stylesheet. */
+  font-weight: 600;
+  text-decoration: none;
+  transform: translateY(calc(-100% - var(--sp-5)));
+  transition: transform var(--motion-fast) var(--ease-out);
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+  color: #ffffff;
+}
+
+/* ------------------------------------------------- prefers-reduced-motion -- */
+/* Not "no motion": a transition that is instant but still fires keeps state
+ * changes legible to anyone relying on them, without the vestibular cost of
+ * things travelling across the screen. Durations collapse; nothing is removed. */
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 1ms;
+    --motion-base: 1ms;
+    --motion-slow: 1ms;
+    /* The breath (motion.css) is the one duration outside the 150-300ms band.
+     * The `*` rule below already collapses it; naming it here means a reader
+     * of this block sees the whole motion vocabulary, not three quarters. */
+    --motion-breath: 1ms;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}

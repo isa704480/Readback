@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#E3E5E0" />
+    <title>Readback</title>
+    <meta
+      name="description"
+      content="Readback listens in the background of a call and writes reference numbers down correctly. Not by hearing better, but by knowing what a valid answer is allowed to be."
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!--
+      IBM Plex Sans is here to cover Cyrillic, which Archivo does not: the
+      Google Fonts stylesheet for Archivo serves only latin, latin-ext and
+      vietnamese and declares no cyrillic unicode-range. It is a fallback in
+      --font-ui, not a replacement -- see the comment on --font-ui in
+      styles/tokens.css for the measurement and the byte cost.
+
+      unicode-range means adding it costs English and Uzbek readers nothing but
+      this stylesheet: the browser only downloads a subset whose range contains
+      a character it actually has to paint, and Archivo matches every Latin
+      glyph first.
+    -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

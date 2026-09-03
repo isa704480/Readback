@@ -1,0 +1,237 @@
+/* The app's sticky chrome, and the one surface in this product where glass is
+ * mandatory rather than allowed.
+ *
+ * Grounds in play, both cool:
+ *   --bg      #f5f5f7  the page ground
+ *   --surface #ffffff  panels
+ *
+ * WHY GLASS IS RIGHT HERE AND NOWHERE ELSE.
+ * The bar overlaps scrolling content. That overlap is the entire licence: a
+ * translucent material tells the reader that what is behind it still exists and
+ * is still moving, which a solid bar cannot say. Every other surface in this
+ * app is a content panel with nothing underneath it, and glass on those is
+ * decoration. The recipe itself is in tokens.css's .glass-nav -- 0.72 alpha,
+ * saturate(180%) blur(20px) -- and this file only positions it and handles the
+ * two user preferences that switch it off.
+ *
+ * NO PERMANENT BORDER. It used to carry `border-bottom: 1px solid` at all
+ * times. A rule under a bar that is flush against the top of an unscrolled page
+ * separates nothing; it is a line drawn because bars have lines. .glass-nav
+ * ships the scroll edge instead -- transparent at rest, a hairline plus a 1px
+ * contact shadow once content is genuinely underneath -- and TopBar.tsx toggles
+ * .is-scrolled from a passive listener at scrollY > 8.
+ *
+ * VIBRANCY, MEASURED. Text on glass is not sitting on a known colour: the
+ * composite is 0.72 x --bg plus 0.28 x whatever scrolled under it. Computed
+ * with the WCAG 2.1 formula for every ground this app can put there:
+ *
+ *                       under --surface  --bg   --track  --accent  --alert  --text
+ *   composite            #f8f8f9  #f5f5f7  #f1f1f4  #b0d0f1  #e3bfb5  #b9b9bb
+ *   --text     #1d1d1f     15.83   15.46    14.98    10.54     9.93     8.55
+ *   --text-body #424245      9.42    9.20     8.91     6.27     5.91     5.09
+ *   --text-2   #6e6e73       4.77    4.66     4.51     3.18     2.99     2.58
+ *   --text-3   #86868b       3.41    3.33     3.22     2.27     2.14     1.84
+ *
+ * --text-2 is the app's ordinary secondary grey and it FAILS on this surface
+ * the moment a filled button or a dark block passes beneath: 2.58:1 under
+ * --text. So the bar's secondary text is one step darker than it would be on a
+ * panel. That is the skill's "raise contrast for text on glass" rule arrived at
+ * by measurement rather than by taste, and --text-body holds 5.09:1 against the
+ * worst ground the app can produce. --text-3 is unusable here at any weight. */
+
+.topbar {
+  /* Sticky, not fixed: the bar keeps its row in the flex column, so nothing
+   * below it needs a compensating top padding and no screen can be built that
+   * forgets one. .shell is a plain flex column and creates no scrollport, so
+   * the sticky reference is the viewport. */
+  position: sticky;
+  top: 0;
+  /* Above content, below .skip-link (z-index 100 in base.css) -- the skip link
+   * is the one thing that must be able to cover the bar. */
+  z-index: 50;
+}
+
+/* THE WRAP RULE.
+ *
+ * A previous project shipped a top bar that laid brand and nav out on one row
+ * and let the row overflow. On a 375px screen "Sign out" went past the right
+ * edge, and because the body cannot scroll horizontally there was no way to
+ * reach it at all. The fix is structural rather than a media query hiding
+ * things: the nav is flex-basis 100% until 660px, so it is always on its own
+ * row on a narrow screen and nothing can be pushed anywhere. */
+.topbar__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-4);
+  padding-block: var(--sp-3);
+}
+
+.topbar__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: var(--touch-min);
+  margin-right: auto;
+  color: var(--text); /* 8.55:1 against the worst glass ground, 15.83:1 on the
+                         commonest one */
+  font-size: var(--text-lg);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  text-decoration: none;
+}
+
+.topbar__brand:hover {
+  color: var(--text);
+}
+
+.topbar__nav {
+  /* Row two below 660px. */
+  flex: 1 0 100%;
+  /* Without this the nav keeps the default min-width:auto of a flex item, which
+   * is its max-content width. A long organisation name then forces the row
+   * wider than the viewport and pushes "Sign out" off the right edge -- the
+   * exact failure this bar exists to not repeat. Measured before the fix: a
+   * 48-character org name gave the bar a 473px scrollWidth inside a 375px
+   * viewport. */
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-2);
+  /* A hairline separating the two rows only exists while there are two rows.
+   * 1.17:1 on the glass -- structure, never a boundary that identifies a
+   * control, which is why it is allowed to be this quiet. */
+  border-top: 1px solid var(--hairline);
+  padding-top: var(--sp-2);
+}
+
+/* The organisation name, which is also the link to the account. It carries
+ * .topbar__link as well, so the pill shape, the min-height, the hover and the
+ * current-page rule all come from there rather than being restated; the only
+ * thing this class still owns is the identity layout — the icon/name pair, the
+ * truncation, and the auto margin that pushes the session controls right. */
+.topbar__who {
+  gap: var(--sp-2);
+  min-width: 0; /* lets the name below actually truncate instead of forcing width */
+  margin-right: auto;
+  font-size: var(--text-meta);
+}
+
+.topbar__who-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  letter-spacing: var(--tracking-code);
+  color: var(--text);
+}
+
+.topbar__link {
+  /* position: relative for the current-page rule below. */
+  position: relative;
+
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-h);
+  padding-inline: var(--sp-3);
+  /* Pill, not the 12px thumbnail tier it used to take. A nav chip is a
+   * pill-shaped control and --r-thumb is for thumbnails. */
+  border-radius: var(--r-full);
+  color: var(--text-body); /* one step below the brand, and it holds 5.09:1 on
+                              the worst glass ground */
+  font-weight: 500;
+  text-decoration: none;
+}
+
+/* The hover tint is a raw rgba and it is the one place in this file that is
+ * not a token, because the token would be wrong. --hover #fbfbfd is OPAQUE: on
+ * a translucent bar it punches a solid patch through the material and the
+ * blurred content stops showing through exactly where the pointer is. A black
+ * alpha darkens the glass without filling it. The value is the skill's own nav
+ * chip figure from components.md, not one invented here. */
+.topbar__link:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text);
+}
+
+/* The current page is marked with a rule as well as with weight, so it survives
+ * greyscale and does not rely on a 0.5px difference in font weight.
+ *
+ * A ::after and not the inset box-shadow this used to be. base.css builds the
+ * focus ring out of box-shadow, so a box-shadow declared here would REPLACE the
+ * inner --text ring on exactly the item a keyboard user is standing on -- the
+ * hazard Sidebar.css already named and solved the same way. */
+.topbar__link[aria-current='page'] {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.topbar__link[aria-current='page']::after {
+  content: '';
+  position: absolute;
+  inset: auto var(--sp-3) 6px;
+  height: 2px;
+  border-radius: var(--r-full);
+  /* --accent is a fill and a stroke, never a text colour. As a rule under a
+   * word it is a non-text indicator: 4.42:1 on the commonest glass ground,
+   * against the 3:1 WCAG 1.4.11 asks. It is also the third carrier here, after
+   * aria-current and the weight step, so a reader who gets nothing from hue
+   * still gets two. */
+  background: var(--accent);
+}
+
+/* ---------------------------------------------------- glass, switched off -- */
+/* Two preferences turn the material into a solid, and both are mandatory the
+ * moment an app ships backdrop-filter. They are scoped .topbar.glass-nav so
+ * they outrank tokens.css's .glass-nav whatever order the bundler emits the
+ * stylesheets in.
+ *
+ * REDUCED TRANSPARENCY: the request is "do not make me read through moving
+ * content". The answer is the opaque ground, not a different blur. --bg rather
+ * than --surface so the bar still reads as chrome rather than as the first
+ * panel of the page, and every ratio in the VIBRANCY table collapses to its
+ * --bg column: --text 15.46, --text-body 9.20, --accent 4.31. */
+@media (prefers-reduced-transparency: reduce) {
+  .topbar.glass-nav {
+    background: var(--bg);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* MORE CONTRAST: solid ground again, and the scroll edge is promoted from a
+ * hairline to a boundary that actually reads -- --text-3 is 3.33:1 on --bg,
+ * against --hairline's 1.17:1. The border is permanent in this mode on purpose:
+ * somebody who has asked for more contrast is asking for the edge to be
+ * findable, not for it to be tasteful. */
+@media (prefers-contrast: more) {
+  .topbar.glass-nav {
+    background: var(--bg);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-bottom-color: var(--text-3);
+  }
+}
+
+@media (min-width: 660px) {
+  .topbar__inner {
+    padding-block: var(--sp-3);
+  }
+
+  .topbar__nav {
+    flex: 0 1 auto;
+    border-top: none;
+    padding-top: 0;
+    gap: var(--sp-2);
+  }
+
+  .topbar__who {
+    margin-right: 0;
+  }
+
+  .topbar__who-name {
+    max-width: 22ch;
+  }
+}

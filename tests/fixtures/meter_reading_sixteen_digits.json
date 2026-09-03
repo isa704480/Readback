@@ -1,0 +1,2127 @@
+{
+ "schema": "readback.fixture/1",
+ "name": "meter_reading_sixteen_digits",
+ "description": "A sixteen-digit meter reading dictated at a utilities desk. No carrier phrase and no identifier, and the digits pass the Luhn check, so by shape and by checksum it is a payment card.",
+ "notes": [
+  "10.0% of uniform random sixteen-digit strings pass Luhn (500,000 draws). A checksum is not evidence of a format; it is evidence about a string whose format something else has to assert.",
+  "This is the second bare-digit format, and it is here so the fix is not tested only against NHS. Sixteen digits also match NHS at distance 0 in seven different windows."
+ ],
+ "truth": {
+  "format": null,
+  "value": null,
+  "spoken_number": "8737983960106896"
+ },
+ "expect": {
+  "contains_identifier": false,
+  "normalised": null,
+  "turns": 3,
+  "digits": "8737983960106896",
+  "luhn_valid": true,
+  "carrier_phrases": 0,
+  "expected_cues": [
+   "rhythm",
+   "shape"
+  ]
+ },
+ "frames": [
+  {
+   "emit_ms": 1112,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "and",
+    "end_of_turn_confidence": 0.184,
+    "words": [
+     {
+      "text": "and",
+      "start": 900,
+      "end": 1022,
+      "confidence": 0.768,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 2170,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "and while I have",
+    "end_of_turn_confidence": 0.204,
+    "words": [
+     {
+      "text": "and",
+      "start": 900,
+      "end": 1022,
+      "confidence": 0.768,
+      "word_is_final": true
+     },
+     {
+      "text": "while",
+      "start": 1098,
+      "end": 1365,
+      "confidence": 0.564,
+      "word_is_final": true
+     },
+     {
+      "text": "I",
+      "start": 1530,
+      "end": 1671,
+      "confidence": 0.598,
+      "word_is_final": false
+     },
+     {
+      "text": "have",
+      "start": 1759,
+      "end": 2080,
+      "confidence": 0.784,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 2916,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "and while I have you what does",
+    "end_of_turn_confidence": 0.125,
+    "words": [
+     {
+      "text": "and",
+      "start": 900,
+      "end": 1022,
+      "confidence": 0.768,
+      "word_is_final": true
+     },
+     {
+      "text": "while",
+      "start": 1098,
+      "end": 1365,
+      "confidence": 0.564,
+      "word_is_final": true
+     },
+     {
+      "text": "I",
+      "start": 1530,
+      "end": 1671,
+      "confidence": 0.598,
+      "word_is_final": true
+     },
+     {
+      "text": "have",
+      "start": 1759,
+      "end": 2080,
+      "confidence": 0.784,
+      "word_is_final": true
+     },
+     {
+      "text": "you",
+      "start": 2277,
+      "end": 2357,
+      "confidence": 0.915,
+      "word_is_final": true
+     },
+     {
+      "text": "what",
+      "start": 2397,
+      "end": 2524,
+      "confidence": 0.836,
+      "word_is_final": false
+     },
+     {
+      "text": "does",
+      "start": 2602,
+      "end": 2826,
+      "confidence": 0.717,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 3884,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "and while I have you what does the meter say",
+    "end_of_turn_confidence": 0.183,
+    "words": [
+     {
+      "text": "and",
+      "start": 900,
+      "end": 1022,
+      "confidence": 0.768,
+      "word_is_final": true
+     },
+     {
+      "text": "while",
+      "start": 1098,
+      "end": 1365,
+      "confidence": 0.564,
+      "word_is_final": true
+     },
+     {
+      "text": "I",
+      "start": 1530,
+      "end": 1671,
+      "confidence": 0.598,
+      "word_is_final": true
+     },
+     {
+      "text": "have",
+      "start": 1759,
+      "end": 2080,
+      "confidence": 0.784,
+      "word_is_final": true
+     },
+     {
+      "text": "you",
+      "start": 2277,
+      "end": 2357,
+      "confidence": 0.915,
+      "word_is_final": true
+     },
+     {
+      "text": "what",
+      "start": 2397,
+      "end": 2524,
+      "confidence": 0.836,
+      "word_is_final": true
+     },
+     {
+      "text": "does",
+      "start": 2602,
+      "end": 2826,
+      "confidence": 0.717,
+      "word_is_final": true
+     },
+     {
+      "text": "the",
+      "start": 2964,
+      "end": 3119,
+      "confidence": 0.777,
+      "word_is_final": true
+     },
+     {
+      "text": "meter",
+      "start": 3214,
+      "end": 3456,
+      "confidence": 0.556,
+      "word_is_final": false
+     },
+     {
+      "text": "say",
+      "start": 3605,
+      "end": 3794,
+      "confidence": 0.694,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 4385,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "and while I have you what does the meter say this morning",
+    "end_of_turn_confidence": 0.254,
+    "words": [
+     {
+      "text": "and",
+      "start": 900,
+      "end": 1022,
+      "confidence": 0.768,
+      "word_is_final": true
+     },
+     {
+      "text": "while",
+      "start": 1098,
+      "end": 1365,
+      "confidence": 0.564,
+      "word_is_final": true
+     },
+     {
+      "text": "I",
+      "start": 1530,
+      "end": 1671,
+      "confidence": 0.598,
+      "word_is_final": true
+     },
+     {
+      "text": "have",
+      "start": 1759,
+      "end": 2080,
+      "confidence": 0.784,
+      "word_is_final": true
+     },
+     {
+      "text": "you",
+      "start": 2277,
+      "end": 2357,
+      "confidence": 0.915,
+      "word_is_final": true
+     },
+     {
+      "text": "what",
+      "start": 2397,
+      "end": 2524,
+      "confidence": 0.836,
+      "word_is_final": true
+     },
+     {
+      "text": "does",
+      "start": 2602,
+      "end": 2826,
+      "confidence": 0.717,
+      "word_is_final": true
+     },
+     {
+      "text": "the",
+      "start": 2964,
+      "end": 3119,
+      "confidence": 0.777,
+      "word_is_final": true
+     },
+     {
+      "text": "meter",
+      "start": 3214,
+      "end": 3456,
+      "confidence": 0.556,
+      "word_is_final": true
+     },
+     {
+      "text": "say",
+      "start": 3605,
+      "end": 3794,
+      "confidence": 0.694,
+      "word_is_final": true
+     },
+     {
+      "text": "this",
+      "start": 3910,
+      "end": 3991,
+      "confidence": 0.73,
+      "word_is_final": false
+     },
+     {
+      "text": "morning",
+      "start": 4041,
+      "end": 4295,
+      "confidence": 0.707,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 5066,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "eight",
+    "end_of_turn_confidence": 0.114,
+    "words": [
+     {
+      "text": "eight",
+      "start": 4745,
+      "end": 4976,
+      "confidence": 0.966,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 5451,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "eight seven",
+    "end_of_turn_confidence": 0.158,
+    "words": [
+     {
+      "text": "eight",
+      "start": 4745,
+      "end": 4976,
+      "confidence": 0.966,
+      "word_is_final": false
+     },
+     {
+      "text": "seven",
+      "start": 5118,
+      "end": 5361,
+      "confidence": 0.989,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 5724,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "eight seven three",
+    "end_of_turn_confidence": 0.047,
+    "words": [
+     {
+      "text": "eight",
+      "start": 4745,
+      "end": 4976,
+      "confidence": 0.966,
+      "word_is_final": true
+     },
+     {
+      "text": "seven",
+      "start": 5118,
+      "end": 5361,
+      "confidence": 0.989,
+      "word_is_final": false
+     },
+     {
+      "text": "three",
+      "start": 5510,
+      "end": 5634,
+      "confidence": 0.902,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 5951,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": true,
+    "transcript": "and while I have you what does the meter say this morning",
+    "end_of_turn_confidence": 0.848,
+    "words": [
+     {
+      "text": "and",
+      "start": 900,
+      "end": 1022,
+      "confidence": 0.768,
+      "word_is_final": true
+     },
+     {
+      "text": "while",
+      "start": 1098,
+      "end": 1365,
+      "confidence": 0.564,
+      "word_is_final": true
+     },
+     {
+      "text": "I",
+      "start": 1530,
+      "end": 1671,
+      "confidence": 0.598,
+      "word_is_final": true
+     },
+     {
+      "text": "have",
+      "start": 1759,
+      "end": 2080,
+      "confidence": 0.784,
+      "word_is_final": true
+     },
+     {
+      "text": "you",
+      "start": 2277,
+      "end": 2357,
+      "confidence": 0.915,
+      "word_is_final": true
+     },
+     {
+      "text": "what",
+      "start": 2397,
+      "end": 2524,
+      "confidence": 0.836,
+      "word_is_final": true
+     },
+     {
+      "text": "does",
+      "start": 2602,
+      "end": 2826,
+      "confidence": 0.717,
+      "word_is_final": true
+     },
+     {
+      "text": "the",
+      "start": 2964,
+      "end": 3119,
+      "confidence": 0.777,
+      "word_is_final": true
+     },
+     {
+      "text": "meter",
+      "start": 3214,
+      "end": 3456,
+      "confidence": 0.556,
+      "word_is_final": true
+     },
+     {
+      "text": "say",
+      "start": 3605,
+      "end": 3794,
+      "confidence": 0.694,
+      "word_is_final": true
+     },
+     {
+      "text": "this",
+      "start": 3910,
+      "end": 3991,
+      "confidence": 0.73,
+      "word_is_final": true
+     },
+     {
+      "text": "morning",
+      "start": 4041,
+      "end": 4295,
+      "confidence": 0.707,
+      "word_is_final": true
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 6021,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "eight seven three seven",
+    "end_of_turn_confidence": 0.184,
+    "words": [
+     {
+      "text": "eight",
+      "start": 4745,
+      "end": 4976,
+      "confidence": 0.966,
+      "word_is_final": true
+     },
+     {
+      "text": "seven",
+      "start": 5118,
+      "end": 5361,
+      "confidence": 0.989,
+      "word_is_final": true
+     },
+     {
+      "text": "three",
+      "start": 5510,
+      "end": 5634,
+      "confidence": 0.902,
+      "word_is_final": false
+     },
+     {
+      "text": "seven",
+      "start": 5710,
+      "end": 5931,
+      "confidence": 0.978,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 6397,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "eight seven three seven nine",
+    "end_of_turn_confidence": 0.078,
+    "words": [
+     {
+      "text": "eight",
+      "start": 4745,
+      "end": 4976,
+      "confidence": 0.966,
+      "word_is_final": true
+     },
+     {
+      "text": "seven",
+      "start": 5118,
+      "end": 5361,
+      "confidence": 0.989,
+      "word_is_final": true
+     },
+     {
+      "text": "three",
+      "start": 5510,
+      "end": 5634,
+      "confidence": 0.902,
+      "word_is_final": true
+     },
+     {
+      "text": "seven",
+      "start": 5710,
+      "end": 5931,
+      "confidence": 0.978,
+      "word_is_final": false
+     },
+     {
+      "text": "nine",
+      "start": 6067,
+      "end": 6307,
+      "confidence": 0.91,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 6789,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "eight seven three seven nine eight",
+    "end_of_turn_confidence": 0.107,
+    "words": [
+     {
+      "text": "eight",
+      "start": 4745,
+      "end": 4976,
+      "confidence": 0.966,
+      "word_is_final": true
+     },
+     {
+      "text": "seven",
+      "start": 5118,
+      "end": 5361,
+      "confidence": 0.989,
+      "word_is_final": true
+     },
+     {
+      "text": "three",
+      "start": 5510,
+      "end": 5634,
+      "confidence": 0.902,
+      "word_is_final": true
+     },
+     {
+      "text": "seven",
+      "start": 5710,
+      "end": 5931,
+      "confidence": 0.978,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 6067,
+      "end": 6307,
+      "confidence": 0.91,
+      "word_is_final": false
+     },
+     {
+      "text": "eight",
+      "start": 6455,
+      "end": 6699,
+      "confidence": 0.97,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 7123,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "eight seven three seven nine eight three",
+    "end_of_turn_confidence": 0.204,
+    "words": [
+     {
+      "text": "eight",
+      "start": 4745,
+      "end": 4976,
+      "confidence": 0.966,
+      "word_is_final": true
+     },
+     {
+      "text": "seven",
+      "start": 5118,
+      "end": 5361,
+      "confidence": 0.989,
+      "word_is_final": true
+     },
+     {
+      "text": "three",
+      "start": 5510,
+      "end": 5634,
+      "confidence": 0.902,
+      "word_is_final": true
+     },
+     {
+      "text": "seven",
+      "start": 5710,
+      "end": 5931,
+      "confidence": 0.978,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 6067,
+      "end": 6307,
+      "confidence": 0.91,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 6455,
+      "end": 6699,
+      "confidence": 0.97,
+      "word_is_final": false
+     },
+     {
+      "text": "three",
+      "start": 6849,
+      "end": 7033,
+      "confidence": 0.885,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 7408,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "eight seven three seven nine eight three nine",
+    "end_of_turn_confidence": 0.252,
+    "words": [
+     {
+      "text": "eight",
+      "start": 4745,
+      "end": 4976,
+      "confidence": 0.966,
+      "word_is_final": true
+     },
+     {
+      "text": "seven",
+      "start": 5118,
+      "end": 5361,
+      "confidence": 0.989,
+      "word_is_final": true
+     },
+     {
+      "text": "three",
+      "start": 5510,
+      "end": 5634,
+      "confidence": 0.902,
+      "word_is_final": true
+     },
+     {
+      "text": "seven",
+      "start": 5710,
+      "end": 5931,
+      "confidence": 0.978,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 6067,
+      "end": 6307,
+      "confidence": 0.91,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 6455,
+      "end": 6699,
+      "confidence": 0.97,
+      "word_is_final": true
+     },
+     {
+      "text": "three",
+      "start": 6849,
+      "end": 7033,
+      "confidence": 0.885,
+      "word_is_final": false
+     },
+     {
+      "text": "nine",
+      "start": 7146,
+      "end": 7318,
+      "confidence": 0.881,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 7772,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "eight seven three seven nine eight three nine six",
+    "end_of_turn_confidence": 0.207,
+    "words": [
+     {
+      "text": "eight",
+      "start": 4745,
+      "end": 4976,
+      "confidence": 0.966,
+      "word_is_final": true
+     },
+     {
+      "text": "seven",
+      "start": 5118,
+      "end": 5361,
+      "confidence": 0.989,
+      "word_is_final": true
+     },
+     {
+      "text": "three",
+      "start": 5510,
+      "end": 5634,
+      "confidence": 0.902,
+      "word_is_final": true
+     },
+     {
+      "text": "seven",
+      "start": 5710,
+      "end": 5931,
+      "confidence": 0.978,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 6067,
+      "end": 6307,
+      "confidence": 0.91,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 6455,
+      "end": 6699,
+      "confidence": 0.97,
+      "word_is_final": true
+     },
+     {
+      "text": "three",
+      "start": 6849,
+      "end": 7033,
+      "confidence": 0.885,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 7146,
+      "end": 7318,
+      "confidence": 0.881,
+      "word_is_final": false
+     },
+     {
+      "text": "six",
+      "start": 7425,
+      "end": 7682,
+      "confidence": 0.933,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 8192,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "eight seven three seven nine eight three nine six oh",
+    "end_of_turn_confidence": 0.056,
+    "words": [
+     {
+      "text": "eight",
+      "start": 4745,
+      "end": 4976,
+      "confidence": 0.966,
+      "word_is_final": true
+     },
+     {
+      "text": "seven",
+      "start": 5118,
+      "end": 5361,
+      "confidence": 0.989,
+      "word_is_final": true
+     },
+     {
+      "text": "three",
+      "start": 5510,
+      "end": 5634,
+      "confidence": 0.902,
+      "word_is_final": true
+     },
+     {
+      "text": "seven",
+      "start": 5710,
+      "end": 5931,
+      "confidence": 0.978,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 6067,
+      "end": 6307,
+      "confidence": 0.91,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 6455,
+      "end": 6699,
+      "confidence": 0.97,
+      "word_is_final": true
+     },
+     {
+      "text": "three",
+      "start": 6849,
+      "end": 7033,
+      "confidence": 0.885,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 7146,
+      "end": 7318,
+      "confidence": 0.881,
+      "word_is_final": true
+     },
+     {
+      "text": "six",
+      "start": 7425,
+      "end": 7682,
+      "confidence": 0.933,
+      "word_is_final": false
+     },
+     {
+      "text": "oh",
+      "start": 7840,
+      "end": 8102,
+      "confidence": 0.891,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 8540,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "eight seven three seven nine eight three nine six oh one",
+    "end_of_turn_confidence": 0.124,
+    "words": [
+     {
+      "text": "eight",
+      "start": 4745,
+      "end": 4976,
+      "confidence": 0.966,
+      "word_is_final": true
+     },
+     {
+      "text": "seven",
+      "start": 5118,
+      "end": 5361,
+      "confidence": 0.989,
+      "word_is_final": true
+     },
+     {
+      "text": "three",
+      "start": 5510,
+      "end": 5634,
+      "confidence": 0.902,
+      "word_is_final": true
+     },
+     {
+      "text": "seven",
+      "start": 5710,
+      "end": 5931,
+      "confidence": 0.978,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 6067,
+      "end": 6307,
+      "confidence": 0.91,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 6455,
+      "end": 6699,
+      "confidence": 0.97,
+      "word_is_final": true
+     },
+     {
+      "text": "three",
+      "start": 6849,
+      "end": 7033,
+      "confidence": 0.885,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 7146,
+      "end": 7318,
+      "confidence": 0.881,
+      "word_is_final": true
+     },
+     {
+      "text": "six",
+      "start": 7425,
+      "end": 7682,
+      "confidence": 0.933,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 7840,
+      "end": 8102,
+      "confidence": 0.891,
+      "word_is_final": false
+     },
+     {
+      "text": "one",
+      "start": 8263,
+      "end": 8450,
+      "confidence": 0.91,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 8780,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "eight seven three seven nine eight three nine six oh one oh",
+    "end_of_turn_confidence": 0.113,
+    "words": [
+     {
+      "text": "eight",
+      "start": 4745,
+      "end": 4976,
+      "confidence": 0.966,
+      "word_is_final": true
+     },
+     {
+      "text": "seven",
+      "start": 5118,
+      "end": 5361,
+      "confidence": 0.989,
+      "word_is_final": true
+     },
+     {
+      "text": "three",
+      "start": 5510,
+      "end": 5634,
+      "confidence": 0.902,
+      "word_is_final": true
+     },
+     {
+      "text": "seven",
+      "start": 5710,
+      "end": 5931,
+      "confidence": 0.978,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 6067,
+      "end": 6307,
+      "confidence": 0.91,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 6455,
+      "end": 6699,
+      "confidence": 0.97,
+      "word_is_final": true
+     },
+     {
+      "text": "three",
+      "start": 6849,
+      "end": 7033,
+      "confidence": 0.885,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 7146,
+      "end": 7318,
+      "confidence": 0.881,
+      "word_is_final": true
+     },
+     {
+      "text": "six",
+      "start": 7425,
+      "end": 7682,
+      "confidence": 0.933,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 7840,
+      "end": 8102,
+      "confidence": 0.891,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 8263,
+      "end": 8450,
+      "confidence": 0.91,
+      "word_is_final": false
+     },
+     {
+      "text": "oh",
+      "start": 8566,
+      "end": 8690,
+      "confidence": 0.917,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 9037,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "eight seven three seven nine eight three nine six oh one oh six",
+    "end_of_turn_confidence": 0.154,
+    "words": [
+     {
+      "text": "eight",
+      "start": 4745,
+      "end": 4976,
+      "confidence": 0.966,
+      "word_is_final": true
+     },
+     {
+      "text": "seven",
+      "start": 5118,
+      "end": 5361,
+      "confidence": 0.989,
+      "word_is_final": true
+     },
+     {
+      "text": "three",
+      "start": 5510,
+      "end": 5634,
+      "confidence": 0.902,
+      "word_is_final": true
+     },
+     {
+      "text": "seven",
+      "start": 5710,
+      "end": 5931,
+      "confidence": 0.978,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 6067,
+      "end": 6307,
+      "confidence": 0.91,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 6455,
+      "end": 6699,
+      "confidence": 0.97,
+      "word_is_final": true
+     },
+     {
+      "text": "three",
+      "start": 6849,
+      "end": 7033,
+      "confidence": 0.885,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 7146,
+      "end": 7318,
+      "confidence": 0.881,
+      "word_is_final": true
+     },
+     {
+      "text": "six",
+      "start": 7425,
+      "end": 7682,
+      "confidence": 0.933,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 7840,
+      "end": 8102,
+      "confidence": 0.891,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 8263,
+      "end": 8450,
+      "confidence": 0.91,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 8566,
+      "end": 8690,
+      "confidence": 0.917,
+      "word_is_final": false
+     },
+     {
+      "text": "six",
+      "start": 8766,
+      "end": 8947,
+      "confidence": 0.947,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 9392,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "eight seven three seven nine eight three nine six oh one oh six eight",
+    "end_of_turn_confidence": 0.276,
+    "words": [
+     {
+      "text": "eight",
+      "start": 4745,
+      "end": 4976,
+      "confidence": 0.966,
+      "word_is_final": true
+     },
+     {
+      "text": "seven",
+      "start": 5118,
+      "end": 5361,
+      "confidence": 0.989,
+      "word_is_final": true
+     },
+     {
+      "text": "three",
+      "start": 5510,
+      "end": 5634,
+      "confidence": 0.902,
+      "word_is_final": true
+     },
+     {
+      "text": "seven",
+      "start": 5710,
+      "end": 5931,
+      "confidence": 0.978,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 6067,
+      "end": 6307,
+      "confidence": 0.91,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 6455,
+      "end": 6699,
+      "confidence": 0.97,
+      "word_is_final": true
+     },
+     {
+      "text": "three",
+      "start": 6849,
+      "end": 7033,
+      "confidence": 0.885,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 7146,
+      "end": 7318,
+      "confidence": 0.881,
+      "word_is_final": true
+     },
+     {
+      "text": "six",
+      "start": 7425,
+      "end": 7682,
+      "confidence": 0.933,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 7840,
+      "end": 8102,
+      "confidence": 0.891,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 8263,
+      "end": 8450,
+      "confidence": 0.91,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 8566,
+      "end": 8690,
+      "confidence": 0.917,
+      "word_is_final": true
+     },
+     {
+      "text": "six",
+      "start": 8766,
+      "end": 8947,
+      "confidence": 0.947,
+      "word_is_final": false
+     },
+     {
+      "text": "eight",
+      "start": 9058,
+      "end": 9302,
+      "confidence": 0.9,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 9668,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "eight seven three seven nine eight three nine six oh one oh six eight nine",
+    "end_of_turn_confidence": 0.207,
+    "words": [
+     {
+      "text": "eight",
+      "start": 4745,
+      "end": 4976,
+      "confidence": 0.966,
+      "word_is_final": true
+     },
+     {
+      "text": "seven",
+      "start": 5118,
+      "end": 5361,
+      "confidence": 0.989,
+      "word_is_final": true
+     },
+     {
+      "text": "three",
+      "start": 5510,
+      "end": 5634,
+      "confidence": 0.902,
+      "word_is_final": true
+     },
+     {
+      "text": "seven",
+      "start": 5710,
+      "end": 5931,
+      "confidence": 0.978,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 6067,
+      "end": 6307,
+      "confidence": 0.91,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 6455,
+      "end": 6699,
+      "confidence": 0.97,
+      "word_is_final": true
+     },
+     {
+      "text": "three",
+      "start": 6849,
+      "end": 7033,
+      "confidence": 0.885,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 7146,
+      "end": 7318,
+      "confidence": 0.881,
+      "word_is_final": true
+     },
+     {
+      "text": "six",
+      "start": 7425,
+      "end": 7682,
+      "confidence": 0.933,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 7840,
+      "end": 8102,
+      "confidence": 0.891,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 8263,
+      "end": 8450,
+      "confidence": 0.91,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 8566,
+      "end": 8690,
+      "confidence": 0.917,
+      "word_is_final": true
+     },
+     {
+      "text": "six",
+      "start": 8766,
+      "end": 8947,
+      "confidence": 0.947,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 9058,
+      "end": 9302,
+      "confidence": 0.9,
+      "word_is_final": false
+     },
+     {
+      "text": "nine",
+      "start": 9452,
+      "end": 9578,
+      "confidence": 0.983,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 9954,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "eight seven three seven nine eight three nine six oh one oh six eight nine six",
+    "end_of_turn_confidence": 0.141,
+    "words": [
+     {
+      "text": "eight",
+      "start": 4745,
+      "end": 4976,
+      "confidence": 0.966,
+      "word_is_final": true
+     },
+     {
+      "text": "seven",
+      "start": 5118,
+      "end": 5361,
+      "confidence": 0.989,
+      "word_is_final": true
+     },
+     {
+      "text": "three",
+      "start": 5510,
+      "end": 5634,
+      "confidence": 0.902,
+      "word_is_final": true
+     },
+     {
+      "text": "seven",
+      "start": 5710,
+      "end": 5931,
+      "confidence": 0.978,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 6067,
+      "end": 6307,
+      "confidence": 0.91,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 6455,
+      "end": 6699,
+      "confidence": 0.97,
+      "word_is_final": true
+     },
+     {
+      "text": "three",
+      "start": 6849,
+      "end": 7033,
+      "confidence": 0.885,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 7146,
+      "end": 7318,
+      "confidence": 0.881,
+      "word_is_final": true
+     },
+     {
+      "text": "six",
+      "start": 7425,
+      "end": 7682,
+      "confidence": 0.933,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 7840,
+      "end": 8102,
+      "confidence": 0.891,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 8263,
+      "end": 8450,
+      "confidence": 0.91,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 8566,
+      "end": 8690,
+      "confidence": 0.917,
+      "word_is_final": true
+     },
+     {
+      "text": "six",
+      "start": 8766,
+      "end": 8947,
+      "confidence": 0.947,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 9058,
+      "end": 9302,
+      "confidence": 0.9,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 9452,
+      "end": 9578,
+      "confidence": 0.983,
+      "word_is_final": false
+     },
+     {
+      "text": "six",
+      "start": 9656,
+      "end": 9864,
+      "confidence": 0.94,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 10560,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 2,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "that",
+    "end_of_turn_confidence": 0.158,
+    "words": [
+     {
+      "text": "that",
+      "start": 10384,
+      "end": 10470,
+      "confidence": 0.645,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 11317,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 2,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "that is a big",
+    "end_of_turn_confidence": 0.062,
+    "words": [
+     {
+      "text": "that",
+      "start": 10384,
+      "end": 10470,
+      "confidence": 0.645,
+      "word_is_final": true
+     },
+     {
+      "text": "is",
+      "start": 10523,
+      "end": 10646,
+      "confidence": 0.958,
+      "word_is_final": true
+     },
+     {
+      "text": "a",
+      "start": 10722,
+      "end": 10864,
+      "confidence": 0.865,
+      "word_is_final": false
+     },
+     {
+      "text": "big",
+      "start": 10952,
+      "end": 11227,
+      "confidence": 0.808,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 11520,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": true,
+    "transcript": "eight seven three seven nine eight three nine six oh one oh six eight nine six",
+    "end_of_turn_confidence": 0.927,
+    "words": [
+     {
+      "text": "eight",
+      "start": 4745,
+      "end": 4976,
+      "confidence": 0.966,
+      "word_is_final": true
+     },
+     {
+      "text": "seven",
+      "start": 5118,
+      "end": 5361,
+      "confidence": 0.989,
+      "word_is_final": true
+     },
+     {
+      "text": "three",
+      "start": 5510,
+      "end": 5634,
+      "confidence": 0.902,
+      "word_is_final": true
+     },
+     {
+      "text": "seven",
+      "start": 5710,
+      "end": 5931,
+      "confidence": 0.978,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 6067,
+      "end": 6307,
+      "confidence": 0.91,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 6455,
+      "end": 6699,
+      "confidence": 0.97,
+      "word_is_final": true
+     },
+     {
+      "text": "three",
+      "start": 6849,
+      "end": 7033,
+      "confidence": 0.885,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 7146,
+      "end": 7318,
+      "confidence": 0.881,
+      "word_is_final": true
+     },
+     {
+      "text": "six",
+      "start": 7425,
+      "end": 7682,
+      "confidence": 0.933,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 7840,
+      "end": 8102,
+      "confidence": 0.891,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 8263,
+      "end": 8450,
+      "confidence": 0.91,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 8566,
+      "end": 8690,
+      "confidence": 0.917,
+      "word_is_final": true
+     },
+     {
+      "text": "six",
+      "start": 8766,
+      "end": 8947,
+      "confidence": 0.947,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 9058,
+      "end": 9302,
+      "confidence": 0.9,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 9452,
+      "end": 9578,
+      "confidence": 0.983,
+      "word_is_final": true
+     },
+     {
+      "text": "six",
+      "start": 9656,
+      "end": 9864,
+      "confidence": 0.94,
+      "word_is_final": true
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 12388,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 2,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "that is a big jump on last",
+    "end_of_turn_confidence": 0.109,
+    "words": [
+     {
+      "text": "that",
+      "start": 10384,
+      "end": 10470,
+      "confidence": 0.645,
+      "word_is_final": true
+     },
+     {
+      "text": "is",
+      "start": 10523,
+      "end": 10646,
+      "confidence": 0.958,
+      "word_is_final": true
+     },
+     {
+      "text": "a",
+      "start": 10722,
+      "end": 10864,
+      "confidence": 0.865,
+      "word_is_final": true
+     },
+     {
+      "text": "big",
+      "start": 10952,
+      "end": 11227,
+      "confidence": 0.808,
+      "word_is_final": true
+     },
+     {
+      "text": "jump",
+      "start": 11397,
+      "end": 11700,
+      "confidence": 0.573,
+      "word_is_final": true
+     },
+     {
+      "text": "on",
+      "start": 11887,
+      "end": 11992,
+      "confidence": 0.795,
+      "word_is_final": false
+     },
+     {
+      "text": "last",
+      "start": 12057,
+      "end": 12298,
+      "confidence": 0.98,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 13182,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 2,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "that is a big jump on last quarter is the",
+    "end_of_turn_confidence": 0.127,
+    "words": [
+     {
+      "text": "that",
+      "start": 10384,
+      "end": 10470,
+      "confidence": 0.645,
+      "word_is_final": true
+     },
+     {
+      "text": "is",
+      "start": 10523,
+      "end": 10646,
+      "confidence": 0.958,
+      "word_is_final": true
+     },
+     {
+      "text": "a",
+      "start": 10722,
+      "end": 10864,
+      "confidence": 0.865,
+      "word_is_final": true
+     },
+     {
+      "text": "big",
+      "start": 10952,
+      "end": 11227,
+      "confidence": 0.808,
+      "word_is_final": true
+     },
+     {
+      "text": "jump",
+      "start": 11397,
+      "end": 11700,
+      "confidence": 0.573,
+      "word_is_final": true
+     },
+     {
+      "text": "on",
+      "start": 11887,
+      "end": 11992,
+      "confidence": 0.795,
+      "word_is_final": true
+     },
+     {
+      "text": "last",
+      "start": 12057,
+      "end": 12298,
+      "confidence": 0.98,
+      "word_is_final": true
+     },
+     {
+      "text": "quarter",
+      "start": 12447,
+      "end": 12670,
+      "confidence": 0.655,
+      "word_is_final": true
+     },
+     {
+      "text": "is",
+      "start": 12808,
+      "end": 12928,
+      "confidence": 0.986,
+      "word_is_final": false
+     },
+     {
+      "text": "the",
+      "start": 13002,
+      "end": 13092,
+      "confidence": 0.96,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 14190,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 2,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "that is a big jump on last quarter is the heating on again",
+    "end_of_turn_confidence": 0.257,
+    "words": [
+     {
+      "text": "that",
+      "start": 10384,
+      "end": 10470,
+      "confidence": 0.645,
+      "word_is_final": true
+     },
+     {
+      "text": "is",
+      "start": 10523,
+      "end": 10646,
+      "confidence": 0.958,
+      "word_is_final": true
+     },
+     {
+      "text": "a",
+      "start": 10722,
+      "end": 10864,
+      "confidence": 0.865,
+      "word_is_final": true
+     },
+     {
+      "text": "big",
+      "start": 10952,
+      "end": 11227,
+      "confidence": 0.808,
+      "word_is_final": true
+     },
+     {
+      "text": "jump",
+      "start": 11397,
+      "end": 11700,
+      "confidence": 0.573,
+      "word_is_final": true
+     },
+     {
+      "text": "on",
+      "start": 11887,
+      "end": 11992,
+      "confidence": 0.795,
+      "word_is_final": true
+     },
+     {
+      "text": "last",
+      "start": 12057,
+      "end": 12298,
+      "confidence": 0.98,
+      "word_is_final": true
+     },
+     {
+      "text": "quarter",
+      "start": 12447,
+      "end": 12670,
+      "confidence": 0.655,
+      "word_is_final": true
+     },
+     {
+      "text": "is",
+      "start": 12808,
+      "end": 12928,
+      "confidence": 0.986,
+      "word_is_final": true
+     },
+     {
+      "text": "the",
+      "start": 13002,
+      "end": 13092,
+      "confidence": 0.96,
+      "word_is_final": true
+     },
+     {
+      "text": "heating",
+      "start": 13148,
+      "end": 13464,
+      "confidence": 0.892,
+      "word_is_final": true
+     },
+     {
+      "text": "on",
+      "start": 13659,
+      "end": 13752,
+      "confidence": 0.895,
+      "word_is_final": false
+     },
+     {
+      "text": "again",
+      "start": 13810,
+      "end": 14100,
+      "confidence": 0.719,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 15756,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 2,
+    "turn_is_formatted": false,
+    "end_of_turn": true,
+    "transcript": "that is a big jump on last quarter is the heating on again",
+    "end_of_turn_confidence": 0.901,
+    "words": [
+     {
+      "text": "that",
+      "start": 10384,
+      "end": 10470,
+      "confidence": 0.645,
+      "word_is_final": true
+     },
+     {
+      "text": "is",
+      "start": 10523,
+      "end": 10646,
+      "confidence": 0.958,
+      "word_is_final": true
+     },
+     {
+      "text": "a",
+      "start": 10722,
+      "end": 10864,
+      "confidence": 0.865,
+      "word_is_final": true
+     },
+     {
+      "text": "big",
+      "start": 10952,
+      "end": 11227,
+      "confidence": 0.808,
+      "word_is_final": true
+     },
+     {
+      "text": "jump",
+      "start": 11397,
+      "end": 11700,
+      "confidence": 0.573,
+      "word_is_final": true
+     },
+     {
+      "text": "on",
+      "start": 11887,
+      "end": 11992,
+      "confidence": 0.795,
+      "word_is_final": true
+     },
+     {
+      "text": "last",
+      "start": 12057,
+      "end": 12298,
+      "confidence": 0.98,
+      "word_is_final": true
+     },
+     {
+      "text": "quarter",
+      "start": 12447,
+      "end": 12670,
+      "confidence": 0.655,
+      "word_is_final": true
+     },
+     {
+      "text": "is",
+      "start": 12808,
+      "end": 12928,
+      "confidence": 0.986,
+      "word_is_final": true
+     },
+     {
+      "text": "the",
+      "start": 13002,
+      "end": 13092,
+      "confidence": 0.96,
+      "word_is_final": true
+     },
+     {
+      "text": "heating",
+      "start": 13148,
+      "end": 13464,
+      "confidence": 0.892,
+      "word_is_final": true
+     },
+     {
+      "text": "on",
+      "start": 13659,
+      "end": 13752,
+      "confidence": 0.895,
+      "word_is_final": true
+     },
+     {
+      "text": "again",
+      "start": 13810,
+      "end": 14100,
+      "confidence": 0.719,
+      "word_is_final": true
+     }
+    ]
+   }
+  }
+ ]
+}

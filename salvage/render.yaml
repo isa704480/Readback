@@ -1,0 +1,137 @@
+# Closeout — Render Blueprint
+#
+# Deploys the FastAPI API and its Postgres database. The web front end is NOT
+# here; it goes to Vercel (see web/vercel.json and docs/DEPLOY.md).
+#
+# ---------------------------------------------------------------------------
+# WHY THE API MUST BE PUBLIC
+# ---------------------------------------------------------------------------
+# This is not a normal "backend + SPA" split. The AssemblyAI Voice Agent runs
+# on AssemblyAI's infrastructure, and it calls our server-side tools
+# (POST /api/tools/{tool_name}) over the open internet — outbound from them,
+# inbound to us. The browser is not in that path.
+#
+# So CLOSEOUT_PUBLIC_BASE_URL must be an HTTPS origin AssemblyAI can resolve
+# and reach. http://localhost:8000 can never work in production: it resolves,
+# on their machines, to their own loopback. Every tool call would fail and the
+# agent would talk to a technician it cannot record anything for.
+#
+# You cannot fill this in before the first deploy, because Render assigns the
+# hostname. Deploy once, copy the service URL, set the value, redeploy. The
+# placeholder below is deliberately obvious so a wrong value is visible.
+#
+# ---------------------------------------------------------------------------
+# FREE TIER SLEEPS — READ THIS BEFORE A DEMO
+# ---------------------------------------------------------------------------
+# Render's free web service instances spin down after ~15 minutes without
+# traffic. The next request wakes the container: cold start is roughly 50
+# seconds. For a judge or a demo audience that is indistinguishable from a
+# broken app — they click "Start", nothing happens, they leave.
+#
+# What to do, cheapest first:
+#   1. Warm it by hand. Two minutes before anyone looks, run:
+#        curl https://<your-service>.onrender.com/health
+#      Wait for {"status":"ok"}. The service now stays up for ~15 min of idle.
+#   2. Keep it warm with an external pinger. Any free uptime monitor hitting
+#      /health every 10 minutes holds it open. Do NOT use Render Cron for this
+#      on the free plan — cron jobs are a paid feature, and a service pinging
+#      itself does not reset the idle timer reliably.
+#   3. Pay. `plan: starter` ($7/mo at time of writing) never sleeps. If the
+#      demo matters more than the $7, this is the honest answer — change the
+#      `plan:` line below and redeploy.
+#
+# The free Postgres instance also expires (currently 30 days after creation),
+# after which the database is deleted, not just stopped. For anything past a
+# hackathon weekend, upgrade the database plan or move it to Neon.
+
+databases:
+  - name: closeout-db
+    databaseName: closeout
+    user: closeout
+    plan: free
+    # Render hands out a connection string with a `postgres://` scheme.
+    # SQLAlchemy 2 rejects that scheme outright, and a bare `postgresql://`
+    # would resolve to the psycopg2 driver we do not install. backend/app/db.py
+    # normalises both to `postgresql+psycopg://` — see normalise_database_url.
+
+services:
+  - type: web
+    name: closeout-api
+    runtime: python
+    plan: free
+    region: oregon
+    # The repo root holds render.yaml; the app lives one level down.
+    rootDir: backend
+    buildCommand: "pip install --upgrade pip && pip install -r requirements.txt"
+    # 0.0.0.0 so the container accepts traffic from Render's proxy, and $PORT
+    # because Render assigns the port — a hardcoded 8000 gets no traffic.
+    # Single worker on purpose: the in-process rate-limit counter in main.py
+    # (`_rate`) is per-process, so extra workers would each get their own
+    # budget and multiply the effective limit. Raise workers only after that
+    # counter moves to the database or Redis.
+    startCommand: "python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1"
+    healthCheckPath: /health
+    autoDeploy: true
+
+    envVars:
+      # --- secrets: set by hand in the Render dashboard, never committed ---
+      # sync:false means "Render will prompt for this and store it; it is not
+      # in this file and not in git." Both of these are real secrets.
+      - key: ASSEMBLYAI_API_KEY
+        sync: false
+      - key: CLOSEOUT_TOOL_SECRET
+        # Signing key for the short-lived tool tokens AND the office session
+        # tokens. Generate with:
+        #   python -c "import secrets; print(secrets.token_urlsafe(48))"
+        # The app refuses to mint tokens while this is unset or "change-me",
+        # so /api/session/start returns {"error":"misconfigured"} until you
+        # set it. That failure is deliberate — an unsigned tool token would
+        # let anyone write to any report.
+        sync: false
+
+      # --- database, wired from the managed instance above ---
+      - key: DATABASE_URL
+        fromDatabase:
+          name: closeout-db
+          property: connectionString
+
+      # --- the public origin AssemblyAI calls back into ---
+      # PLACEHOLDER. After the first deploy, replace with the real service URL
+      # (Render dashboard -> closeout-api -> the URL at the top of the page),
+      # commit, and redeploy. No trailing slash.
+      - key: CLOSEOUT_PUBLIC_BASE_URL
+        value: https://closeout-api.onrender.com
+
+      # --- CORS: the browser origins allowed to call this API ---
+      # Comma-separated, no spaces after commas needed (config.py strips them).
+      # Add your Vercel production domain here after the front end deploys.
+      # Vercel preview deployments get a new hostname per commit and will NOT
+      # match this list — add them explicitly if you need to demo from one.
+      - key: CORS_ORIGINS
+        value: https://closeout.vercel.app,http://localhost:5173
+
+      # --- voice agent configuration ---
+      - key: CLOSEOUT_AGENT_VOICE
+        value: alba
+      - key: CLOSEOUT_LLM_MODEL
+        value: claude-sonnet-4-6
+      - key: CLOSEOUT_LLM_BASE_URL
+        value: https://llm-gateway.assemblyai.com/v1
+
+      # --- limits, to protect hackathon credits ---
+      # A runaway session is billed by the second. 420s is seven minutes, which
+      # is long for a closeout and short enough that a forgotten open tab costs
+      # pennies rather than the whole credit balance.
+      - key: CLOSEOUT_MAX_SESSION_SECONDS
+        value: "420"
+      - key: CLOSEOUT_MAX_SESSIONS_PER_DAY
+        value: "300"
+      - key: CLOSEOUT_TOOL_CALLS_PER_MINUTE
+        value: "40"
+
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      # Unbuffered stdout, so uvicorn's logs reach the Render log tail as they
+      # happen rather than in blocks when the buffer flushes.
+      - key: PYTHONUNBUFFERED
+        value: "1"

@@ -1,0 +1,232 @@
+[
+  {
+    "case": "baseline",
+    "verdict": "accepted (not fatal)",
+    "frames": [
+      {
+        "type": "Begin",
+        "id": "be7cd596-50ff-4966-b2c5-1251e69baf3f",
+        "expires_at": 1788286975,
+        "configuration": {
+          "model": "universal-3-5-pro",
+          "mode": "balanced",
+          "api_version": "2025-05-12",
+          "speaker_labels": false,
+          "redact_pii": false,
+          "filter_profanity": false,
+          "domain": null,
+          "voice_focus": null
+        }
+      },
+      {
+        "type": "Termination",
+        "audio_duration_seconds": 1,
+        "session_duration_seconds": 0
+      }
+    ]
+  },
+  {
+    "case": "keyterm 60 chars",
+    "verdict": "accepted (not fatal)",
+    "frames": [
+      {
+        "type": "Begin",
+        "id": "0e2b8146-66d3-4417-9707-ed39139c805d",
+        "expires_at": 1788286983,
+        "configuration": {
+          "model": "universal-3-5-pro",
+          "mode": "balanced",
+          "api_version": "2025-05-12",
+          "speaker_labels": false,
+          "redact_pii": false,
+          "filter_profanity": false,
+          "domain": null,
+          "voice_focus": null
+        }
+      },
+      {
+        "type": "Termination",
+        "audio_duration_seconds": 1,
+        "session_duration_seconds": 0
+      }
+    ]
+  },
+  {
+    "case": "keyterm 200 chars",
+    "verdict": "accepted (not fatal)",
+    "frames": [
+      {
+        "type": "Begin",
+        "id": "4c344986-3918-4942-9ebc-c9552fa07da2",
+        "expires_at": 1788286991,
+        "configuration": {
+          "model": "universal-3-5-pro",
+          "mode": "balanced",
+          "api_version": "2025-05-12",
+          "speaker_labels": false,
+          "redact_pii": false,
+          "filter_profanity": false,
+          "domain": null,
+          "voice_focus": null
+        }
+      },
+      {
+        "type": "Termination",
+        "audio_duration_seconds": 1,
+        "session_duration_seconds": 0
+      }
+    ]
+  },
+  {
+    "case": "keyterms exactly 100",
+    "verdict": "accepted (not fatal)",
+    "frames": [
+      {
+        "type": "Begin",
+        "id": "60c1d02e-2313-4b03-8971-d4b0a5ba204d",
+        "expires_at": 1788286999,
+        "configuration": {
+          "model": "universal-3-5-pro",
+          "mode": "balanced",
+          "api_version": "2025-05-12",
+          "speaker_labels": false,
+          "redact_pii": false,
+          "filter_profanity": false,
+          "domain": null,
+          "voice_focus": null
+        }
+      },
+      {
+        "type": "Termination",
+        "audio_duration_seconds": 1,
+        "session_duration_seconds": 0
+      }
+    ]
+  },
+  {
+    "case": "prompt 1700 chars",
+    "verdict": "accepted (not fatal)",
+    "frames": [
+      {
+        "type": "Begin",
+        "id": "5aac05ca-0159-4ecf-a601-17e524f886e0",
+        "expires_at": 1788287007,
+        "configuration": {
+          "model": "universal-3-5-pro",
+          "mode": "balanced",
+          "api_version": "2025-05-12",
+          "speaker_labels": false,
+          "redact_pii": false,
+          "filter_profanity": false,
+          "domain": null,
+          "voice_focus": null
+        }
+      },
+      {
+        "type": "Termination",
+        "audio_duration_seconds": 1,
+        "session_duration_seconds": 0
+      }
+    ]
+  },
+  {
+    "case": "prompt 1900 chars",
+    "verdict": "CLOSED 3006",
+    "frames": [
+      {
+        "type": "Error",
+        "error_code": 3006,
+        "error": "User Input Validation Error: Invalid 'prompt': Value error, prompt exceeds maximum length of 1750 characters (got 1900)"
+      }
+    ]
+  },
+  {
+    "case": "voice_focus=near-field",
+    "verdict": "accepted (not fatal)",
+    "frames": [
+      {
+        "type": "Begin",
+        "id": "d4b48f89-f15b-47e1-99ea-e24fb8e98042",
+        "expires_at": 1788287026,
+        "configuration": {
+          "model": "universal-3-5-pro",
+          "mode": "balanced",
+          "api_version": "2025-05-12",
+          "speaker_labels": false,
+          "redact_pii": false,
+          "filter_profanity": false,
+          "domain": null,
+          "voice_focus": "near-field"
+        }
+      },
+      {
+        "type": "Termination",
+        "audio_duration_seconds": 1,
+        "session_duration_seconds": 0
+      }
+    ]
+  },
+  {
+    "case": "speaker_labels=true",
+    "verdict": "CLOSED 1008",
+    "frames": [
+      {
+        "type": "Error",
+        "error_code": 1008,
+        "error": "Unauthorized Connection: Too many concurrent sessions"
+      }
+    ]
+  },
+  {
+    "case": "domain=medical-v1",
+    "verdict": "accepted (not fatal)",
+    "frames": [
+      {
+        "type": "Begin",
+        "id": "9535f5f6-b86a-4c79-bde6-e59a2ce0bfa8",
+        "expires_at": 1788287042,
+        "configuration": {
+          "model": "universal-3-5-pro",
+          "mode": "balanced",
+          "api_version": "2025-05-12",
+          "speaker_labels": false,
+          "redact_pii": false,
+          "filter_profanity": false,
+          "domain": "medical-v1",
+          "voice_focus": null
+        }
+      },
+      {
+        "type": "Termination",
+        "audio_duration_seconds": 1,
+        "session_duration_seconds": 0
+      }
+    ]
+  },
+  {
+    "case": "filter_profanity=true",
+    "verdict": "accepted (not fatal)",
+    "frames": [
+      {
+        "type": "Begin",
+        "id": "2fa4fbd2-f4cd-446b-bb03-16f87a9658be",
+        "expires_at": 1788287050,
+        "configuration": {
+          "model": "universal-3-5-pro",
+          "mode": "balanced",
+          "api_version": "2025-05-12",
+          "speaker_labels": false,
+          "redact_pii": false,
+          "filter_profanity": true,
+          "domain": null,
+          "voice_focus": null
+        }
+      },
+      {
+        "type": "Termination",
+        "audio_duration_seconds": 1,
+        "session_duration_seconds": 0
+      }
+    ]
+  }
+]

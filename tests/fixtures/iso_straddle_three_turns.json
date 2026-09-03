@@ -1,0 +1,1330 @@
+{
+ "schema": "readback.fixture/1",
+ "name": "iso_straddle_three_turns",
+ "description": "The same container number spread over three turns, broken by a 1.9 s hesitation inside the code. Unarmed, the owner code's K is heard as A; armed with the MSKU keyterm from the next turn, it is not.",
+ "notes": [
+  "Both readings pass the check digit: MSAU and MSKU differ by 11 at weight 2^2, so the sum is unchanged mod 11 (docs/FINDINGS.md 4). Nothing arithmetic separates them -- which is the case for arming, and the case for asking.",
+  "update_configuration issued during turn 0 must not change turn 0. The variants make that a visible difference rather than a claim."
+ ],
+ "truth": {
+  "format": "iso6346",
+  "value": "MSKU4158005",
+  "spoken": "em ess kay you four one five eight zero zero five"
+ },
+ "expect": {
+  "contains_identifier": true,
+  "normalised_unarmed": "MSAU4158005",
+  "normalised_armed": "MSKU4158005",
+  "arming_keyterm": "MSKU",
+  "arming_effective_from_turn": 1,
+  "checksum_valid_as_heard": true,
+  "turns": 3,
+  "hesitation_after_turn": 0,
+  "solver_action_unarmed": "ASK_UNEXPLAINED",
+  "solver_top_unarmed": "MSAU4158005",
+  "ask_position_unarmed": 2,
+  "solver_action_armed": "ACCEPT",
+  "solver_top_armed": "MSKU4158005",
+  "trailing_noise_chars": 1
+ },
+ "frames": [
+  {
+   "emit_ms": 1237,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "right",
+    "end_of_turn_confidence": 0.292,
+    "words": [
+     {
+      "text": "right",
+      "start": 900,
+      "end": 1147,
+      "confidence": 0.905,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 1469,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "right so",
+    "end_of_turn_confidence": 0.021,
+    "words": [
+     {
+      "text": "right",
+      "start": 900,
+      "end": 1147,
+      "confidence": 0.905,
+      "word_is_final": false
+     },
+     {
+      "text": "so",
+      "start": 1299,
+      "end": 1379,
+      "confidence": 0.957,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 1641,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "right so the",
+    "end_of_turn_confidence": 0.195,
+    "words": [
+     {
+      "text": "right",
+      "start": 900,
+      "end": 1147,
+      "confidence": 0.905,
+      "word_is_final": true
+     },
+     {
+      "text": "so",
+      "start": 1299,
+      "end": 1379,
+      "confidence": 0.957,
+      "word_is_final": false
+     },
+     {
+      "text": "the",
+      "start": 1427,
+      "end": 1551,
+      "confidence": 0.882,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 1945,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "right so the container",
+    "end_of_turn_confidence": 0.241,
+    "words": [
+     {
+      "text": "right",
+      "start": 900,
+      "end": 1147,
+      "confidence": 0.905,
+      "word_is_final": true
+     },
+     {
+      "text": "so",
+      "start": 1299,
+      "end": 1379,
+      "confidence": 0.957,
+      "word_is_final": true
+     },
+     {
+      "text": "the",
+      "start": 1427,
+      "end": 1551,
+      "confidence": 0.882,
+      "word_is_final": false
+     },
+     {
+      "text": "container",
+      "start": 1627,
+      "end": 1855,
+      "confidence": 0.96,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 2376,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "right so the container number",
+    "end_of_turn_confidence": 0.061,
+    "words": [
+     {
+      "text": "right",
+      "start": 900,
+      "end": 1147,
+      "confidence": 0.905,
+      "word_is_final": true
+     },
+     {
+      "text": "so",
+      "start": 1299,
+      "end": 1379,
+      "confidence": 0.957,
+      "word_is_final": true
+     },
+     {
+      "text": "the",
+      "start": 1427,
+      "end": 1551,
+      "confidence": 0.882,
+      "word_is_final": true
+     },
+     {
+      "text": "container",
+      "start": 1627,
+      "end": 1855,
+      "confidence": 0.96,
+      "word_is_final": false
+     },
+     {
+      "text": "number",
+      "start": 1996,
+      "end": 2286,
+      "confidence": 0.907,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 2651,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "right so the container number is",
+    "end_of_turn_confidence": 0.185,
+    "words": [
+     {
+      "text": "right",
+      "start": 900,
+      "end": 1147,
+      "confidence": 0.905,
+      "word_is_final": true
+     },
+     {
+      "text": "so",
+      "start": 1299,
+      "end": 1379,
+      "confidence": 0.957,
+      "word_is_final": true
+     },
+     {
+      "text": "the",
+      "start": 1427,
+      "end": 1551,
+      "confidence": 0.882,
+      "word_is_final": true
+     },
+     {
+      "text": "container",
+      "start": 1627,
+      "end": 1855,
+      "confidence": 0.96,
+      "word_is_final": true
+     },
+     {
+      "text": "number",
+      "start": 1996,
+      "end": 2286,
+      "confidence": 0.907,
+      "word_is_final": false
+     },
+     {
+      "text": "is",
+      "start": 2464,
+      "end": 2561,
+      "confidence": 0.959,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 2953,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "right so the container number is em",
+    "end_of_turn_confidence": 0.294,
+    "words": [
+     {
+      "text": "right",
+      "start": 900,
+      "end": 1147,
+      "confidence": 0.905,
+      "word_is_final": true
+     },
+     {
+      "text": "so",
+      "start": 1299,
+      "end": 1379,
+      "confidence": 0.957,
+      "word_is_final": true
+     },
+     {
+      "text": "the",
+      "start": 1427,
+      "end": 1551,
+      "confidence": 0.882,
+      "word_is_final": true
+     },
+     {
+      "text": "container",
+      "start": 1627,
+      "end": 1855,
+      "confidence": 0.96,
+      "word_is_final": true
+     },
+     {
+      "text": "number",
+      "start": 1996,
+      "end": 2286,
+      "confidence": 0.907,
+      "word_is_final": true
+     },
+     {
+      "text": "is",
+      "start": 2464,
+      "end": 2561,
+      "confidence": 0.959,
+      "word_is_final": false
+     },
+     {
+      "text": "em",
+      "start": 2622,
+      "end": 2863,
+      "confidence": 0.95,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 3349,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "right so the container number is em ess",
+    "end_of_turn_confidence": 0.096,
+    "words": [
+     {
+      "text": "right",
+      "start": 900,
+      "end": 1147,
+      "confidence": 0.905,
+      "word_is_final": true
+     },
+     {
+      "text": "so",
+      "start": 1299,
+      "end": 1379,
+      "confidence": 0.957,
+      "word_is_final": true
+     },
+     {
+      "text": "the",
+      "start": 1427,
+      "end": 1551,
+      "confidence": 0.882,
+      "word_is_final": true
+     },
+     {
+      "text": "container",
+      "start": 1627,
+      "end": 1855,
+      "confidence": 0.96,
+      "word_is_final": true
+     },
+     {
+      "text": "number",
+      "start": 1996,
+      "end": 2286,
+      "confidence": 0.907,
+      "word_is_final": true
+     },
+     {
+      "text": "is",
+      "start": 2464,
+      "end": 2561,
+      "confidence": 0.959,
+      "word_is_final": true
+     },
+     {
+      "text": "em",
+      "start": 2622,
+      "end": 2863,
+      "confidence": 0.95,
+      "word_is_final": false
+     },
+     {
+      "text": "ess",
+      "start": 3011,
+      "end": 3259,
+      "confidence": 0.96,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 4915,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": true,
+    "transcript": "right so the container number is em ess",
+    "end_of_turn_confidence": 0.821,
+    "words": [
+     {
+      "text": "right",
+      "start": 900,
+      "end": 1147,
+      "confidence": 0.905,
+      "word_is_final": true
+     },
+     {
+      "text": "so",
+      "start": 1299,
+      "end": 1379,
+      "confidence": 0.957,
+      "word_is_final": true
+     },
+     {
+      "text": "the",
+      "start": 1427,
+      "end": 1551,
+      "confidence": 0.882,
+      "word_is_final": true
+     },
+     {
+      "text": "container",
+      "start": 1627,
+      "end": 1855,
+      "confidence": 0.96,
+      "word_is_final": true
+     },
+     {
+      "text": "number",
+      "start": 1996,
+      "end": 2286,
+      "confidence": 0.907,
+      "word_is_final": true
+     },
+     {
+      "text": "is",
+      "start": 2464,
+      "end": 2561,
+      "confidence": 0.959,
+      "word_is_final": true
+     },
+     {
+      "text": "em",
+      "start": 2622,
+      "end": 2863,
+      "confidence": 0.95,
+      "word_is_final": true
+     },
+     {
+      "text": "ess",
+      "start": 3011,
+      "end": 3259,
+      "confidence": 0.96,
+      "word_is_final": true
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 5483,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "uh",
+    "end_of_turn_confidence": 0.143,
+    "words": [
+     {
+      "text": "uh",
+      "start": 5159,
+      "end": 5393,
+      "confidence": 0.893,
+      "word_is_final": false
+     }
+    ]
+   },
+   "forbids_keyterm": "MSKU"
+  },
+  {
+   "emit_ms": 5483,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "uh",
+    "end_of_turn_confidence": 0.295,
+    "words": [
+     {
+      "text": "uh",
+      "start": 5159,
+      "end": 5393,
+      "confidence": 0.893,
+      "word_is_final": false
+     }
+    ]
+   },
+   "requires_keyterm": "MSKU"
+  },
+  {
+   "emit_ms": 5830,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "uh ay",
+    "end_of_turn_confidence": 0.218,
+    "words": [
+     {
+      "text": "uh",
+      "start": 5159,
+      "end": 5393,
+      "confidence": 0.893,
+      "word_is_final": false
+     },
+     {
+      "text": "ay",
+      "start": 5537,
+      "end": 5740,
+      "confidence": 0.46,
+      "word_is_final": false
+     }
+    ]
+   },
+   "forbids_keyterm": "MSKU"
+  },
+  {
+   "emit_ms": 5830,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "uh kay",
+    "end_of_turn_confidence": 0.035,
+    "words": [
+     {
+      "text": "uh",
+      "start": 5159,
+      "end": 5393,
+      "confidence": 0.893,
+      "word_is_final": false
+     },
+     {
+      "text": "kay",
+      "start": 5537,
+      "end": 5740,
+      "confidence": 0.88,
+      "word_is_final": false
+     }
+    ]
+   },
+   "requires_keyterm": "MSKU"
+  },
+  {
+   "emit_ms": 6222,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "uh ay you",
+    "end_of_turn_confidence": 0.234,
+    "words": [
+     {
+      "text": "uh",
+      "start": 5159,
+      "end": 5393,
+      "confidence": 0.893,
+      "word_is_final": true
+     },
+     {
+      "text": "ay",
+      "start": 5537,
+      "end": 5740,
+      "confidence": 0.46,
+      "word_is_final": false
+     },
+     {
+      "text": "you",
+      "start": 5865,
+      "end": 6132,
+      "confidence": 0.941,
+      "word_is_final": false
+     }
+    ]
+   },
+   "forbids_keyterm": "MSKU"
+  },
+  {
+   "emit_ms": 6222,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "uh kay you",
+    "end_of_turn_confidence": 0.071,
+    "words": [
+     {
+      "text": "uh",
+      "start": 5159,
+      "end": 5393,
+      "confidence": 0.893,
+      "word_is_final": true
+     },
+     {
+      "text": "kay",
+      "start": 5537,
+      "end": 5740,
+      "confidence": 0.88,
+      "word_is_final": false
+     },
+     {
+      "text": "you",
+      "start": 5865,
+      "end": 6132,
+      "confidence": 0.941,
+      "word_is_final": false
+     }
+    ]
+   },
+   "requires_keyterm": "MSKU"
+  },
+  {
+   "emit_ms": 6538,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "uh ay you four",
+    "end_of_turn_confidence": 0.247,
+    "words": [
+     {
+      "text": "uh",
+      "start": 5159,
+      "end": 5393,
+      "confidence": 0.893,
+      "word_is_final": true
+     },
+     {
+      "text": "ay",
+      "start": 5537,
+      "end": 5740,
+      "confidence": 0.46,
+      "word_is_final": true
+     },
+     {
+      "text": "you",
+      "start": 5865,
+      "end": 6132,
+      "confidence": 0.941,
+      "word_is_final": false
+     },
+     {
+      "text": "four",
+      "start": 6296,
+      "end": 6448,
+      "confidence": 0.913,
+      "word_is_final": false
+     }
+    ]
+   },
+   "forbids_keyterm": "MSKU"
+  },
+  {
+   "emit_ms": 6538,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "uh kay you four",
+    "end_of_turn_confidence": 0.298,
+    "words": [
+     {
+      "text": "uh",
+      "start": 5159,
+      "end": 5393,
+      "confidence": 0.893,
+      "word_is_final": true
+     },
+     {
+      "text": "kay",
+      "start": 5537,
+      "end": 5740,
+      "confidence": 0.88,
+      "word_is_final": true
+     },
+     {
+      "text": "you",
+      "start": 5865,
+      "end": 6132,
+      "confidence": 0.941,
+      "word_is_final": false
+     },
+     {
+      "text": "four",
+      "start": 6296,
+      "end": 6448,
+      "confidence": 0.913,
+      "word_is_final": false
+     }
+    ]
+   },
+   "requires_keyterm": "MSKU"
+  },
+  {
+   "emit_ms": 6883,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "uh ay you four one",
+    "end_of_turn_confidence": 0.249,
+    "words": [
+     {
+      "text": "uh",
+      "start": 5159,
+      "end": 5393,
+      "confidence": 0.893,
+      "word_is_final": true
+     },
+     {
+      "text": "ay",
+      "start": 5537,
+      "end": 5740,
+      "confidence": 0.46,
+      "word_is_final": true
+     },
+     {
+      "text": "you",
+      "start": 5865,
+      "end": 6132,
+      "confidence": 0.941,
+      "word_is_final": true
+     },
+     {
+      "text": "four",
+      "start": 6296,
+      "end": 6448,
+      "confidence": 0.913,
+      "word_is_final": false
+     },
+     {
+      "text": "one",
+      "start": 6542,
+      "end": 6793,
+      "confidence": 0.895,
+      "word_is_final": false
+     }
+    ]
+   },
+   "forbids_keyterm": "MSKU"
+  },
+  {
+   "emit_ms": 6883,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "uh kay you four one",
+    "end_of_turn_confidence": 0.074,
+    "words": [
+     {
+      "text": "uh",
+      "start": 5159,
+      "end": 5393,
+      "confidence": 0.893,
+      "word_is_final": true
+     },
+     {
+      "text": "kay",
+      "start": 5537,
+      "end": 5740,
+      "confidence": 0.88,
+      "word_is_final": true
+     },
+     {
+      "text": "you",
+      "start": 5865,
+      "end": 6132,
+      "confidence": 0.941,
+      "word_is_final": true
+     },
+     {
+      "text": "four",
+      "start": 6296,
+      "end": 6448,
+      "confidence": 0.913,
+      "word_is_final": false
+     },
+     {
+      "text": "one",
+      "start": 6542,
+      "end": 6793,
+      "confidence": 0.895,
+      "word_is_final": false
+     }
+    ]
+   },
+   "requires_keyterm": "MSKU"
+  },
+  {
+   "emit_ms": 7775,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 2,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "five",
+    "end_of_turn_confidence": 0.162,
+    "words": [
+     {
+      "text": "five",
+      "start": 7493,
+      "end": 7685,
+      "confidence": 0.913,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 8154,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 2,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "five ate",
+    "end_of_turn_confidence": 0.276,
+    "words": [
+     {
+      "text": "five",
+      "start": 7493,
+      "end": 7685,
+      "confidence": 0.913,
+      "word_is_final": false
+     },
+     {
+      "text": "ate",
+      "start": 7803,
+      "end": 8064,
+      "confidence": 0.957,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 8449,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": true,
+    "transcript": "uh ay you four one",
+    "end_of_turn_confidence": 0.88,
+    "words": [
+     {
+      "text": "uh",
+      "start": 5159,
+      "end": 5393,
+      "confidence": 0.893,
+      "word_is_final": true
+     },
+     {
+      "text": "ay",
+      "start": 5537,
+      "end": 5740,
+      "confidence": 0.46,
+      "word_is_final": true
+     },
+     {
+      "text": "you",
+      "start": 5865,
+      "end": 6132,
+      "confidence": 0.941,
+      "word_is_final": true
+     },
+     {
+      "text": "four",
+      "start": 6296,
+      "end": 6448,
+      "confidence": 0.913,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 6542,
+      "end": 6793,
+      "confidence": 0.895,
+      "word_is_final": true
+     }
+    ]
+   },
+   "forbids_keyterm": "MSKU"
+  },
+  {
+   "emit_ms": 8449,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": true,
+    "transcript": "uh kay you four one",
+    "end_of_turn_confidence": 0.94,
+    "words": [
+     {
+      "text": "uh",
+      "start": 5159,
+      "end": 5393,
+      "confidence": 0.893,
+      "word_is_final": true
+     },
+     {
+      "text": "kay",
+      "start": 5537,
+      "end": 5740,
+      "confidence": 0.88,
+      "word_is_final": true
+     },
+     {
+      "text": "you",
+      "start": 5865,
+      "end": 6132,
+      "confidence": 0.941,
+      "word_is_final": true
+     },
+     {
+      "text": "four",
+      "start": 6296,
+      "end": 6448,
+      "confidence": 0.913,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 6542,
+      "end": 6793,
+      "confidence": 0.895,
+      "word_is_final": true
+     }
+    ]
+   },
+   "requires_keyterm": "MSKU"
+  },
+  {
+   "emit_ms": 8521,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 2,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "five ate zero",
+    "end_of_turn_confidence": 0.277,
+    "words": [
+     {
+      "text": "five",
+      "start": 7493,
+      "end": 7685,
+      "confidence": 0.913,
+      "word_is_final": true
+     },
+     {
+      "text": "ate",
+      "start": 7803,
+      "end": 8064,
+      "confidence": 0.957,
+      "word_is_final": false
+     },
+     {
+      "text": "zero",
+      "start": 8225,
+      "end": 8431,
+      "confidence": 0.984,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 8864,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 2,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "five eight zero zero",
+    "end_of_turn_confidence": 0.076,
+    "words": [
+     {
+      "text": "five",
+      "start": 7493,
+      "end": 7685,
+      "confidence": 0.913,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 7803,
+      "end": 8064,
+      "confidence": 0.957,
+      "word_is_final": true
+     },
+     {
+      "text": "zero",
+      "start": 8225,
+      "end": 8431,
+      "confidence": 0.984,
+      "word_is_final": false
+     },
+     {
+      "text": "zero",
+      "start": 8558,
+      "end": 8774,
+      "confidence": 0.889,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 9226,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 2,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "five eight zero zero five",
+    "end_of_turn_confidence": 0.294,
+    "words": [
+     {
+      "text": "five",
+      "start": 7493,
+      "end": 7685,
+      "confidence": 0.913,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 7803,
+      "end": 8064,
+      "confidence": 0.957,
+      "word_is_final": true
+     },
+     {
+      "text": "zero",
+      "start": 8225,
+      "end": 8431,
+      "confidence": 0.984,
+      "word_is_final": true
+     },
+     {
+      "text": "zero",
+      "start": 8558,
+      "end": 8774,
+      "confidence": 0.889,
+      "word_is_final": false
+     },
+     {
+      "text": "five",
+      "start": 8907,
+      "end": 9136,
+      "confidence": 0.936,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 9646,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 2,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "five eight zero zero five that's",
+    "end_of_turn_confidence": 0.286,
+    "words": [
+     {
+      "text": "five",
+      "start": 7493,
+      "end": 7685,
+      "confidence": 0.913,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 7803,
+      "end": 8064,
+      "confidence": 0.957,
+      "word_is_final": true
+     },
+     {
+      "text": "zero",
+      "start": 8225,
+      "end": 8431,
+      "confidence": 0.984,
+      "word_is_final": true
+     },
+     {
+      "text": "zero",
+      "start": 8558,
+      "end": 8774,
+      "confidence": 0.889,
+      "word_is_final": true
+     },
+     {
+      "text": "five",
+      "start": 8907,
+      "end": 9136,
+      "confidence": 0.936,
+      "word_is_final": false
+     },
+     {
+      "text": "that's",
+      "start": 9277,
+      "end": 9556,
+      "confidence": 0.886,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 9990,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 2,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "five eight zero zero five that's the",
+    "end_of_turn_confidence": 0.114,
+    "words": [
+     {
+      "text": "five",
+      "start": 7493,
+      "end": 7685,
+      "confidence": 0.913,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 7803,
+      "end": 8064,
+      "confidence": 0.957,
+      "word_is_final": true
+     },
+     {
+      "text": "zero",
+      "start": 8225,
+      "end": 8431,
+      "confidence": 0.984,
+      "word_is_final": true
+     },
+     {
+      "text": "zero",
+      "start": 8558,
+      "end": 8774,
+      "confidence": 0.889,
+      "word_is_final": true
+     },
+     {
+      "text": "five",
+      "start": 8907,
+      "end": 9136,
+      "confidence": 0.936,
+      "word_is_final": true
+     },
+     {
+      "text": "that's",
+      "start": 9277,
+      "end": 9556,
+      "confidence": 0.886,
+      "word_is_final": false
+     },
+     {
+      "text": "the",
+      "start": 9727,
+      "end": 9900,
+      "confidence": 0.91,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 10257,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 2,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "five eight zero zero five that's the one",
+    "end_of_turn_confidence": 0.178,
+    "words": [
+     {
+      "text": "five",
+      "start": 7493,
+      "end": 7685,
+      "confidence": 0.913,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 7803,
+      "end": 8064,
+      "confidence": 0.957,
+      "word_is_final": true
+     },
+     {
+      "text": "zero",
+      "start": 8225,
+      "end": 8431,
+      "confidence": 0.984,
+      "word_is_final": true
+     },
+     {
+      "text": "zero",
+      "start": 8558,
+      "end": 8774,
+      "confidence": 0.889,
+      "word_is_final": true
+     },
+     {
+      "text": "five",
+      "start": 8907,
+      "end": 9136,
+      "confidence": 0.936,
+      "word_is_final": true
+     },
+     {
+      "text": "that's",
+      "start": 9277,
+      "end": 9556,
+      "confidence": 0.886,
+      "word_is_final": true
+     },
+     {
+      "text": "the",
+      "start": 9727,
+      "end": 9900,
+      "confidence": 0.91,
+      "word_is_final": false
+     },
+     {
+      "text": "one",
+      "start": 10007,
+      "end": 10167,
+      "confidence": 0.916,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 11823,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 2,
+    "turn_is_formatted": false,
+    "end_of_turn": true,
+    "transcript": "five eight zero zero five that's the one",
+    "end_of_turn_confidence": 0.954,
+    "words": [
+     {
+      "text": "five",
+      "start": 7493,
+      "end": 7685,
+      "confidence": 0.913,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 7803,
+      "end": 8064,
+      "confidence": 0.957,
+      "word_is_final": true
+     },
+     {
+      "text": "zero",
+      "start": 8225,
+      "end": 8431,
+      "confidence": 0.984,
+      "word_is_final": true
+     },
+     {
+      "text": "zero",
+      "start": 8558,
+      "end": 8774,
+      "confidence": 0.889,
+      "word_is_final": true
+     },
+     {
+      "text": "five",
+      "start": 8907,
+      "end": 9136,
+      "confidence": 0.936,
+      "word_is_final": true
+     },
+     {
+      "text": "that's",
+      "start": 9277,
+      "end": 9556,
+      "confidence": 0.886,
+      "word_is_final": true
+     },
+     {
+      "text": "the",
+      "start": 9727,
+      "end": 9900,
+      "confidence": 0.91,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 10007,
+      "end": 10167,
+      "confidence": 0.916,
+      "word_is_final": true
+     }
+    ]
+   }
+  }
+ ]
+}

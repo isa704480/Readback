@@ -1,0 +1,939 @@
+/* Landing page.
+ *
+ * Every ratio in this file was computed with the WCAG 2.1 relative-luminance
+ * formula against the surface the colour actually sits on, not eyeballed:
+ *   B = --bg      #f5f5f7  the page ground
+ *   S = --surface #ffffff  panels, chips, the sweep table
+ * A token only appears as text where the number beside it clears 4.5:1, or 3:1
+ * where the text is large or the mark is a boundary rather than a word.
+ *
+ * The old warm legend (G #E3E5E0 / S #FAFAF8 / R #F1F2EF) and every ratio
+ * quoted against it are gone: those numbers described a palette this file no
+ * longer paints, and a stale measurement is worse than none.
+ */
+
+/* ════════════════════════════════════════════════════════════════════════════
+   THE WIDTH LADDER — one spine, two overhangs.
+
+   Measured before this existed: all six sections were 1076.0px wide. Six of
+   six. Meanwhile the page carried TWELVE different content widths (320, 358.7,
+   414.0, 458.2, 544.0, 586.5, 639.6, 696.5, 724.0, 868.3, 980.0, 1076.0) --
+   `--measure: 68ch` alone renders as three different columns, because the font
+   size under it changes. So the page had variety exactly where it reads as
+   noise (ragged prose widths) and uniformity exactly where it should have
+   carried the argument (section scale). Six equal blocks is a list.
+
+   The rule that replaces it:
+
+       Every sentence on this page lives in one 720px reading spine.
+       Exactly two objects on the whole page are allowed to cross it.
+
+   A column of text with two objects overhanging it IS an argument shape. The
+   two are `.hero__rack` and `.ratios`, both marked `.l-escape`; that is the
+   complete list and there is no third. Measured: the step-out opens at 765px of
+   client width (721 - 720 = 0.5px per side, the first pixel past the spine) and
+   reaches its full (1076 - 720) / 2 = 178.0px per side at 1120 client width,
+   where `--page-max` caps `.page`. Between those two it grows continuously.
+   The whole ladder therefore costs NO breakpoint: there is no width at which it
+   snaps, and below 765 it is simply not there.
+
+   NO FULL BLEED, AND NOT FOR TASTE. A section wider than `.page` needs
+   `margin-inline: calc(50% - 50vw)`. Measured in this browser: `100vw` = 1440
+   while `documentElement.clientWidth` = 1425 -- `vw` includes the 15px
+   scrollbar. Any `100vw` escape puts 15px of horizontal scroll on the page
+   body, which is a named non-negotiable. `100dvw` has the same defect and
+   there is no scrollbar-safe unit here without JS. So the ladder has two rungs.
+
+   SUBGRID, not negative margins. `CSS.supports('grid-template-columns',
+   'subgrid')` is true here. Subgrid means the escape cannot overflow: it is
+   placed on the parent's own track lines, so there is no arithmetic to get
+   wrong and no `vw` anywhere in this file. The @supports fallback keeps a
+   browser without it readable rather than broken.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* Sections breathe on the system's own rhythm rather than a hand-set sp-8/sp-9
+ * pair, so the landing page and the rest of the app step at the same interval.
+ * `.landing` sits inside <main class="shell__main page"> -- max-width 1120,
+ * padding-inline 22 -- so its own box is 1076 and the --max-grid cap only binds
+ * on a wider page than this app paints. It is declared anyway: the tier is the
+ * token's meaning, not this page's arithmetic. --max-read and --max-grid were
+ * both already in tokens.css with zero callers app-wide; this is the ladder
+ * they were declared for. */
+.landing {
+  width: 100%;
+  max-width: var(--max-grid); /* 1080 */
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns:
+    [wide-start] minmax(0, 1fr)
+    [read-start] minmax(0, var(--max-read)) /* 720 */
+    [read-end] minmax(0, 1fr) [wide-end];
+  row-gap: var(--section-gap);
+}
+
+/* Each section adopts the parent's columns rather than declaring its own, so
+ * there is exactly one place in this file where the ladder's widths are
+ * written down. `align-content: start` because subgrid rows stretch by default
+ * and a short section would otherwise pad itself out to fill the row. */
+.landing > section {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: wide-start / wide-end;
+  align-content: start;
+}
+
+/* Default: everything is spine. min-width:0 because a grid child's automatic
+ * minimum is its max-content width -- the overflow that pushes a page sideways. */
+.landing > section > * {
+  grid-column: read;
+  min-width: 0;
+}
+
+/* The two exceptions, spelled by class and never by tag. A tag selector here
+ * would catch the next <div> somebody adds; a class has to be asked for.
+ * Specificity 0,2,0 against the 0,1,1 of the default rule above, so order in
+ * this file is not load-bearing. */
+.landing .l-escape {
+  grid-column: wide-start / wide-end;
+  min-width: 0;
+}
+
+/* Without subgrid a section cannot inherit the rails, so the spine becomes a
+ * plain cap and the escapes take the full 1076. The left rail is lost; the page
+ * is still a 720 column of prose with two wider objects in it, and every
+ * acceptance measurement except the overhang still holds. Degraded, not broken
+ * -- which is the only thing a fallback owes. */
+@supports not (grid-template-columns: subgrid) {
+  .landing > section {
+    display: block;
+  }
+
+  .landing > section > * {
+    max-width: var(--max-read);
+  }
+
+  .landing .l-escape {
+    max-width: none;
+  }
+}
+
+/* At 375px both `1fr` rails resolve to 0 and the read track to 331: one column,
+ * exactly the geometry the page already had. The ladder is a >=764px feature
+ * that collapses to nothing below it, which is correct -- a phone has no width
+ * to spend on a rail. */
+
+/* A heading is not a paragraph: it takes a wider column before the eye loses
+ * the line return, because the return is much less frequent. */
+.section__title {
+  max-width: 22ch;
+  font-size: var(--text-2xl);
+  letter-spacing: var(--tracking-h2);
+}
+
+@media (min-width: 660px) {
+  .section__title {
+    max-width: 26ch;
+    font-size: var(--text-3xl);
+  }
+}
+
+/* ------------------------------------------------------------------ hero -- */
+
+.hero__eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-2); /* 4.66:1 on B */
+}
+
+/* The one title on the site big enough to need the full negative tracking. */
+.hero__title {
+  max-width: 20ch;
+  margin-top: var(--sp-3);
+  font-size: var(--text-3xl);
+  letter-spacing: var(--tracking-title);
+}
+
+@media (min-width: 660px) {
+  .hero__title {
+    max-width: 24ch;
+    font-size: var(--text-5xl);
+  }
+}
+
+/* THE HEADLINE IS TWO BLOCK BOXES, AND THAT IS LAYOUT RATHER THAN MOTION.
+ *
+ * The sentence is a denial followed by the reversal that overturns it, and the
+ * two clauses are separate catalog keys rendered as separate spans. `display:
+ * block` is doing two jobs at once and both are load-bearing:
+ *
+ *   1. A box is what a transform can move. animations/landing.ts raises clause A
+ *      alone, then clause B 300ms later and more slowly, so the reader registers
+ *      a complete assertion before the reversal exists on screen. An inline span
+ *      that wraps across lines cannot be translated as one object.
+ *
+ *   2. The line break is where the sentence turns, in EVERY mode. A reader with
+ *      reduced motion on gets no tween at all, and the pivot survives because it
+ *      was never in the tween -- it is in the break. That is the whole reason
+ *      the split had to be structural: a motion-only split leaves that reader
+ *      with nothing.
+ *
+ * MEASURED, and the split turns out to cost NOTHING. Line tops inside the h1,
+ * fonts loaded:
+ *
+ *   1280x900, 48px/52.8   split 163 / 215 / 268   unsplit 163 / 215 / 268
+ *   375x812,  33px/36.3   split 215 / 252 / 288 / 324
+ *                         unsplit 215 / 252 / 288 / 324
+ *
+ * Identical at both sizes, and identical in en, ru and uz: h1 height 158px
+ * (3 lines) at 1280 and 145px (4 lines) at 375 with and without the split, in
+ * all six cases. The block break lands exactly where the text already wrapped.
+ *
+ * What changes is WHICH clause owns line 2 at 375. Measured in the unsplit
+ * flow, clause A spans lines 1 AND 2 and ends 89px into line 2, where clause B
+ * then begins on that same line -- so line 2 carries the end of the denial and
+ * the start of the reversal at once. That is the measurement that rules out the
+ * reflexive per-line split: it would have animated "better." together with "It
+ * knows what a valid" as one unit and staggered the pitch's pivot against its
+ * own meaning. The split has to be by clause, and a clause has to be a block
+ * box to be transformable.
+ *
+ * No margin between them: the leading of a 3xl/5xl heading is already the gap,
+ * and the two clauses are one sentence, not two paragraphs. */
+.hero__title-a,
+.hero__title-b {
+  display: block;
+}
+
+/* The lede, the scope note and the two buttons, as one box.
+ *
+ * There is nothing to declare here and that is the point -- it is a grid item
+ * like the elements it replaced, so it inherits `grid-column: read` and
+ * `min-width: 0` from the ladder above, and because a grid item establishes an
+ * independent formatting context its children's top margins stay inside it
+ * rather than collapsing through. Measured either side of the change at 1440:
+ * `.hero__scope` 502.3 / 551.9 before, 502.3 / 551.9 after. Not one pixel.
+ *
+ * It exists so the three can arrive as ONE tween. Staggering them would assert
+ * that they are three sibling claims arriving in order; the scope note is the
+ * page's honesty line and is set in --text, darker than the pitch above it,
+ * precisely so it does not read as a footnote. A 70ms stagger would put it
+ * third in a list. */
+.hero__support {
+  display: block;
+}
+
+.hero__lede {
+  max-width: var(--measure);
+  margin-top: var(--sp-4);
+  font-size: var(--text-lg);
+  color: var(--text-2); /* 4.66:1 on B, and 19px is large text besides */
+}
+
+/* The scope note: which language the PIPELINE works in, as opposed to the
+ * interface. It is not conditional on the interface language and it is not a
+ * footnote. "Readback listens to the call" is unremarkable in English and reads
+ * as a promise of multilingual speech recognition the moment it is translated,
+ * so the sentence that resolves it is shown to everyone, English included.
+ *
+ * It is set in --text rather than a grey, which makes it the darkest running
+ * text in the hero: the honesty line must not sit quieter than the pitch above
+ * it. There is no box, no rule, no icon and no colour on it -- not buried, and
+ * not dressed up either. --text-body-size, not --text-meta: the type scale
+ * reserves 14px for mono labels and codes and says it is never a sentence. */
+.hero__scope {
+  max-width: var(--measure);
+  margin-top: var(--sp-3);
+  font-size: var(--text-body-size);
+  line-height: var(--leading-body);
+  color: var(--text); /* 15.46:1 on B */
+}
+
+/* sp-4, not sp-5, and the 8px is not cosmetic. Measured at 1440x900 before the
+ * ladder: `.hero__rack` began at y=670 and the first `.rack__row` ended at
+ * y=891 -- one row cleared a 900px fold by NINE pixels. Widening the lede to
+ * the 720 spine risks reflowing it and pushing that row under, and the row is
+ * the only place a stranger sees the product happening. This 8px and the 16px
+ * below buy 24px of headroom for it. */
+.hero__actions {
+  margin-top: var(--sp-4);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+/* Flat sp-6 at every width. The >=660 sp-7 override that used to sit here spent
+ * 16px of the fold on air above the one object that has to be seen above it. */
+.hero__rack {
+  margin-top: var(--sp-6);
+}
+
+/* ------------------------------------------------------------- mechanism -- */
+
+/* row-gap, NOT gap. `.beats` is a subgrid now (see the ladder header), and a
+ * subgrid that sets its own column-gap resizes the tracks it borrowed --
+ * silently pulling this one section's spine out of line with the other four.
+ * The row rhythm is all this rule ever meant; naming the axis is what keeps it
+ * meaning only that. */
+.beats {
+  row-gap: var(--sp-6);
+}
+
+/* The >=660 step to sp-7 that used to sit here is gone. Each beat already
+ * carries sp-5 of its own padding-top under a hairline, so the boundary was
+ * being marked three times: 48px of gap, 24px of padding and a rule. Measured
+ * in English with the two variants side by side: `.beats` 1243.0 with sp-7
+ * against 1195.0 with sp-6 (three gaps, 16px each). sp-6 lands `.beats` inside
+ * the 1100-1200 band this restructure is budgeted for, and holds the page's
+ * section-height sum to 4255.2 against a 4229.0 baseline -- +0.62%, which is
+ * the promise that silence's 3.53x promotion is paid for by the merge and by
+ * deleted padding, not by making the reader scroll further. */
+
+/* The section label, demoted from the H2's type to the eyebrow's. It is still
+ * an <h2> in the DOM -- it names the section for aria-labelledby and it is the
+ * only thing saying the three blocks below are one argument -- but the 01/02/03
+ * indices already say "three beats", so the sentence only has to say which one
+ * matters. Demoting it frees the largest heading below the hero for `.silence`,
+ * which is where the argument actually lands. Matches `.hero__eyebrow` exactly;
+ * no catalog string changed. */
+.beats__eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: var(--leading-body);
+  color: var(--text-2); /* 4.66:1 on B */
+}
+
+/* Structure between beats, and nothing here is interactive, so it is a hairline
+ * (1.17:1 on B) rather than a drawn grey line. The separation is carried by the
+ * sp-5 of air above each beat; the rule only says where one ends. */
+.beat {
+  display: grid;
+  gap: var(--sp-4);
+  align-items: start;
+  min-width: 0;
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--hairline);
+}
+
+/* THE TWO-COLUMN BEAT GRID IS GONE, AND SO IS ITS 860px BREAKPOINT.
+ *
+ * Measured: the figure column was 724.0px in all three beats and the ink inside
+ * it was 268.8 / 414.0 / 458.2 -- 62.9% / 42.8% / 36.7% EMPTY. It existed to
+ * fill width the content never asked for, and it paid for that by squeezing the
+ * prose into a 320px column where beat 1's 178-character body ran about seven
+ * lines. On the 720 spine the same paragraph runs three.
+ *
+ * Alternating the three left/right was the obvious alternative and it does not
+ * earn itself here. Alternation says "three of the same thing seen from
+ * alternating sides". These are not three of the same thing: 01 states a
+ * problem (three character pairs -- a fact), 02 introduces a constraint (a slot
+ * strip -- an object), 03 executes it (a ten-column sweep -- a proof), and their
+ * ink widths differ by 1.7x. They are a ramp, and symmetry would flatten it at
+ * the cost of a second breakpoint. Stacked instead: text, then figure below it,
+ * both left-aligned on the spine, each figure sized to its own content. All
+ * three fit -- 268.8, 414.0 and 458.2 are every one of them under 720.
+ *
+ * This redesign REMOVES a breakpoint and adds none. */
+
+/* The variety between the beats is apparatus acquired as the argument proceeds,
+ * not layout applied to it: 01 is bare type on the page ground, 02 is a recessed
+ * lane, 03 is a panel. See the surface ladder note above `.confusable`. */
+
+.beat__text,
+.beat__figure {
+  min-width: 0; /* grid children default to min-width:auto, which is their
+                   max-content width -- the overflow that pushes a page sideways */
+}
+
+.beat__index {
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.12em;
+  color: var(--text-2); /* 4.66:1 on B */
+}
+
+.beat__title {
+  margin-top: var(--sp-2);
+  font-size: var(--text-xl);
+}
+
+.beat__body {
+  max-width: var(--measure);
+  margin-top: var(--sp-3);
+  line-height: var(--leading-read);
+  color: var(--text-2); /* 4.66:1 on B */
+}
+
+/* Outside the rack the lane hugs its code rather than stretching: on its own it
+ * is a readout of one number, not a rack whose other rows have to line up. */
+.beat__strip {
+  width: max-content;
+  max-width: 100%;
+}
+
+.figure__caption {
+  margin-top: var(--sp-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  line-height: var(--leading-body);
+  color: var(--text-2); /* 4.66:1 on B */
+}
+
+.figure__formula {
+  margin-top: var(--sp-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  letter-spacing: var(--tracking-code);
+  color: var(--text); /* 15.46:1 on B */
+  overflow-wrap: anywhere;
+}
+
+/* -------------------------------------------------------- beat 1: sounds -- */
+
+/* ── THE SURFACE LADDER ──────────────────────────────────────────────────────
+   A white panel (--surface + --sh-card/--sh-panel + --r-card/--r-panel) is
+   reserved for ONE meaning on this page: a literal readout of the pipeline.
+   The rack, the slot strip, the sweep table, the pairs table. Never prose,
+   never a heading, never a CTA, never a stat.
+
+   Counted before: `.gain`, `.close`, `.pairs`, `.sweep__scroll`, three
+   `.confusable` chips and the rack = EIGHT white surfaces, meaning five
+   different things between them. After: rack, strip, sweep, pairs -- four, and
+   each one means the same thing. The anti-fragmentation move is subtraction,
+   not a new card style.
+
+   These three chips are the clearest case. Three backgrounds and three shadows
+   for six characters, floating off the ground, is the masonry-of-cards look
+   this project chose against. The pairs are one row of mono type on the page
+   ground now; the `aria-hidden` group and its `.sr-only` sibling are untouched,
+   because the surface never carried the meaning -- the characters do.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.confusables {
+  display: flex;
+  flex-wrap: wrap;
+  /* sp-5, up from sp-3. With the chip padding gone the gap is the only thing
+   * separating one pair from the next, so it takes over the job the padding
+   * was doing. 3 items at ~54px + 2 gaps at 24px = ~210px, which is inside the
+   * 331px content box at 375px on one row. */
+  gap: var(--sp-5);
+  margin: 0;
+}
+
+.confusable {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* The two characters and the ≈ between them are one aria-hidden group, with the
+ * whole relation spoken once as a sibling. A screen reader used to get
+ * "M / sounds like / N" as three fragments in fixed order, which is the wrong
+ * order in Uzbek and reads as a list rather than a comparison in Russian. */
+.confusable__pair {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.confusable__char {
+  font-family: var(--font-mono);
+  font-size: var(--text-xl);
+  font-weight: 500;
+  letter-spacing: var(--tracking-code);
+  /* Re-measured against the ground it now sits on. It used to be quoted at
+   * 16.83:1 on S; with the chip deleted these characters sit on B, where --text
+   * is 15.46:1. Still far past AA, and the number in the comment is the one
+   * that describes what is actually painted. */
+  color: var(--text); /* 15.46:1 on B */
+}
+
+.confusable__eq {
+  font-size: var(--text-lg);
+  color: var(--text-2); /* 4.66:1 on B -- heard, not settled, which is exactly
+                           what an ambiguous pair is */
+}
+
+/* --------------------------------------------------------- beat 3: sweep -- */
+
+.sweep__scroll {
+  /* Containing block, so the .sr-only spans inside the cells are clipped by
+   * this lane instead of escaping it. Without this the page scrolled 90.4px
+   * sideways at 375px. */
+  position: relative;
+  overflow-x: auto; /* ten columns plus a stub do not fit 375px. It scrolls in
+                       here; the page does not scroll sideways. */
+  overscroll-behavior-x: contain;
+  /* Hugs its table instead of stretching to the spine. The sweep is machine
+   * output, not a headline: the surface ladder says WIDE is a maximum and never
+   * a target, and stretching a 458px table across 720px of panel is padding by
+   * another name. 458.2 + 2x16 of padding = ~490 intrinsic; `max-width: 100%`
+   * is what keeps that inside a 331px content box at 375px, where the lane
+   * scrolls internally and the page does not. Same pattern as `.beat__strip`. */
+  width: max-content;
+  max-width: 100%;
+  padding: var(--sp-4);
+  background: var(--surface);
+  border-radius: var(--r-card);
+  box-shadow: var(--sh-card);
+}
+
+.sweep {
+  border-collapse: separate;
+  border-spacing: 3px;
+  width: max-content;
+}
+
+.sweep__caption {
+  max-width: 44ch;
+  margin-bottom: var(--sp-3);
+  text-align: left;
+  /* Prose, so it takes the 16px body floor rather than --text-meta. The type
+   * scale reserves --text-meta (14px) for mono labels, codes and timings and
+   * says in its own comment that it is never a sentence. */
+  font-size: var(--text-body-size);
+  line-height: var(--leading-body);
+  color: var(--text-2); /* 5.07:1 on S */
+  text-wrap: pretty;
+}
+
+/* The identifier that the caption talks about, kept OUT of the caption string
+ * and rendered in its own translate="no" run. white-space: nowrap so an eleven-
+ * character container number never breaks across two lines -- a code with a
+ * line break in the middle of it reads as two codes. */
+.sweep__code {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  letter-spacing: var(--tracking-code);
+  white-space: nowrap;
+  color: var(--text); /* 16.83:1 on S */
+}
+
+/* The unknown position. It used to be tinted amber; the "?" already says
+ * unknown, and the accent on this page is spent on the one legal column below.
+ * Tone plus weight, per the state vocabulary: not settled is --text-2. */
+.sweep__gap {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-2); /* 5.07:1 on S */
+}
+
+.sweep__stub {
+  padding-right: var(--sp-3);
+  text-align: left;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-weight: 400;
+  color: var(--text-2); /* 5.07:1 on S */
+}
+
+.sweep__cell {
+  min-width: 30px;
+  height: 34px;
+  padding: 0 var(--sp-1);
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: var(--text-body-size);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-code);
+  border-radius: var(--r-chip);
+  /* --faint is the structure-only token: 1.51:1 on S. Nothing in this table is
+   * interactive, so the cell edge is a grid line, not a control boundary, and
+   * does not owe 3:1. */
+  border: 1px solid var(--faint);
+  color: var(--text-2); /* 5.07:1 on S */
+}
+
+/* What the recogniser produced. The strike-through is the carrier, not the
+ * tone: --text-2 and --text are one greyscale family, so a reader in greyscale,
+ * in sunlight or colour-blind gets the mark and not a shade. */
+.sweep__cell--candidate[data-mark='heard'] {
+  color: var(--text-2); /* 5.07:1 on S */
+  border-color: var(--text-2); /* 5.07:1 on S -- well past the 3:1 a mark owes */
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+}
+
+/* The single column the arithmetic allows, and the one accent this view spends.
+ * Filled rather than tinted, so it survives greyscale as a block rather than as
+ * a shade. */
+.sweep__cell[data-mark='legal'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  /* Literal white, as the skill's own accent-button snippet writes it: no token
+   * in the new system names "the ink that goes on an accent fill", and the
+   * legacy --on-hiviz is one of the aliases being retired. 4.70:1. */
+  color: #fff;
+  font-weight: 600;
+}
+
+/* The candidate digit in that column keeps the white ground, so --accent would
+ * be text here (4.70 on S, under AA) -- it takes --accent-text instead, and the
+ * ring around it stays --accent because a stroke owes 3:1, not 4.5. */
+.sweep__cell--candidate[data-mark='legal'] {
+  background: var(--surface);
+  color: var(--accent-text); /* 5.57:1 on S */
+  box-shadow: inset 0 0 0 1px var(--accent); /* 4.70:1 on S */
+}
+
+/* ------------------------------------------------------------------ gain -- */
+/* One number with room around it. Deliberately not a row of stat tiles: the
+ * 15× is the strongest thing measured and putting three siblings beside it
+ * would spend it on a layout pattern. */
+
+/* NO PANEL. The `sp-8 sp-7` box that used to hold this recovered 128px of pure
+ * vertical padding when it went, but the reason is not the pixels: a stat in a
+ * box reads as a stat in a box. On the bare ground the 15x is a mark on the
+ * page, which is louder rather than quieter, and it stops the loudest figure on
+ * the site from borrowing the same white surface the rack uses to mean "this is
+ * a readout of the pipeline". The surface ladder above says a panel means one
+ * thing; a number is not that thing. */
+
+.gain__figure {
+  font-family: var(--font-mono);
+  font-size: var(--text-5xl);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: var(--tracking-title);
+  color: var(--text); /* 15.46:1 on B -- re-measured; the panel it used to sit
+                         on (16.83:1 on S) is gone */
+}
+
+@media (min-width: 660px) {
+  .gain__figure {
+    font-size: 76px; /* off the type scale on purpose. The scale exists so a rack
+                        of forty rows does not tear into headline sizes; this is
+                        the one figure on the site that is allowed to be loud. */
+  }
+}
+
+/* The 64x4 accent bar that used to sit here is gone. It carried no information
+ * -- it existed to look designed -- and the gap between the figure and the
+ * title says the same thing with nothing in it.
+ *
+ * `max-width: 26ch` is gone too; the title takes the spine. Measured payoff in
+ * Russian, which is where this string is 1.16x English: at 1440 it rendered
+ * 404.2 x 154.0 -- five lines, the tallest heading on the page, in the
+ * narrowest column on the page. Bounded by the 720 spine it measures
+ * 720.0 x 61.6: two lines, 92.4px saved, and the tallest heading on the page
+ * stops being the one with the least room to be tall in. */
+.gain__title {
+  margin-top: var(--sp-5);
+  font-size: var(--text-xl);
+  letter-spacing: var(--tracking-h2);
+}
+
+@media (min-width: 660px) {
+  .gain__title {
+    font-size: var(--text-2xl);
+  }
+}
+
+.gain__body {
+  max-width: var(--measure);
+  margin-top: var(--sp-4);
+  line-height: var(--leading-read);
+  color: var(--text-2); /* 4.66:1 on B -- re-measured off the deleted panel */
+}
+
+/* The second `.l-escape`, and the `max-width: 34rem` that used to cap it at 544
+ * is gone. Width is information here and nowhere else on this page: the fill is
+ * 100/15 = 6.7% of the track, so a longer track draws the ratio more legibly.
+ * Track 352 -> ~884px; the unconstrained lane 23.6 -> ~59px, 2.5x more visible.
+ * No panel: it is aria-hidden decoration of a number the paragraphs above
+ * already state, and the surface ladder does not spend a white panel on that. */
+.ratios {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin-top: var(--sp-6);
+}
+
+.ratio {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr) 3rem;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+/* THE BAR USED TO LIE ON A PHONE, AND THIS IS THE FIX.
+ *
+ * Measured at 375px before this rule: track 91px, fill clamped by the 12px
+ * `min-width` floor below = 13.19% drawn against a true value of 6.67%. The one
+ * graphic on this page whose entire job is to be to scale was overstating the
+ * unconstrained lane by 1.98x. That is a bug, not a taste question, and it
+ * cannot be fixed by deleting the floor -- a 6px fill is a rounding artefact,
+ * not a bar.
+ *
+ * Stacking the label above the track gives the track the whole width instead.
+ * Measured after, at 375px in all three languages: track 91 -> 302.2px (3.32x),
+ * fill 20.2px = 6.69% drawn against a true 6.67%. Off the floor, and true. It
+ * also stops the Russian label from wrapping inside a fixed 7.5rem column,
+ * which was costing `.gain` +16.0% of its height at 375px.
+ *
+ * Why 519 and not the crossing itself: with the three-column row the fill hits
+ * the 12px floor at a 179px track, which is 415px of client width. 519 is that
+ * crossing with a margin wide enough that a longer label in another language
+ * cannot walk the layout back into the lie. Verified either side of it -- at
+ * 535 client width (three columns, track 299, drawn 6.70%) and at 375 (stacked,
+ * track 302.2, drawn 6.69%) the bar is true in both regimes. */
+@media (max-width: 519px) {
+  .ratio {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .ratio__label {
+    grid-column: 1 / -1;
+  }
+}
+
+.ratio__label,
+.ratio__value {
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2); /* 4.66:1 on B -- re-measured off the deleted panel */
+}
+
+.ratio__value {
+  text-align: right;
+  font-weight: 600;
+  color: var(--text); /* 15.46:1 on B */
+}
+
+/* --track is the system's meter groove and this is its first caller. It does
+ * not need contrast of its own: what has to be perceivable is the FILL, and
+ * --accent measures 3.85:1 against --track and -- now the panel under this is
+ * deleted and it sits on the page ground -- 4.31:1 against --bg. Both are past
+ * the 3:1 WCAG 2.1 (1.4.11) asks of a meaningful graphic. The
+ * old 1px --muted outline and the inset ink ring inside the fill were both
+ * compensating for a groove that had no value; neither is needed now. The
+ * lengths are labelled 1× and 15× in text besides, so nothing here depends on
+ * seeing the bar at all. */
+.ratio__track {
+  height: 14px;
+  border-radius: var(--r-full);
+  background: var(--track);
+}
+
+.ratio__fill {
+  display: block;
+  height: 100%;
+  min-width: 12px;
+  border-radius: var(--r-full);
+  background: var(--accent);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   SILENCE, AND ITS LIMIT — one section, two movements, one hairline.
+
+   `.blind` used to be a section of its own and it was never a second topic.
+   `landing.blind.body.rest` closes with "...which is why the rack at the top of
+   this page has a row waiting on one character" -- the blind section's own last
+   sentence is a sentence about silence. Merged, the admission that twelve
+   mishearings are invisible sits INSIDE the claim it qualifies instead of being
+   a section a scroller can skip past.
+
+   The merge is also where this section's height comes from, and it comes from
+   content that already existed rather than from padding. Measured before:
+   `.silence` was 226.7px, 5.36% of section height -- the SMALLEST thing on the
+   page, smaller than `.close` and less than half of `.blind`, for the argument
+   the brief calls the hardest and most valuable. Measured after, at 1280x900:
+   806.0px, 18.94%. A 3.53x promotion.
+
+   It does NOT become the second-largest section, and the design note that said
+   it would was wrong on its own numbers: hero is 35.95% and `.beats` 28.08%,
+   both by design, so this lands third. What it becomes is the largest
+   single-argument block below the hero, and that is the claim the measurement
+   actually supports.
+
+   The page does not pay for it in scroll. Section-height sum 4229.0 before,
+   4255.2 after -- +0.62% -- because the space comes from the merge, from the
+   224px of panel padding deleted from `.gain` and `.close`, and from the width
+   the two-column beats were wasting. Nothing here is padded to look important.
+
+   Its currency is DURATION, not area or weight -- 806px of prose and hairlines
+   with no panel in it. That is deliberate: the rack wins on area and detail
+   (1076 wide, the only wide panel), the 15x wins on type weight (76px, off the
+   scale), and this wins on how long it takes to read. Three different
+   currencies, so nothing ties.
+
+   `docs/FINDINGS.md`'s 5.3%, the twelve pairs, the 21 and the 64 are all still
+   here, in the same strings, unchanged.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+.silence__body {
+  max-width: var(--measure);
+  margin-top: var(--sp-4);
+  font-size: var(--text-lg);
+  line-height: var(--leading-body);
+  color: var(--text-2); /* 4.66:1 on B, and 19px is large text besides */
+}
+
+/* No left bar. A pullquote that needs a coloured rule to read as a pullquote is
+ * not carrying its own weight: size and weight do it, which is also what
+ * survives greyscale and a 375px screen. */
+.pull {
+  max-width: var(--measure);
+  margin-top: var(--sp-5);
+  font-size: var(--text-xl);
+  font-weight: 500;
+  line-height: var(--leading-snug);
+  letter-spacing: -0.01em;
+  color: var(--text); /* 15.46:1 on B */
+  text-wrap: pretty;
+}
+
+/* Promoted to --text-2xl at >=660: this is the sentence the product is named
+ * for and it should be the second-loudest type on the page after the 15x.
+ * It steps up with the breakpoint rather than at every width because
+ * `landing.silence.pull` is the page's worst Russian expansion -- 1.50x, 88
+ * characters becoming 132 -- and 28px of that in a 331px column is six lines of
+ * pull quote on a phone. Every other heading in this file steps the same way. */
+@media (min-width: 660px) {
+  .pull {
+    font-size: var(--text-2xl);
+  }
+}
+
+/* The turn between the two movements. A real <hr>, so a reader who never sees
+ * the hairline is still told the argument has changed direction -- the rule is
+ * not the only carrier of that. sp-7 of air on both sides, which is what makes
+ * one section read as two movements rather than as one long column. */
+.silence__break {
+  width: 100%;
+  height: 0;
+  margin: var(--sp-7) 0;
+  border: 0;
+  border-top: 1px solid var(--hairline); /* 1.17:1 on B -- structure weight, and
+                                            nothing here is interactive */
+}
+
+/* Movement B's heading, and it does NOT step up with the breakpoint. Measured
+ * at 1280: with a >=660 step to --text-2xl it rendered 28px, the same size as
+ * `.pull` directly above it, which flattens the one place on this page where
+ * the pull quote is supposed to be the second-loudest type. Held at
+ * --text-xl the ladder inside this section reads 33 / 28 / 23 -- section title,
+ * pull, subheading -- and the h2 stays the largest heading below the hero. */
+.silence__subtitle {
+  max-width: 26ch;
+  font-size: var(--text-xl);
+  letter-spacing: var(--tracking-h2);
+}
+
+.blind__body {
+  max-width: var(--measure);
+  margin-top: var(--sp-4);
+  line-height: var(--leading-read);
+  color: var(--text-2); /* 4.66:1 on B */
+}
+
+/* One panel, hairline-divided -- not three bordered cards with an accent
+ * left-bar each. They are three instances of one fact, which is the case the
+ * unified surface exists for. The "these always get asked about" meaning is in
+ * the paragraph above; it does not need to be re-stated as three coloured
+ * edges.
+ *
+ * It stays on the 720 spine and does NOT take `.l-escape`, and that is the
+ * deliberate part. Keeping the rack the only PANEL on the page that crosses the
+ * spine is what makes the rack a moment; a second wide panel would cost the
+ * page that for nothing. Measured consequence, and it is accepted: `.pair__math`
+ * rendered 309.7-310.7px on one line in the old 358.7px cell, so at ~240px it
+ * wraps to two. A two-line math cell is not a defect.
+ *
+ * ESCAPE HATCH, and it is the only one in this design: if `.pair__math` ever
+ * exceeds TWO lines at 720px in any of en/ru/uz, stack `.pairs` to the single
+ * column it already uses below 660px -- do not widen it. Stacking costs ~93px,
+ * which this section can afford. Widening costs the page its one moment. */
+.pairs {
+  display: grid;
+  margin: var(--sp-5) 0;
+  background: var(--surface);
+  border-radius: var(--r-panel);
+  box-shadow: var(--sh-panel);
+}
+
+.pair {
+  min-width: 0;
+  padding: var(--sp-4) var(--sp-5);
+}
+
+/* Adjacent-sibling, so there is no leading or trailing rule inside the panel. */
+.pair + .pair {
+  border-top: 1px solid var(--hairline); /* 1.17:1 on S */
+}
+
+@media (min-width: 660px) {
+  .pairs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .pair + .pair {
+    border-top: 0;
+    border-left: 1px solid var(--hairline);
+  }
+}
+
+.pair__chars {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  letter-spacing: var(--tracking-code);
+  color: var(--text); /* 16.83:1 on S */
+}
+
+.pair__vs {
+  font-weight: 400;
+  color: var(--text-2); /* 5.07:1 on S */
+}
+
+.pair__math {
+  margin-top: var(--sp-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--leading-body);
+  color: var(--text-2); /* 5.07:1 on S */
+}
+
+/* ----------------------------------------------------------------- close -- */
+
+/* NO PANEL, and the 96px of recovered padding is the smaller half of the
+ * reason. With the box gone this is the only surface on the page that is
+ * neither the spine's argument nor a machine readout: bare heading, bare
+ * paragraph, one button on the page ground. That is the right signal for "the
+ * argument is over, here is the door". Left-aligned on the spine, not centred
+ * -- centring would break the shared left rail at the last moment for no
+ * reason, and the rail is the whole point of the ladder. */
+
+.close__title {
+  max-width: 20ch;
+  font-size: var(--text-2xl);
+  letter-spacing: var(--tracking-h2);
+}
+
+.close__body {
+  max-width: var(--measure);
+  margin-top: var(--sp-4);
+  line-height: var(--leading-read);
+  color: var(--text-2); /* 4.66:1 on B -- re-measured off the deleted panel */
+}
+
+/* justify-self: start, because a grid child stretches to its track by default
+ * and a 720px-wide button is not a button. --control-h is 46px, over the 44px
+ * floor, and the stretch was never what carried the target size. */
+.close__action {
+  justify-self: start;
+  margin-top: var(--sp-5);
+}

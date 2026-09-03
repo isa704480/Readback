@@ -1,0 +1,57 @@
+/* A destination the rail names and nothing has been built behind yet.
+ *
+ * One ground, and it is the only one this screen paints on: G = --bg #f5f5f7.
+ * The header used to name three -- S, G as "--ground", and R as "--raised" --
+ * of which --ground has not existed since the palette swap, --raised was a
+ * legacy alias that is now deleted, and neither was referenced below.
+ *
+ * This screen paints almost nothing on purpose. An absence dressed as a
+ * feature -- a card, a shaded panel, an illustration of the thing that is not
+ * there -- reads as a product surface and invites the reader to wait for it to
+ * load. Text on the page ground, at the same measure as every other screen,
+ * reads as what it is: a sentence. */
+
+.pending {
+  padding-block: var(--sp-5) var(--sp-7);
+}
+
+.pending__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--text-meta);
+  letter-spacing: var(--tracking-code);
+  text-transform: uppercase;
+  color: var(--text-2); /* 4.66:1 on G */
+}
+
+.pending__title {
+  margin: 0;
+  font-size: var(--text-2xl);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-h2);
+  color: var(--text); /* 15.46:1 on G */
+  /* A 40-character Uzbek or Russian compound must break rather than push the
+     page out from under the viewport. THE 375px RULE is checked on the body,
+     and a title is the one element long enough to break it single-handed. */
+  overflow-wrap: anywhere;
+}
+
+.pending__body {
+  margin: 0;
+  font-size: var(--text-body-size);
+  line-height: var(--leading-read);
+  color: var(--text-2); /* 4.66:1 on G */
+}
+
+.pending__go {
+  margin: 0;
+}
+
+@media (min-width: 660px) {
+  .pending__title {
+    font-size: var(--text-3xl);
+    letter-spacing: var(--tracking-title);
+  }
+}

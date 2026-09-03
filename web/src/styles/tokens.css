@@ -1,0 +1,257 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   Readback — Apple Liquid Glass tokens
+
+   The previous warm-neutral palette is preserved verbatim at tokens.warm.css.
+   It is not dead weight: it carries its own measured contrast table, and if the
+   restyle is ever reverted that table is what makes the revert safe.
+
+   WHY THIS FILE HAD A LEGACY LAYER, AND WHAT IS LEFT OF IT
+   The app had 358 references to the old token names across 12 components. A
+   straight rename would have left every one of them undefined and the app
+   unstyled, so the new palette was defined first and the old names aliased onto
+   it, then migrated file by file. Twenty-four aliases have been deleted that
+   way. ONE remains — --hiviz, whose only caller is Icon.tsx — and the block at
+   the foot of this :root records what each of the others became.
+
+   Every ratio below was computed with the WCAG 2.1 relative-luminance formula,
+   never eyeballed, against the two grounds this app paints: --bg #f5f5f7 and
+   --surface #ffffff. Where the Apple skill's own value did not survive that
+   measurement for the job Readback needs, the substitution is named at the point
+   it happens rather than quietly applied.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* THE APP IS LIGHT-ONLY, AND IT SAYS SO.
+     There is no dark palette in this file and every ratio in this codebase is
+     computed against #f5f5f7 and #ffffff. App.css used to declare
+     `color-scheme: light dark` beside a dark :root of its own; that block was
+     emitted before this one, so this file overrode every name the two shared
+     and the dark theme half-applied -- a white page with four dark values loose
+     in it, one of which put a 2.60:1 link on the sign-in screen. Both are gone.
+     Naming `light` here is not a preference: it stops the UA painting
+     scrollbars, form-control defaults and the pre-paint canvas dark around an
+     interface that has no dark ground to meet them. */
+  color-scheme: light;
+
+  /* ── Neutrals ─────────────────────────────────────────────────────────────
+     Cool, not warm. The old ground (#e3e5e0) was chosen deliberately to look
+     like an instrument rather than a consumer AI toy; the Apple language calls
+     that the over-used AI look and specifies a cool ground. That is a genuine
+     reversal, made on the owner's instruction, and this file follows it all the
+     way rather than half-way. */
+  --bg:        #f5f5f7;   /* page ground */
+  --surface:   #ffffff;   /* panels */
+  --hover:     #fbfbfd;   /* row hover */
+  --text:      #1d1d1f;   /* 15.46 on bg · 16.83 on surface */
+  --text-body: #424245;   /*  9.20 · 10.01 — the design system's long-body grey.
+                              Reachable again: the alias that used to shadow this
+                              line with the 16px SIZE is gone, and the 22 call
+                              sites that meant the size now say
+                              --text-body-size. Callers that read it as a colour
+                              today: base.css `a`, TopBar ×2, Sidebar,
+                              LanguageSwitcher ×3, Dashboard ×3. */
+  --text-2:    #6e6e73;   /*  4.66 ·  5.07 — the last grey that passes AA for body text */
+  --text-3:    #86868b;   /*  3.33 ·  3.62 — LARGE TEXT ONLY; clears 3:1 for a boundary */
+  --text-4:    #aeaeb2;   /*  2.03 ·  2.21 — never carries meaning */
+  --faint:     #d2d2d7;   /*  1.38 ·  1.51 — structure only */
+  --hairline:  rgba(0, 0, 0, 0.07);
+  --track:     #e8e8ed;   /* meter fill; --text on it = 13.78 */
+
+  /* ── Accent ───────────────────────────────────────────────────────────────
+     MEASURED SUBSTITUTION 1. The skill names #0071e3 as the accent. As TEXT it
+     is 4.31 on the ground — under AA's 4.5 — while #0066cc, which the skill
+     already ships for link text, is 5.11 and carries white at 5.57. The old
+     --green did BOTH jobs in this app (primary button fill AND four places of
+     coloured text), so the legacy alias is wired to the value that passes in
+     both directions.
+       --accent       fills, strokes, focus rings. White on it 4.70.
+       --accent-text  anything a person reads, and any fill carrying white. */
+  --accent:      #0071e3;
+  --accent-text: #0066cc;
+
+  /* --accent-weak and --alert-weak are deleted, and not because nothing happened
+     to read them. They were the tints App.css's two notice boxes mixed by hand,
+     and with those gone no surface in this app carries a coloured fill: the
+     design language forbids tinted backgrounds on plain content, and every state
+     here is carried by a word, an icon, tone and weight. A named "weak tint" in
+     a file whose whole discipline is the opposite is a permission slip, so it
+     does not survive its last caller. */
+
+  /* ── The one warm accent, and why it is not the skill's ────────────────────
+     MEASURED SUBSTITUTION 2. The skill's heat is #ff6b00: 2.62 on the ground,
+     2.86 on white. Contrast is symmetric, so that single number condemns it
+     both as text and as a fill under white — and FLAGGED is the one state in
+     this product a person must not miss, because it means a captured identifier
+     is in dispute and needs a human.
+     #b3350a is the same hue family darkened until it passes: 5.62 on the
+     ground, 6.12 on surface (= white-on-it, the same ratio). Darker options if
+     it reads too bright in use: #a8330b (6.14/6.68), #96300a (7.08/7.71).
+     Lighter does not survive — #c94f00 is 4.19 and fails as text. */
+  --alert:      #b3350a;
+
+  /* ── Type ─────────────────────────────────────────────────────────────────
+     System stack for the interface, per the skill.
+
+     IBM Plex Mono stays for identifiers, and that is not a style preference.
+     This entire product exists because characters get confused for one another
+     — the solver's own table puts O↔0 at 0.95 and B↔D at 0.75 — so a reader has
+     to be able to tell O from 0 and 1 from l in the rack. SF Mono is not present
+     off macOS; Plex ships with the app and separates those pairs by design.
+     Swapping it for a system mono would undo the product's premise for a font. */
+  --font-ui:   -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display',
+               'Helvetica Neue', 'Segoe UI', 'PingFang SC', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --tracking-code:  0.02em;
+  --tracking-title: -0.03em;  /* the skill's iron rule: bigger title, more negative */
+  --tracking-h2:    -0.02em;
+
+  /* Sizes kept from the warm palette. They were argued from a minor-third scale
+     and a 16px floor, and none of that reasoning depended on the colours. The
+     one thing the skill adds is a long-form leading floor. */
+  --text-meta: 14px;
+  --text-body-size: 16px;
+  --text-lg:   19px;  --text-xl:  23px;  --text-2xl: 28px;
+  --text-3xl:  33px;  --text-4xl: 40px;  --text-5xl: 48px;
+  --leading-tight: 1.1;   /* was 1.15; the skill wants 1.1–1.18 on H1 */
+  --leading-snug:  1.35;
+  --leading-body:  1.55;  /* short UI copy */
+  --leading-read:  1.85;  /* long-form prose — the skill's floor */
+
+  /* ── Radius — the Apple tiers. The old values were 3/6/10; these are 6/12/18,
+     and that alone is much of what reads as Apple at a glance. ── */
+  --r-chip:  6px;
+  --r-thumb: 12px;
+  --r-sheet: 16px;
+  --r-card:  18px;
+  --r-panel: 22px;
+  --r-hero:  26px;
+  --r-full:  999px;
+
+  /* ── Shadow — always two-layer; never one hard shadow ── */
+  --sh-card:    0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.05);
+  --sh-panel:   0 1px 3px rgba(0, 0, 0, 0.05), 0 14px 40px rgba(0, 0, 0, 0.05);
+  --sh-lift:    0 12px 32px rgba(0, 0, 0, 0.10);
+  --sh-cta:     0 20px 54px rgba(0, 113, 227, 0.24);
+  --sh-overlay: 0 2px 8px rgba(0, 0, 0, 0.10), 0 30px 80px rgba(0, 0, 0, 0.24);
+
+  /* ── Spacing and layout — unchanged. The 4px base lands on a whole device
+     pixel at 1x, 1.5x and 2x DPR, and 1.5x is the Windows default this actually
+     runs on. None of that depended on the palette. ── */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px; --sp-5: 24px;
+  --sp-6: 32px; --sp-7: 48px; --sp-8: 64px; --sp-9: 96px;
+  --max-read: 720px;
+  --max-grid: 1080px;
+  --page-max: 1120px;
+  --pad-x: 22px;
+  --section-gap: clamp(34px, 6vw, 56px);
+  --measure: 68ch;
+  --touch-min: 44px;
+  --control-h: 46px;
+
+  /* ── Motion ───────────────────────────────────────────────────────────────
+     The durations survive the restyle unchanged, because they were argued from
+     perception rather than from a palette: below ~150ms a transition is not
+     perceived as motion, above ~300ms the interface waits on itself.
+     --motion-slow stays reserved for a capture row settling — the one duration
+     in this product a user should actually notice. */
+  --motion-fast:  150ms;
+  --motion-base:  200ms;
+  --motion-slow:  300ms;
+  --motion-sheet: 400ms;
+  --ease-out:       cubic-bezier(0.2, 0, 0, 1);
+  --ease-in-out:    cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring:    cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+
+  /* ══════════════════════════════════════════════════════════════════════════
+     LEGACY ALIASES — one left.
+
+     Twenty-four names have now been retired here as their last call site was
+     migrated. The first thirteen went in an earlier pass: --ground, --line-soft,
+     --steel, --green, --r-sm, --shadow-md, --shadow-lg and the six --on-*
+     whites. Eleven more went in this one, and the file that was holding almost
+     all of them open was App.css:
+
+       --line          -> --hairline          App.css ×2
+       --line-strong   -> (nothing)           already 0 callers when this pass
+                                              started; deleted unread
+       --raised        -> --bg / --hover      App.css (a region: --bg, 1.09 on
+                                              --surface), LanguageSwitcher.css
+                                              (a control :hover: --hover, which
+                                              is the token for exactly that)
+       --ink           -> --text              App.css ×2, LanguageSwitcher, Pending
+       --muted         -> --text-2/--text-body  App.css ×4, Pending ×2 took
+                                              --text-2; LanguageSwitcher ×3 took
+                                              --text-body, because it renders on
+                                              the glass bar where --text-2 falls
+                                              to 2.58 (see TopBar.css's table)
+       --amber         -> (nothing)           the offline notice spends no colour
+       --red           -> --alert             App.css ×2
+       --shadow-sm     -> --sh-panel          App.css:76, .card
+       --r-md          -> --r-thumb           App.css ×2, LanguageSwitcher
+       --r-lg          -> --r-panel           App.css:75, .card
+       --text-body     -> --text-body-size    22 font-size call sites across
+                                              App, Button, Field, PasswordStrength,
+                                              Account and Pending
+
+     Counted with `grep -rn -- "var(--NAME)" src` over *.css/*.ts/*.tsx,
+     excluding this file and tokens.warm.css.
+
+     Retiring --text-body is the one that mattered beyond tidiness. It used to
+     be declared TWICE in this :root -- the colour #424245 at the top, then this
+     alias for the 16px size -- so the later declaration won and
+     `color: var(--text-body)` computed to `16px`, was invalid, and silently
+     inherited. Four stylesheets carried a comment warning about the trap and
+     three named a rule that WANTED the long-body grey and could not have it
+     (Dashboard's .record__replay, .stamp--example and .rec__caveat). base.css
+     carried a whole bridge token, --text-long, to stand in for it. The alias is
+     gone, --text-body is the colour again, the bridge is deleted, and the three
+     rules have the grey the design system names for them.
+     ══════════════════════════════════════════════════════════════════════════ */
+  --hiviz: var(--accent);       /* 1: Icon.tsx:232, the logo bar. Fills and
+                                   strokes only — NEVER text (4.31). The last
+                                   alias, and its only caller is a .tsx rather
+                                   than a stylesheet: swap that one attribute to
+                                   var(--accent) and this line goes too. */
+
+  /* Slot states, restated in the new language. */
+  --state-heard:     var(--text-2);
+  --state-repaired:  var(--text);     /* shown by the mark and the superseded
+                                         character above it, not by hue */
+  --state-asking:    var(--accent-text);
+  --state-settled:   var(--text);
+  --state-flagged:   var(--alert);
+  --state-empty:     var(--faint);
+  --state-heard-was: var(--text-4);   /* the character that was replaced */
+}
+
+/* Liquid glass — ONLY where layers actually overlap. Never on content panels. */
+.glass-nav {
+  background: rgba(245, 245, 247, 0.72);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--motion-slow) var(--ease-out),
+              box-shadow  var(--motion-slow) var(--ease-out);
+}
+
+/* Scroll edge, not a permanent divider: the hairline appears only once content
+   is genuinely underneath the nav. */
+.glass-nav.is-scrolled {
+  border-bottom-color: var(--hairline);
+  box-shadow: 0 1px 12px rgba(0, 0, 0, 0.04);
+}
+
+/* Reduced motion RE-ENCODES, it does not delete. The tone difference between a
+   provisional and a settled character is static and carries the meaning on its
+   own, so only the movement is removed here. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

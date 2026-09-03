@@ -1,0 +1,61 @@
+/* The two-track layout for the signed-in app.
+ *
+ * This file sets geometry only. It declares no colour, because it paints
+ * nothing: the rail draws itself and the content track is whatever screen was
+ * handed to it. A layout stylesheet that reaches for a token is a layout
+ * stylesheet that will be edited when a screen changes.
+ *
+ * The whole grid lives inside <main class="shell__main page">, so the 1120px
+ * measure and the --pad-x gutters are already applied around it. See the
+ * header of AppShell.tsx for why that is the right side of <main> to be on. */
+
+.appshell {
+  display: grid;
+
+  /* Explicitly minmax(0, 1fr), never the implied single column.
+   *
+   * A grid item's automatic minimum size is its max-content width. The record
+   * puts a scrolling identifier lane in this track -- a 22-character IBAN is
+   * wider than a 375px viewport by construction -- so an implied 1fr track
+   * sizes itself to that lane and the page grows instead of the lane. body has
+   * overflow-x: clip, which means the overflow is not a scroll region, it is
+   * content nobody can reach. Account.css:69-81 records the measured cost of
+   * exactly this mistake: 663px document scrollWidth at 375px. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+}
+
+/* Same reason, one level down: the track may size below its content so that
+ * the overflow-x: auto containers inside it scroll themselves. THE 375px RULE
+ * is checked on the page body, never on the child. */
+.appshell__content {
+  min-width: 0;
+}
+
+/* The content track is a focus target for the skip link, and a programmatic
+ * focus should not draw a ring around the whole page. Keyboard users still get
+ * :focus-visible on everything inside it; this only suppresses the ring on the
+ * container that was focused by script. */
+.appshell__content:focus {
+  outline: none;
+}
+
+/* ---------------------------------------------------------------- >=1024 -- */
+/* 240px rail + a 48px gutter. Re-derived after base.css replaced .page's
+ * 16px/24px padding media query with a flat --pad-x of 22px: at a 1440px
+ * viewport the page measure caps at 1120, 22px a side leaves 1076, and the
+ * tracks come out 240 / 48 / 788; at a 1024px viewport, 980 inside the padding
+ * and 240 / 48 / 692. Both hold an eleven-slot ISO 6346 row (266px at
+ * Rack.css's 22px slot metric, 374px at the 32px one) without the lane needing
+ * to scroll, which is the width this breakpoint was chosen for.
+ *
+ * align-items: start so the rail is its own height and can be sticky inside
+ * its grid area, rather than being stretched to the height of a long record
+ * and having nothing left to travel through. */
+@media (min-width: 1024px) {
+  .appshell {
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: var(--sp-7);
+    align-items: start;
+  }
+}

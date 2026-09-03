@@ -1,0 +1,1611 @@
+{
+ "schema": "readback.fixture/1",
+ "name": "date_range_welded",
+ "description": "A collection window read as two dates in one breath. \"to\" reads as the digit 2 and welds them into one thirteen-character run, which is long enough to be an NHS number by shape.",
+ "notes": [
+  "A single date is caught by length, not by the cue logic. Saying so matters: length is an accident of vocabulary, and one more spoken element crosses it.",
+  "The third turn says 'the booking', which the carrier table used to match and no longer does (docs/FINDINGS.md 6). It is here to keep that shut."
+ ],
+ "truth": {
+  "format": null,
+  "value": null
+ },
+ "expect": {
+  "contains_identifier": false,
+  "normalised": null,
+  "turns": 3,
+  "welded_by": "to",
+  "carrier_phrases": 0,
+  "expected_cues": [
+   "rhythm",
+   "shape"
+  ]
+ },
+ "frames": [
+  {
+   "emit_ms": 887,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "what",
+    "end_of_turn_confidence": 0.108,
+    "words": [
+     {
+      "text": "what",
+      "start": 700,
+      "end": 797,
+      "confidence": 0.959,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 1651,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "what window did they",
+    "end_of_turn_confidence": 0.046,
+    "words": [
+     {
+      "text": "what",
+      "start": 700,
+      "end": 797,
+      "confidence": 0.959,
+      "word_is_final": true
+     },
+     {
+      "text": "window",
+      "start": 857,
+      "end": 1118,
+      "confidence": 0.681,
+      "word_is_final": true
+     },
+     {
+      "text": "did",
+      "start": 1278,
+      "end": 1398,
+      "confidence": 0.95,
+      "word_is_final": false
+     },
+     {
+      "text": "they",
+      "start": 1473,
+      "end": 1561,
+      "confidence": 0.8,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 2470,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "what window did they give us for",
+    "end_of_turn_confidence": 0.032,
+    "words": [
+     {
+      "text": "what",
+      "start": 700,
+      "end": 797,
+      "confidence": 0.959,
+      "word_is_final": true
+     },
+     {
+      "text": "window",
+      "start": 857,
+      "end": 1118,
+      "confidence": 0.681,
+      "word_is_final": true
+     },
+     {
+      "text": "did",
+      "start": 1278,
+      "end": 1398,
+      "confidence": 0.95,
+      "word_is_final": true
+     },
+     {
+      "text": "they",
+      "start": 1473,
+      "end": 1561,
+      "confidence": 0.8,
+      "word_is_final": true
+     },
+     {
+      "text": "give",
+      "start": 1615,
+      "end": 1895,
+      "confidence": 0.628,
+      "word_is_final": true
+     },
+     {
+      "text": "us",
+      "start": 2067,
+      "end": 2205,
+      "confidence": 0.569,
+      "word_is_final": false
+     },
+     {
+      "text": "for",
+      "start": 2290,
+      "end": 2380,
+      "confidence": 0.756,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 2963,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "what window did they give us for the collection",
+    "end_of_turn_confidence": 0.102,
+    "words": [
+     {
+      "text": "what",
+      "start": 700,
+      "end": 797,
+      "confidence": 0.959,
+      "word_is_final": true
+     },
+     {
+      "text": "window",
+      "start": 857,
+      "end": 1118,
+      "confidence": 0.681,
+      "word_is_final": true
+     },
+     {
+      "text": "did",
+      "start": 1278,
+      "end": 1398,
+      "confidence": 0.95,
+      "word_is_final": true
+     },
+     {
+      "text": "they",
+      "start": 1473,
+      "end": 1561,
+      "confidence": 0.8,
+      "word_is_final": true
+     },
+     {
+      "text": "give",
+      "start": 1615,
+      "end": 1895,
+      "confidence": 0.628,
+      "word_is_final": true
+     },
+     {
+      "text": "us",
+      "start": 2067,
+      "end": 2205,
+      "confidence": 0.569,
+      "word_is_final": true
+     },
+     {
+      "text": "for",
+      "start": 2290,
+      "end": 2380,
+      "confidence": 0.756,
+      "word_is_final": true
+     },
+     {
+      "text": "the",
+      "start": 2436,
+      "end": 2535,
+      "confidence": 0.697,
+      "word_is_final": false
+     },
+     {
+      "text": "collection",
+      "start": 2596,
+      "end": 2873,
+      "confidence": 0.821,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 3555,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "oh",
+    "end_of_turn_confidence": 0.056,
+    "words": [
+     {
+      "text": "oh",
+      "start": 3303,
+      "end": 3465,
+      "confidence": 0.969,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 3863,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "oh one",
+    "end_of_turn_confidence": 0.058,
+    "words": [
+     {
+      "text": "oh",
+      "start": 3303,
+      "end": 3465,
+      "confidence": 0.969,
+      "word_is_final": false
+     },
+     {
+      "text": "one",
+      "start": 3565,
+      "end": 3773,
+      "confidence": 0.963,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 4322,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "oh one oh",
+    "end_of_turn_confidence": 0.035,
+    "words": [
+     {
+      "text": "oh",
+      "start": 3303,
+      "end": 3465,
+      "confidence": 0.969,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 3565,
+      "end": 3773,
+      "confidence": 0.963,
+      "word_is_final": false
+     },
+     {
+      "text": "oh",
+      "start": 3902,
+      "end": 4232,
+      "confidence": 0.898,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 4529,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": true,
+    "transcript": "what window did they give us for the collection",
+    "end_of_turn_confidence": 0.9,
+    "words": [
+     {
+      "text": "what",
+      "start": 700,
+      "end": 797,
+      "confidence": 0.959,
+      "word_is_final": true
+     },
+     {
+      "text": "window",
+      "start": 857,
+      "end": 1118,
+      "confidence": 0.681,
+      "word_is_final": true
+     },
+     {
+      "text": "did",
+      "start": 1278,
+      "end": 1398,
+      "confidence": 0.95,
+      "word_is_final": true
+     },
+     {
+      "text": "they",
+      "start": 1473,
+      "end": 1561,
+      "confidence": 0.8,
+      "word_is_final": true
+     },
+     {
+      "text": "give",
+      "start": 1615,
+      "end": 1895,
+      "confidence": 0.628,
+      "word_is_final": true
+     },
+     {
+      "text": "us",
+      "start": 2067,
+      "end": 2205,
+      "confidence": 0.569,
+      "word_is_final": true
+     },
+     {
+      "text": "for",
+      "start": 2290,
+      "end": 2380,
+      "confidence": 0.756,
+      "word_is_final": true
+     },
+     {
+      "text": "the",
+      "start": 2436,
+      "end": 2535,
+      "confidence": 0.697,
+      "word_is_final": true
+     },
+     {
+      "text": "collection",
+      "start": 2596,
+      "end": 2873,
+      "confidence": 0.821,
+      "word_is_final": true
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 4746,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "oh one oh nine",
+    "end_of_turn_confidence": 0.186,
+    "words": [
+     {
+      "text": "oh",
+      "start": 3303,
+      "end": 3465,
+      "confidence": 0.969,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 3565,
+      "end": 3773,
+      "confidence": 0.963,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 3902,
+      "end": 4232,
+      "confidence": 0.898,
+      "word_is_final": false
+     },
+     {
+      "text": "nine",
+      "start": 4435,
+      "end": 4656,
+      "confidence": 0.972,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 5030,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "oh one oh nine to",
+    "end_of_turn_confidence": 0.118,
+    "words": [
+     {
+      "text": "oh",
+      "start": 3303,
+      "end": 3465,
+      "confidence": 0.969,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 3565,
+      "end": 3773,
+      "confidence": 0.963,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 3902,
+      "end": 4232,
+      "confidence": 0.898,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 4435,
+      "end": 4656,
+      "confidence": 0.972,
+      "word_is_final": false
+     },
+     {
+      "text": "to",
+      "start": 4792,
+      "end": 4940,
+      "confidence": 0.914,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 5330,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "oh one oh nine to oh",
+    "end_of_turn_confidence": 0.197,
+    "words": [
+     {
+      "text": "oh",
+      "start": 3303,
+      "end": 3465,
+      "confidence": 0.969,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 3565,
+      "end": 3773,
+      "confidence": 0.963,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 3902,
+      "end": 4232,
+      "confidence": 0.898,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 4435,
+      "end": 4656,
+      "confidence": 0.972,
+      "word_is_final": true
+     },
+     {
+      "text": "to",
+      "start": 4792,
+      "end": 4940,
+      "confidence": 0.914,
+      "word_is_final": false
+     },
+     {
+      "text": "oh",
+      "start": 5032,
+      "end": 5240,
+      "confidence": 0.917,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 5682,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "oh one oh nine to oh eight",
+    "end_of_turn_confidence": 0.1,
+    "words": [
+     {
+      "text": "oh",
+      "start": 3303,
+      "end": 3465,
+      "confidence": 0.969,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 3565,
+      "end": 3773,
+      "confidence": 0.963,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 3902,
+      "end": 4232,
+      "confidence": 0.898,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 4435,
+      "end": 4656,
+      "confidence": 0.972,
+      "word_is_final": true
+     },
+     {
+      "text": "to",
+      "start": 4792,
+      "end": 4940,
+      "confidence": 0.914,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 5032,
+      "end": 5240,
+      "confidence": 0.917,
+      "word_is_final": false
+     },
+     {
+      "text": "eight",
+      "start": 5368,
+      "end": 5592,
+      "confidence": 0.985,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 6094,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "oh one oh nine to oh eight oh",
+    "end_of_turn_confidence": 0.049,
+    "words": [
+     {
+      "text": "oh",
+      "start": 3303,
+      "end": 3465,
+      "confidence": 0.969,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 3565,
+      "end": 3773,
+      "confidence": 0.963,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 3902,
+      "end": 4232,
+      "confidence": 0.898,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 4435,
+      "end": 4656,
+      "confidence": 0.972,
+      "word_is_final": true
+     },
+     {
+      "text": "to",
+      "start": 4792,
+      "end": 4940,
+      "confidence": 0.914,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 5032,
+      "end": 5240,
+      "confidence": 0.917,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 5368,
+      "end": 5592,
+      "confidence": 0.985,
+      "word_is_final": false
+     },
+     {
+      "text": "oh",
+      "start": 5730,
+      "end": 6004,
+      "confidence": 0.956,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 6500,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "oh one oh nine to oh eight oh nine",
+    "end_of_turn_confidence": 0.058,
+    "words": [
+     {
+      "text": "oh",
+      "start": 3303,
+      "end": 3465,
+      "confidence": 0.969,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 3565,
+      "end": 3773,
+      "confidence": 0.963,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 3902,
+      "end": 4232,
+      "confidence": 0.898,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 4435,
+      "end": 4656,
+      "confidence": 0.972,
+      "word_is_final": true
+     },
+     {
+      "text": "to",
+      "start": 4792,
+      "end": 4940,
+      "confidence": 0.914,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 5032,
+      "end": 5240,
+      "confidence": 0.917,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 5368,
+      "end": 5592,
+      "confidence": 0.985,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 5730,
+      "end": 6004,
+      "confidence": 0.956,
+      "word_is_final": false
+     },
+     {
+      "text": "nine",
+      "start": 6173,
+      "end": 6410,
+      "confidence": 0.899,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 6874,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "oh one oh nine to oh eight oh nine two",
+    "end_of_turn_confidence": 0.071,
+    "words": [
+     {
+      "text": "oh",
+      "start": 3303,
+      "end": 3465,
+      "confidence": 0.969,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 3565,
+      "end": 3773,
+      "confidence": 0.963,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 3902,
+      "end": 4232,
+      "confidence": 0.898,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 4435,
+      "end": 4656,
+      "confidence": 0.972,
+      "word_is_final": true
+     },
+     {
+      "text": "to",
+      "start": 4792,
+      "end": 4940,
+      "confidence": 0.914,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 5032,
+      "end": 5240,
+      "confidence": 0.917,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 5368,
+      "end": 5592,
+      "confidence": 0.985,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 5730,
+      "end": 6004,
+      "confidence": 0.956,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 6173,
+      "end": 6410,
+      "confidence": 0.899,
+      "word_is_final": false
+     },
+     {
+      "text": "two",
+      "start": 6556,
+      "end": 6784,
+      "confidence": 0.881,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 7260,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "oh one oh nine to oh eight oh nine two oh",
+    "end_of_turn_confidence": 0.134,
+    "words": [
+     {
+      "text": "oh",
+      "start": 3303,
+      "end": 3465,
+      "confidence": 0.969,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 3565,
+      "end": 3773,
+      "confidence": 0.963,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 3902,
+      "end": 4232,
+      "confidence": 0.898,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 4435,
+      "end": 4656,
+      "confidence": 0.972,
+      "word_is_final": true
+     },
+     {
+      "text": "to",
+      "start": 4792,
+      "end": 4940,
+      "confidence": 0.914,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 5032,
+      "end": 5240,
+      "confidence": 0.917,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 5368,
+      "end": 5592,
+      "confidence": 0.985,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 5730,
+      "end": 6004,
+      "confidence": 0.956,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 6173,
+      "end": 6410,
+      "confidence": 0.899,
+      "word_is_final": true
+     },
+     {
+      "text": "two",
+      "start": 6556,
+      "end": 6784,
+      "confidence": 0.881,
+      "word_is_final": false
+     },
+     {
+      "text": "oh",
+      "start": 6924,
+      "end": 7170,
+      "confidence": 0.949,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 7593,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "oh one oh nine to oh eight oh nine two oh two",
+    "end_of_turn_confidence": 0.2,
+    "words": [
+     {
+      "text": "oh",
+      "start": 3303,
+      "end": 3465,
+      "confidence": 0.969,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 3565,
+      "end": 3773,
+      "confidence": 0.963,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 3902,
+      "end": 4232,
+      "confidence": 0.898,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 4435,
+      "end": 4656,
+      "confidence": 0.972,
+      "word_is_final": true
+     },
+     {
+      "text": "to",
+      "start": 4792,
+      "end": 4940,
+      "confidence": 0.914,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 5032,
+      "end": 5240,
+      "confidence": 0.917,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 5368,
+      "end": 5592,
+      "confidence": 0.985,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 5730,
+      "end": 6004,
+      "confidence": 0.956,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 6173,
+      "end": 6410,
+      "confidence": 0.899,
+      "word_is_final": true
+     },
+     {
+      "text": "two",
+      "start": 6556,
+      "end": 6784,
+      "confidence": 0.881,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 6924,
+      "end": 7170,
+      "confidence": 0.949,
+      "word_is_final": false
+     },
+     {
+      "text": "two",
+      "start": 7322,
+      "end": 7503,
+      "confidence": 0.946,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 7933,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "oh one oh nine to oh eight oh nine two oh two six",
+    "end_of_turn_confidence": 0.12,
+    "words": [
+     {
+      "text": "oh",
+      "start": 3303,
+      "end": 3465,
+      "confidence": 0.969,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 3565,
+      "end": 3773,
+      "confidence": 0.963,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 3902,
+      "end": 4232,
+      "confidence": 0.898,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 4435,
+      "end": 4656,
+      "confidence": 0.972,
+      "word_is_final": true
+     },
+     {
+      "text": "to",
+      "start": 4792,
+      "end": 4940,
+      "confidence": 0.914,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 5032,
+      "end": 5240,
+      "confidence": 0.917,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 5368,
+      "end": 5592,
+      "confidence": 0.985,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 5730,
+      "end": 6004,
+      "confidence": 0.956,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 6173,
+      "end": 6410,
+      "confidence": 0.899,
+      "word_is_final": true
+     },
+     {
+      "text": "two",
+      "start": 6556,
+      "end": 6784,
+      "confidence": 0.881,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 6924,
+      "end": 7170,
+      "confidence": 0.949,
+      "word_is_final": true
+     },
+     {
+      "text": "two",
+      "start": 7322,
+      "end": 7503,
+      "confidence": 0.946,
+      "word_is_final": false
+     },
+     {
+      "text": "six",
+      "start": 7615,
+      "end": 7843,
+      "confidence": 0.884,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 8645,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 2,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "fine",
+    "end_of_turn_confidence": 0.238,
+    "words": [
+     {
+      "text": "fine",
+      "start": 8343,
+      "end": 8555,
+      "confidence": 0.717,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 9386,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 2,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "fine I will put",
+    "end_of_turn_confidence": 0.143,
+    "words": [
+     {
+      "text": "fine",
+      "start": 8343,
+      "end": 8555,
+      "confidence": 0.717,
+      "word_is_final": true
+     },
+     {
+      "text": "I",
+      "start": 8686,
+      "end": 8787,
+      "confidence": 0.708,
+      "word_is_final": true
+     },
+     {
+      "text": "will",
+      "start": 8849,
+      "end": 8969,
+      "confidence": 0.66,
+      "word_is_final": false
+     },
+     {
+      "text": "put",
+      "start": 9044,
+      "end": 9296,
+      "confidence": 0.837,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 9499,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 1,
+    "turn_is_formatted": false,
+    "end_of_turn": true,
+    "transcript": "oh one oh nine to oh eight oh nine two oh two six",
+    "end_of_turn_confidence": 0.888,
+    "words": [
+     {
+      "text": "oh",
+      "start": 3303,
+      "end": 3465,
+      "confidence": 0.969,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 3565,
+      "end": 3773,
+      "confidence": 0.963,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 3902,
+      "end": 4232,
+      "confidence": 0.898,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 4435,
+      "end": 4656,
+      "confidence": 0.972,
+      "word_is_final": true
+     },
+     {
+      "text": "to",
+      "start": 4792,
+      "end": 4940,
+      "confidence": 0.914,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 5032,
+      "end": 5240,
+      "confidence": 0.917,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 5368,
+      "end": 5592,
+      "confidence": 0.985,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 5730,
+      "end": 6004,
+      "confidence": 0.956,
+      "word_is_final": true
+     },
+     {
+      "text": "nine",
+      "start": 6173,
+      "end": 6410,
+      "confidence": 0.899,
+      "word_is_final": true
+     },
+     {
+      "text": "two",
+      "start": 6556,
+      "end": 6784,
+      "confidence": 0.881,
+      "word_is_final": true
+     },
+     {
+      "text": "oh",
+      "start": 6924,
+      "end": 7170,
+      "confidence": 0.949,
+      "word_is_final": true
+     },
+     {
+      "text": "two",
+      "start": 7322,
+      "end": 7503,
+      "confidence": 0.946,
+      "word_is_final": true
+     },
+     {
+      "text": "six",
+      "start": 7615,
+      "end": 7843,
+      "confidence": 0.884,
+      "word_is_final": true
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 10116,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 2,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "fine I will put that on the",
+    "end_of_turn_confidence": 0.039,
+    "words": [
+     {
+      "text": "fine",
+      "start": 8343,
+      "end": 8555,
+      "confidence": 0.717,
+      "word_is_final": true
+     },
+     {
+      "text": "I",
+      "start": 8686,
+      "end": 8787,
+      "confidence": 0.708,
+      "word_is_final": true
+     },
+     {
+      "text": "will",
+      "start": 8849,
+      "end": 8969,
+      "confidence": 0.66,
+      "word_is_final": true
+     },
+     {
+      "text": "put",
+      "start": 9044,
+      "end": 9296,
+      "confidence": 0.837,
+      "word_is_final": true
+     },
+     {
+      "text": "that",
+      "start": 9452,
+      "end": 9608,
+      "confidence": 0.958,
+      "word_is_final": true
+     },
+     {
+      "text": "on",
+      "start": 9705,
+      "end": 9811,
+      "confidence": 0.901,
+      "word_is_final": false
+     },
+     {
+      "text": "the",
+      "start": 9876,
+      "end": 10026,
+      "confidence": 0.743,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 10930,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 2,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "fine I will put that on the booking and tell",
+    "end_of_turn_confidence": 0.201,
+    "words": [
+     {
+      "text": "fine",
+      "start": 8343,
+      "end": 8555,
+      "confidence": 0.717,
+      "word_is_final": true
+     },
+     {
+      "text": "I",
+      "start": 8686,
+      "end": 8787,
+      "confidence": 0.708,
+      "word_is_final": true
+     },
+     {
+      "text": "will",
+      "start": 8849,
+      "end": 8969,
+      "confidence": 0.66,
+      "word_is_final": true
+     },
+     {
+      "text": "put",
+      "start": 9044,
+      "end": 9296,
+      "confidence": 0.837,
+      "word_is_final": true
+     },
+     {
+      "text": "that",
+      "start": 9452,
+      "end": 9608,
+      "confidence": 0.958,
+      "word_is_final": true
+     },
+     {
+      "text": "on",
+      "start": 9705,
+      "end": 9811,
+      "confidence": 0.901,
+      "word_is_final": true
+     },
+     {
+      "text": "the",
+      "start": 9876,
+      "end": 10026,
+      "confidence": 0.743,
+      "word_is_final": true
+     },
+     {
+      "text": "booking",
+      "start": 10118,
+      "end": 10321,
+      "confidence": 0.675,
+      "word_is_final": true
+     },
+     {
+      "text": "and",
+      "start": 10446,
+      "end": 10556,
+      "confidence": 0.654,
+      "word_is_final": false
+     },
+     {
+      "text": "tell",
+      "start": 10625,
+      "end": 10840,
+      "confidence": 0.725,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 11437,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 2,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "fine I will put that on the booking and tell the yard",
+    "end_of_turn_confidence": 0.226,
+    "words": [
+     {
+      "text": "fine",
+      "start": 8343,
+      "end": 8555,
+      "confidence": 0.717,
+      "word_is_final": true
+     },
+     {
+      "text": "I",
+      "start": 8686,
+      "end": 8787,
+      "confidence": 0.708,
+      "word_is_final": true
+     },
+     {
+      "text": "will",
+      "start": 8849,
+      "end": 8969,
+      "confidence": 0.66,
+      "word_is_final": true
+     },
+     {
+      "text": "put",
+      "start": 9044,
+      "end": 9296,
+      "confidence": 0.837,
+      "word_is_final": true
+     },
+     {
+      "text": "that",
+      "start": 9452,
+      "end": 9608,
+      "confidence": 0.958,
+      "word_is_final": true
+     },
+     {
+      "text": "on",
+      "start": 9705,
+      "end": 9811,
+      "confidence": 0.901,
+      "word_is_final": true
+     },
+     {
+      "text": "the",
+      "start": 9876,
+      "end": 10026,
+      "confidence": 0.743,
+      "word_is_final": true
+     },
+     {
+      "text": "booking",
+      "start": 10118,
+      "end": 10321,
+      "confidence": 0.675,
+      "word_is_final": true
+     },
+     {
+      "text": "and",
+      "start": 10446,
+      "end": 10556,
+      "confidence": 0.654,
+      "word_is_final": true
+     },
+     {
+      "text": "tell",
+      "start": 10625,
+      "end": 10840,
+      "confidence": 0.725,
+      "word_is_final": true
+     },
+     {
+      "text": "the",
+      "start": 10972,
+      "end": 11072,
+      "confidence": 0.973,
+      "word_is_final": false
+     },
+     {
+      "text": "yard",
+      "start": 11134,
+      "end": 11347,
+      "confidence": 0.781,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 13003,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 2,
+    "turn_is_formatted": false,
+    "end_of_turn": true,
+    "transcript": "fine I will put that on the booking and tell the yard",
+    "end_of_turn_confidence": 0.927,
+    "words": [
+     {
+      "text": "fine",
+      "start": 8343,
+      "end": 8555,
+      "confidence": 0.717,
+      "word_is_final": true
+     },
+     {
+      "text": "I",
+      "start": 8686,
+      "end": 8787,
+      "confidence": 0.708,
+      "word_is_final": true
+     },
+     {
+      "text": "will",
+      "start": 8849,
+      "end": 8969,
+      "confidence": 0.66,
+      "word_is_final": true
+     },
+     {
+      "text": "put",
+      "start": 9044,
+      "end": 9296,
+      "confidence": 0.837,
+      "word_is_final": true
+     },
+     {
+      "text": "that",
+      "start": 9452,
+      "end": 9608,
+      "confidence": 0.958,
+      "word_is_final": true
+     },
+     {
+      "text": "on",
+      "start": 9705,
+      "end": 9811,
+      "confidence": 0.901,
+      "word_is_final": true
+     },
+     {
+      "text": "the",
+      "start": 9876,
+      "end": 10026,
+      "confidence": 0.743,
+      "word_is_final": true
+     },
+     {
+      "text": "booking",
+      "start": 10118,
+      "end": 10321,
+      "confidence": 0.675,
+      "word_is_final": true
+     },
+     {
+      "text": "and",
+      "start": 10446,
+      "end": 10556,
+      "confidence": 0.654,
+      "word_is_final": true
+     },
+     {
+      "text": "tell",
+      "start": 10625,
+      "end": 10840,
+      "confidence": 0.725,
+      "word_is_final": true
+     },
+     {
+      "text": "the",
+      "start": 10972,
+      "end": 11072,
+      "confidence": 0.973,
+      "word_is_final": true
+     },
+     {
+      "text": "yard",
+      "start": 11134,
+      "end": 11347,
+      "confidence": 0.781,
+      "word_is_final": true
+     }
+    ]
+   }
+  }
+ ]
+}

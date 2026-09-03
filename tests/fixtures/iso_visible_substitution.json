@@ -1,0 +1,942 @@
+{
+ "schema": "readback.fixture/1",
+ "name": "iso_visible_substitution",
+ "description": "M heard as N at position 1. Different residue classes, so the ISO 6346 check digit fails and the solver has arithmetic to work with.",
+ "notes": [
+  "M/N carries 0.72 in the confusion table, the fourth heaviest pair, and it is visible to the check digit. The heavy pairs almost all are (docs/FINDINGS.md 4).",
+  "normalise_window finds nothing here on purpose: as heard, no window validates. Recovering this one is the solver's job, not the scanner's."
+ ],
+ "truth": {
+  "format": "iso6346",
+  "value": "MSKU4158005",
+  "spoken": "container number em ess kay you four one five eight zero zero five"
+ },
+ "expect": {
+  "contains_identifier": true,
+  "normalised": "NSKU4158005",
+  "checksum_valid_as_heard": false,
+  "checksum_sees_it": true,
+  "substitution": {
+   "position": 0,
+   "truth": "M",
+   "heard": "N",
+   "weight": 0.72
+  },
+  "turns": 1,
+  "solver_action": "ACCEPT",
+  "solver_top": "MSKU4158005",
+  "silent_repair": true
+ },
+ "frames": [
+  {
+   "emit_ms": 1415,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "container",
+    "end_of_turn_confidence": 0.098,
+    "words": [
+     {
+      "text": "container",
+      "start": 1100,
+      "end": 1325,
+      "confidence": 0.898,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 1774,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "container number",
+    "end_of_turn_confidence": 0.229,
+    "words": [
+     {
+      "text": "container",
+      "start": 1100,
+      "end": 1325,
+      "confidence": 0.898,
+      "word_is_final": false
+     },
+     {
+      "text": "number",
+      "start": 1464,
+      "end": 1684,
+      "confidence": 0.924,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 2099,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "container number en",
+    "end_of_turn_confidence": 0.199,
+    "words": [
+     {
+      "text": "container",
+      "start": 1100,
+      "end": 1325,
+      "confidence": 0.898,
+      "word_is_final": true
+     },
+     {
+      "text": "number",
+      "start": 1464,
+      "end": 1684,
+      "confidence": 0.924,
+      "word_is_final": false
+     },
+     {
+      "text": "en",
+      "start": 1819,
+      "end": 2009,
+      "confidence": 0.38,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 2450,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "container number en ess",
+    "end_of_turn_confidence": 0.21,
+    "words": [
+     {
+      "text": "container",
+      "start": 1100,
+      "end": 1325,
+      "confidence": 0.898,
+      "word_is_final": true
+     },
+     {
+      "text": "number",
+      "start": 1464,
+      "end": 1684,
+      "confidence": 0.924,
+      "word_is_final": true
+     },
+     {
+      "text": "en",
+      "start": 1819,
+      "end": 2009,
+      "confidence": 0.38,
+      "word_is_final": false
+     },
+     {
+      "text": "ess",
+      "start": 2127,
+      "end": 2360,
+      "confidence": 0.897,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 2812,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "container number en ess kay",
+    "end_of_turn_confidence": 0.131,
+    "words": [
+     {
+      "text": "container",
+      "start": 1100,
+      "end": 1325,
+      "confidence": 0.898,
+      "word_is_final": true
+     },
+     {
+      "text": "number",
+      "start": 1464,
+      "end": 1684,
+      "confidence": 0.924,
+      "word_is_final": true
+     },
+     {
+      "text": "en",
+      "start": 1819,
+      "end": 2009,
+      "confidence": 0.38,
+      "word_is_final": true
+     },
+     {
+      "text": "ess",
+      "start": 2127,
+      "end": 2360,
+      "confidence": 0.897,
+      "word_is_final": false
+     },
+     {
+      "text": "kay",
+      "start": 2504,
+      "end": 2722,
+      "confidence": 0.984,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 3166,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "container number en ess kay you",
+    "end_of_turn_confidence": 0.225,
+    "words": [
+     {
+      "text": "container",
+      "start": 1100,
+      "end": 1325,
+      "confidence": 0.898,
+      "word_is_final": true
+     },
+     {
+      "text": "number",
+      "start": 1464,
+      "end": 1684,
+      "confidence": 0.924,
+      "word_is_final": true
+     },
+     {
+      "text": "en",
+      "start": 1819,
+      "end": 2009,
+      "confidence": 0.38,
+      "word_is_final": true
+     },
+     {
+      "text": "ess",
+      "start": 2127,
+      "end": 2360,
+      "confidence": 0.897,
+      "word_is_final": true
+     },
+     {
+      "text": "kay",
+      "start": 2504,
+      "end": 2722,
+      "confidence": 0.984,
+      "word_is_final": false
+     },
+     {
+      "text": "you",
+      "start": 2856,
+      "end": 3076,
+      "confidence": 0.986,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 3644,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "container number en ess kay you four",
+    "end_of_turn_confidence": 0.043,
+    "words": [
+     {
+      "text": "container",
+      "start": 1100,
+      "end": 1325,
+      "confidence": 0.898,
+      "word_is_final": true
+     },
+     {
+      "text": "number",
+      "start": 1464,
+      "end": 1684,
+      "confidence": 0.924,
+      "word_is_final": true
+     },
+     {
+      "text": "en",
+      "start": 1819,
+      "end": 2009,
+      "confidence": 0.38,
+      "word_is_final": true
+     },
+     {
+      "text": "ess",
+      "start": 2127,
+      "end": 2360,
+      "confidence": 0.897,
+      "word_is_final": true
+     },
+     {
+      "text": "kay",
+      "start": 2504,
+      "end": 2722,
+      "confidence": 0.984,
+      "word_is_final": true
+     },
+     {
+      "text": "you",
+      "start": 2856,
+      "end": 3076,
+      "confidence": 0.986,
+      "word_is_final": false
+     },
+     {
+      "text": "four",
+      "start": 3211,
+      "end": 3554,
+      "confidence": 0.893,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 4072,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "container number en ess kay you four won",
+    "end_of_turn_confidence": 0.23,
+    "words": [
+     {
+      "text": "container",
+      "start": 1100,
+      "end": 1325,
+      "confidence": 0.898,
+      "word_is_final": true
+     },
+     {
+      "text": "number",
+      "start": 1464,
+      "end": 1684,
+      "confidence": 0.924,
+      "word_is_final": true
+     },
+     {
+      "text": "en",
+      "start": 1819,
+      "end": 2009,
+      "confidence": 0.38,
+      "word_is_final": true
+     },
+     {
+      "text": "ess",
+      "start": 2127,
+      "end": 2360,
+      "confidence": 0.897,
+      "word_is_final": true
+     },
+     {
+      "text": "kay",
+      "start": 2504,
+      "end": 2722,
+      "confidence": 0.984,
+      "word_is_final": true
+     },
+     {
+      "text": "you",
+      "start": 2856,
+      "end": 3076,
+      "confidence": 0.986,
+      "word_is_final": true
+     },
+     {
+      "text": "four",
+      "start": 3211,
+      "end": 3554,
+      "confidence": 0.893,
+      "word_is_final": false
+     },
+     {
+      "text": "won",
+      "start": 3765,
+      "end": 3982,
+      "confidence": 0.96,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 4392,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "container number en ess kay you four won five",
+    "end_of_turn_confidence": 0.2,
+    "words": [
+     {
+      "text": "container",
+      "start": 1100,
+      "end": 1325,
+      "confidence": 0.898,
+      "word_is_final": true
+     },
+     {
+      "text": "number",
+      "start": 1464,
+      "end": 1684,
+      "confidence": 0.924,
+      "word_is_final": true
+     },
+     {
+      "text": "en",
+      "start": 1819,
+      "end": 2009,
+      "confidence": 0.38,
+      "word_is_final": true
+     },
+     {
+      "text": "ess",
+      "start": 2127,
+      "end": 2360,
+      "confidence": 0.897,
+      "word_is_final": true
+     },
+     {
+      "text": "kay",
+      "start": 2504,
+      "end": 2722,
+      "confidence": 0.984,
+      "word_is_final": true
+     },
+     {
+      "text": "you",
+      "start": 2856,
+      "end": 3076,
+      "confidence": 0.986,
+      "word_is_final": true
+     },
+     {
+      "text": "four",
+      "start": 3211,
+      "end": 3554,
+      "confidence": 0.893,
+      "word_is_final": true
+     },
+     {
+      "text": "won",
+      "start": 3765,
+      "end": 3982,
+      "confidence": 0.96,
+      "word_is_final": false
+     },
+     {
+      "text": "five",
+      "start": 4115,
+      "end": 4302,
+      "confidence": 0.937,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 4700,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "container number en ess kay you four one five ate",
+    "end_of_turn_confidence": 0.135,
+    "words": [
+     {
+      "text": "container",
+      "start": 1100,
+      "end": 1325,
+      "confidence": 0.898,
+      "word_is_final": true
+     },
+     {
+      "text": "number",
+      "start": 1464,
+      "end": 1684,
+      "confidence": 0.924,
+      "word_is_final": true
+     },
+     {
+      "text": "en",
+      "start": 1819,
+      "end": 2009,
+      "confidence": 0.38,
+      "word_is_final": true
+     },
+     {
+      "text": "ess",
+      "start": 2127,
+      "end": 2360,
+      "confidence": 0.897,
+      "word_is_final": true
+     },
+     {
+      "text": "kay",
+      "start": 2504,
+      "end": 2722,
+      "confidence": 0.984,
+      "word_is_final": true
+     },
+     {
+      "text": "you",
+      "start": 2856,
+      "end": 3076,
+      "confidence": 0.986,
+      "word_is_final": true
+     },
+     {
+      "text": "four",
+      "start": 3211,
+      "end": 3554,
+      "confidence": 0.893,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 3765,
+      "end": 3982,
+      "confidence": 0.96,
+      "word_is_final": true
+     },
+     {
+      "text": "five",
+      "start": 4115,
+      "end": 4302,
+      "confidence": 0.937,
+      "word_is_final": false
+     },
+     {
+      "text": "ate",
+      "start": 4417,
+      "end": 4610,
+      "confidence": 0.982,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 5048,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "container number en ess kay you four one five ate zero",
+    "end_of_turn_confidence": 0.241,
+    "words": [
+     {
+      "text": "container",
+      "start": 1100,
+      "end": 1325,
+      "confidence": 0.898,
+      "word_is_final": true
+     },
+     {
+      "text": "number",
+      "start": 1464,
+      "end": 1684,
+      "confidence": 0.924,
+      "word_is_final": true
+     },
+     {
+      "text": "en",
+      "start": 1819,
+      "end": 2009,
+      "confidence": 0.38,
+      "word_is_final": true
+     },
+     {
+      "text": "ess",
+      "start": 2127,
+      "end": 2360,
+      "confidence": 0.897,
+      "word_is_final": true
+     },
+     {
+      "text": "kay",
+      "start": 2504,
+      "end": 2722,
+      "confidence": 0.984,
+      "word_is_final": true
+     },
+     {
+      "text": "you",
+      "start": 2856,
+      "end": 3076,
+      "confidence": 0.986,
+      "word_is_final": true
+     },
+     {
+      "text": "four",
+      "start": 3211,
+      "end": 3554,
+      "confidence": 0.893,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 3765,
+      "end": 3982,
+      "confidence": 0.96,
+      "word_is_final": true
+     },
+     {
+      "text": "five",
+      "start": 4115,
+      "end": 4302,
+      "confidence": 0.937,
+      "word_is_final": true
+     },
+     {
+      "text": "ate",
+      "start": 4417,
+      "end": 4610,
+      "confidence": 0.982,
+      "word_is_final": false
+     },
+     {
+      "text": "zero",
+      "start": 4729,
+      "end": 4958,
+      "confidence": 0.963,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 5426,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "container number en ess kay you four one five eight zero zero",
+    "end_of_turn_confidence": 0.027,
+    "words": [
+     {
+      "text": "container",
+      "start": 1100,
+      "end": 1325,
+      "confidence": 0.898,
+      "word_is_final": true
+     },
+     {
+      "text": "number",
+      "start": 1464,
+      "end": 1684,
+      "confidence": 0.924,
+      "word_is_final": true
+     },
+     {
+      "text": "en",
+      "start": 1819,
+      "end": 2009,
+      "confidence": 0.38,
+      "word_is_final": true
+     },
+     {
+      "text": "ess",
+      "start": 2127,
+      "end": 2360,
+      "confidence": 0.897,
+      "word_is_final": true
+     },
+     {
+      "text": "kay",
+      "start": 2504,
+      "end": 2722,
+      "confidence": 0.984,
+      "word_is_final": true
+     },
+     {
+      "text": "you",
+      "start": 2856,
+      "end": 3076,
+      "confidence": 0.986,
+      "word_is_final": true
+     },
+     {
+      "text": "four",
+      "start": 3211,
+      "end": 3554,
+      "confidence": 0.893,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 3765,
+      "end": 3982,
+      "confidence": 0.96,
+      "word_is_final": true
+     },
+     {
+      "text": "five",
+      "start": 4115,
+      "end": 4302,
+      "confidence": 0.937,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 4417,
+      "end": 4610,
+      "confidence": 0.982,
+      "word_is_final": true
+     },
+     {
+      "text": "zero",
+      "start": 4729,
+      "end": 4958,
+      "confidence": 0.963,
+      "word_is_final": false
+     },
+     {
+      "text": "zero",
+      "start": 5099,
+      "end": 5336,
+      "confidence": 0.89,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 5810,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": false,
+    "transcript": "container number en ess kay you four one five eight zero zero five",
+    "end_of_turn_confidence": 0.061,
+    "words": [
+     {
+      "text": "container",
+      "start": 1100,
+      "end": 1325,
+      "confidence": 0.898,
+      "word_is_final": true
+     },
+     {
+      "text": "number",
+      "start": 1464,
+      "end": 1684,
+      "confidence": 0.924,
+      "word_is_final": true
+     },
+     {
+      "text": "en",
+      "start": 1819,
+      "end": 2009,
+      "confidence": 0.38,
+      "word_is_final": true
+     },
+     {
+      "text": "ess",
+      "start": 2127,
+      "end": 2360,
+      "confidence": 0.897,
+      "word_is_final": true
+     },
+     {
+      "text": "kay",
+      "start": 2504,
+      "end": 2722,
+      "confidence": 0.984,
+      "word_is_final": true
+     },
+     {
+      "text": "you",
+      "start": 2856,
+      "end": 3076,
+      "confidence": 0.986,
+      "word_is_final": true
+     },
+     {
+      "text": "four",
+      "start": 3211,
+      "end": 3554,
+      "confidence": 0.893,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 3765,
+      "end": 3982,
+      "confidence": 0.96,
+      "word_is_final": true
+     },
+     {
+      "text": "five",
+      "start": 4115,
+      "end": 4302,
+      "confidence": 0.937,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 4417,
+      "end": 4610,
+      "confidence": 0.982,
+      "word_is_final": true
+     },
+     {
+      "text": "zero",
+      "start": 4729,
+      "end": 4958,
+      "confidence": 0.963,
+      "word_is_final": true
+     },
+     {
+      "text": "zero",
+      "start": 5099,
+      "end": 5336,
+      "confidence": 0.89,
+      "word_is_final": false
+     },
+     {
+      "text": "five",
+      "start": 5482,
+      "end": 5720,
+      "confidence": 0.927,
+      "word_is_final": false
+     }
+    ]
+   }
+  },
+  {
+   "emit_ms": 7376,
+   "frame": {
+    "type": "Turn",
+    "turn_order": 0,
+    "turn_is_formatted": false,
+    "end_of_turn": true,
+    "transcript": "container number en ess kay you four one five eight zero zero five",
+    "end_of_turn_confidence": 0.945,
+    "words": [
+     {
+      "text": "container",
+      "start": 1100,
+      "end": 1325,
+      "confidence": 0.898,
+      "word_is_final": true
+     },
+     {
+      "text": "number",
+      "start": 1464,
+      "end": 1684,
+      "confidence": 0.924,
+      "word_is_final": true
+     },
+     {
+      "text": "en",
+      "start": 1819,
+      "end": 2009,
+      "confidence": 0.38,
+      "word_is_final": true
+     },
+     {
+      "text": "ess",
+      "start": 2127,
+      "end": 2360,
+      "confidence": 0.897,
+      "word_is_final": true
+     },
+     {
+      "text": "kay",
+      "start": 2504,
+      "end": 2722,
+      "confidence": 0.984,
+      "word_is_final": true
+     },
+     {
+      "text": "you",
+      "start": 2856,
+      "end": 3076,
+      "confidence": 0.986,
+      "word_is_final": true
+     },
+     {
+      "text": "four",
+      "start": 3211,
+      "end": 3554,
+      "confidence": 0.893,
+      "word_is_final": true
+     },
+     {
+      "text": "one",
+      "start": 3765,
+      "end": 3982,
+      "confidence": 0.96,
+      "word_is_final": true
+     },
+     {
+      "text": "five",
+      "start": 4115,
+      "end": 4302,
+      "confidence": 0.937,
+      "word_is_final": true
+     },
+     {
+      "text": "eight",
+      "start": 4417,
+      "end": 4610,
+      "confidence": 0.982,
+      "word_is_final": true
+     },
+     {
+      "text": "zero",
+      "start": 4729,
+      "end": 4958,
+      "confidence": 0.963,
+      "word_is_final": true
+     },
+     {
+      "text": "zero",
+      "start": 5099,
+      "end": 5336,
+      "confidence": 0.89,
+      "word_is_final": true
+     },
+     {
+      "text": "five",
+      "start": 5482,
+      "end": 5720,
+      "confidence": 0.927,
+      "word_is_final": true
+     }
+    ]
+   }
+  }
+ ]
+}
