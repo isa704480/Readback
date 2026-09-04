@@ -52,6 +52,7 @@ import asyncio
 import statistics
 import time
 import uuid
+from collections import Counter
 from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass, field
 from typing import Any, Final
@@ -152,6 +153,20 @@ class Aligned:
     confs: list[float]
     words: list[int]            # index into the tape's word list, per cell
     ok: bool                    # False when the walk could not match pass1
+    # True when one recogniser word produced BLOCK_CELLS_PER_WORD or more of
+    # these cells: the confidences are then one number copied per position,
+    # not per-position doubt, and the decider must treat them as ARCH 3.7's
+    # BLOCK regime for this candidate whatever the session-wide detector
+    # says. Measured 2026-09-04: universal-3-5-pro returns a spoken
+    # identifier as one formatted word, so on live audio this is the common
+    # case, and RegimeDetector's 40-word window never fills in a short call.
+    block: bool = False
+
+
+# The most cells a per-character speaker's single word ever yields is three
+# ("treble four"). Four from one word means the recogniser welded a spelling
+# into a code, and its one confidence is the whole block's.
+BLOCK_CELLS_PER_WORD: Final = 4
 
 
 def align_run(words: Sequence[Word], idx: Sequence[int]) -> Aligned:
@@ -169,8 +184,10 @@ def align_run(words: Sequence[Word], idx: Sequence[int]) -> Aligned:
 
     toks = _merge_tokens(run_words)
     mean = statistics.fmean([w.confidence for w in run_words]) if run_words else 0.0
+    # Unaligned, so no per-word count; the average is the honest proxy.
+    welded_on_average = bool(run_words) and len(cells) >= BLOCK_CELLS_PER_WORD * len(run_words)
     spread = Aligned(cells, [mean] * len(cells), [idx[-1]] * len(cells) if idx else [],
-                     ok=False)
+                     ok=False, block=welded_on_average)
     if [t for t, _c, _w in toks] != tokenise(text):
         return spread
 
@@ -199,7 +216,8 @@ def align_run(words: Sequence[Word], idx: Sequence[int]) -> Aligned:
         i += size
     if len(confs) != len(cells):
         return spread
-    return Aligned(cells, confs, owners, ok=True)
+    welded = max(Counter(owners).values(), default=0) >= BLOCK_CELLS_PER_WORD
+    return Aligned(cells, confs, owners, ok=True, block=welded)
 
 
 def _merge_tokens(run_words: Sequence[Word]) -> list[tuple[str, float, int]]:
@@ -259,6 +277,10 @@ class CandidateWindow:
     last_word_end_ms: int
     trailing_cells: int
     cells_used: int
+    # Aligned.block for the run this window was cut from: the confidences are
+    # one recogniser word's number per position. The decider reads it as the
+    # BLOCK regime for this candidate (see the Moment it is folded into).
+    block_confidence: bool = False
 
 
 # 4.9's "LENGTH BEFORE CHARACTERS". `pass2` expands "double u" into one slot or
@@ -307,8 +329,27 @@ def build_window(words: Sequence[Word], shape: ShapeHit, armed: bool) -> Candida
                 last_word_end_ms=words[a.words[last_cell]].end,
                 trailing_cells=len(a.cells) - (start + size),
                 cells_used=size,
+                block_confidence=a.block,
             )
     return None
+
+
+def candidate_regime(window: CandidateWindow, measured: str | None) -> str:
+    """ARCH 3.7's regime for THIS candidate.
+
+    The session-wide RegimeDetector needs 40 words and a live call rarely
+    gives it that many before the first identifier, so `measured` is usually
+    None -- "unknown", which the decider treats as per-character, the one
+    regime in which a silent repair is allowed. But a window cut from a welded
+    word carries no per-position doubt at all: twelve cells, one number. That
+    is the BLOCK regime by construction, known from the alignment, not from a
+    statistic, and it overrides the unmeasured session-wide answer for this
+    candidate only. A checksum-clean capture still commits silently in every
+    regime; what BLOCK forbids is changing a character nobody can localise.
+    """
+    if window.block_confidence:
+        return "block"
+    return measured or "unknown"
 
 
 def _expansion_map(cells: Sequence[Any], length: int) -> list[int]:
@@ -977,7 +1018,7 @@ def _moment(p: _Pending, source: Any, tape: Tape, regime: str | None,
         # that binds this to a specific form field replaces one expression.
         required=_second_signal(p) != "none",
         checksum_valid_as_heard=p.window.fmt.ok(p.heard),
-        regime=regime or "unknown",
+        regime=candidate_regime(p.window, regime),
     )
 
 

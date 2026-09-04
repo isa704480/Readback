@@ -107,44 +107,85 @@ docs/
 
 ## Status
 
-The pipeline runs end to end today, with no API key, against five recorded
-fixtures:
+The pipeline runs end to end against five recorded fixtures with no API key,
+and against the live `universal-3-5-pro` socket with one:
 
 ```
-$ PYTHONPATH=. python -m pytest tests/ -q          19 passed
-$ PYTHONPATH=. python tests/test_pipeline_e2e.py   272 checks passed
-$ curl -X POST localhost:8000/api/demo/replay -d '{"fixture":"iso_visible_substitution"}'
-  heard NSKU4158005 -> wrote MSKU4158005, silently, 0 questions
+$ PYTHONPATH=. python -m pytest tests/ -q                       85 passed
+$ PYTHONPATH=. python experiments/day1/e2e_live.py --wav container.wav --truth MSKU4158005
+  [4575 ms] capture.update   rack=MSKU4158___
+  [5885 ms] candidate.seen   MSKU4158005  complete  checksum_ok  aligned
+  [6198 ms] capture.commit   value=MSKU4158005  heard=MSKU4158005
+  VERDICT: truth MSKU4158005 committed: YES
 ```
 
 Built and tested: validators, solver, normaliser, question generator, arity
 repair, the rolling tape, the detector and ARM/IDLE state machine, the replay
 source and fixture corpus, the decider, the runner, the event stream, the
-persistence layer, and the FastAPI surface.
+persistence layer, the FastAPI surface, sign-in and organisations, the
+browser microphone path (AudioWorklet → PCM16 → `/api/session/{id}/audio` →
+the same runner the fixtures use), the rack UI, and a trilingual interface.
 
-Every fixture is now run at **both** clocks — instant and real-time — because a
-gate that is a condition on time passing is not tested by a replay that
-fast-forwards. That check found the one bug that would have lost the demo: the
-agent could not satisfy 4.8's politeness delay after a `ForceEndpoint`, so in
-real time it never spoke. See section I of `tests/test_pipeline_e2e.py`.
+Every fixture runs at **both** clocks — instant and real-time — because a gate
+that is a condition on time passing is not tested by a replay that
+fast-forwards. That check found the bug that would have lost the demo: the agent
+could not satisfy 4.8's politeness delay after a `ForceEndpoint`, so in real
+time it never spoke. See section I of `tests/test_pipeline_e2e.py`.
 
-Not built yet: the rack UI, the LLM Gateway format-ID call, the browser audio
-client, the BIC owner-code registry beyond a bootstrap list.
+### What the live socket taught us, and what we decided against
 
-The live socket is the thing least exercised, but no longer entirely
-unexercised: with a junk key `LiveSource` reaches the real endpoint and is
-rejected by it — `Error 1008, Unauthorized Connection` in about a second, raised
-as `SourceError` — so the URL, the auth header shape and the error-frame path are
-confirmed against the live service. What remains unverified is every frame shape
-*after* a successful handshake. Those are the twelve `TODO(day1-NN)` markers in
-`server/stream/live.py`. Swapping the source in is a constructor argument behind
-`settings.live_capture`, which is a `.env` edit.
+The day-1 experiment was written to answer one question — *do spelled
+characters come back as separate `Word` objects?* — because everything
+downstream branches on it. It has now run (`experiments/day1/FINDINGS-day1.md`).
+The answer is **no**: every frame arrives formatted, partials included, and a
+spoken identifier comes back as **one word with one confidence** —
+`RMSKU4158005.` (0.80) — or as a capitalised prefix beside a welded digit
+block, `RM SKU 4158005`. There is no unformatted path on this model;
+`format_turns=false` is accepted and ignored.
 
-**Blocked on day 1:** the falsification experiment needs an API key. It measures
-(A) whether spelled characters return as separate `Word` objects, and (B) the
-AUC of `words[].confidence` separating correct from incorrect characters. The
-answer decides whether escalation is a one-character question or a span re-read.
-Nothing else is written until it returns.
+Every fixture in this repository spells one word per character, so all of them
+passed while the live path produced zero captures. One measured session found
+four defects between the fixtures and the first live capture, none visible
+from a fixture:
+
+1. the welded word, which `_one()` could not read (`tokenise()` now splits
+   code-shaped tokens);
+2. the detector judging readability per word, so the welded word never joined
+   a run and the shape cue could not fire;
+3. `terminate()` closing the socket in the same breath as sending `Terminate`
+   — the server flushes a last Turn, then `Termination`, then closes, and we
+   were hanging up first, losing the turn the caller pressed stop after;
+4. the capitalised prefix, and "SKU" inside it matching a carrier phrase that
+   flipped the format away from the "container number" said six seconds
+   earlier. MSKU is Maersk's prefix.
+
+Decided against, from measurement rather than preference:
+
+- **Per-character confidence from the recogniser.** It does not exist for this
+  input. The solver's substrate is per-position doubt; on welded output every
+  position shares one number. The regime detector (ARCH 3.7) names this and
+  the decider forbids a silent repair in it; a checksum-clean capture still
+  commits silently, which is what the live run did.
+- **The LLM Gateway as a format identifier for bare digit strings.** Measured
+  anti-correlated: a phone-number window scored `nhs 0.90`, a real NHS number
+  `not_an_identifier 0.70`. It is not consulted for those formats.
+- **The `end_of_turn_confidence_threshold` lever the ARM path was designed
+  around.** Universal-Streaming-only per the reference; accepted without error
+  here, like any unknown name — the day-1 control proved the server drops
+  unknown parameters silently, which is why "it connected" is worth nothing as
+  evidence. `mode` is real and connect-time only.
+- **Tuning the rhythm threshold on the false-positive fixture.** The
+  conversational and dictation distributions overlap (cv 0.167–0.336 on pure
+  conversation); a threshold that separates them does not exist. The
+  independence test on cues (`shape_is_evidence`) is what holds the gate shut:
+  16 false commits before, 0 after.
+- **A dialect hint.** There is no such parameter; `language_code=en` is pinned
+  because, left free, the model code-switched a synthetic voice into Japanese.
+
+Not yet measured: a human voice reading NATO spelling. The synthetic voice used
+for the measurements mangled "Mike Sierra" into `RMI KCR`; a person would not,
+but that is an expectation, not a number. `experiments/day1/listen.py --codes 3`
+is the instrument.
 
 ## Path
 

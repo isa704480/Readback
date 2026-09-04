@@ -379,6 +379,26 @@ the per-word readability test, the socket closed before its last turn, and
 the capitalised prefix beside the digits. 85 tests; the false-positive
 fixtures unchanged throughout.
 
+**Fifth, argued from the first four rather than observed failing: the regime
+was "unknown" at the moment it mattered.** Every split character inherits its
+word's one confidence, so a welded reading is ARCH 3.7's BLOCK regime by
+construction -- `wpc = 1/12`, far under `REGIME_BLOCK_WPC = 0.6`. But the
+session-wide `RegimeDetector` needs 40 words, a short live call never gives
+it that many before the first identifier, and the decider treats "unknown"
+as per-character: the one regime in which a silent repair is allowed. A
+welded reading with a bad checksum would have been silently edited by
+prior alone -- twelve cells, one number, so "the doubt is at position 7" is
+a sentence the data cannot support -- which is the 5.0% silently-wrong that
+3.7 measured and the detector exists to prevent. `align_run()` already
+knows how many cells each recogniser word produced; four or more from one
+word (`BLOCK_CELLS_PER_WORD`; "treble four" is the per-character maximum at
+three) flags the window, and `candidate_regime()` hands the decider BLOCK
+for that candidate whatever the statistic says. A checksum-clean reading
+still commits silently -- the live run did -- and a repair now becomes a
+span re-read instead of a guess. Six tests in `tests/test_block_regime.py`.
+The 40-word statistic stays as it was: it is still the right instrument for
+a long call, and nothing here re-tunes it.
+
 **Recommendation for the live path, from run 2:** pin `language_code=en`.
 The agent listens in English only (measured and stated in the UI); leaving
 the model free to code-switch bought nothing and cost two Japanese partials.
