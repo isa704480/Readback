@@ -445,6 +445,14 @@ export interface ReplayCapture {
  * the same runner.run_session the live socket uses and answers with its
  * captures. A hard-coded MSKU4158005 here would be the first fake number in the
  * product, on the first screen a judge sees. */
+/* A replay that asks a question waits out the answer budget in REAL time --
+ * gates 4 and 5 are conditions on time passing, and a fixture with no scripted
+ * human never answers. Measured 2026-09-04: iso_blind_substitution returns
+ * after 12.3 s (one question, no answer, handed over), which the transport's
+ * 12 s default cut off by a hair and showed as "the server did not answer".
+ * Thirty seconds covers that path with room; the fast fixtures are unaffected. */
+const REPLAY_TIMEOUT_MS = 30_000;
+
 export async function replayFixture(
   fixture: string,
   signal?: AbortSignal,
@@ -452,6 +460,7 @@ export async function replayFixture(
   const result = await request<unknown>('/api/demo/replay', {
     method: 'POST',
     body: { fixture },
+    timeoutMs: REPLAY_TIMEOUT_MS,
     ...(signal ? { signal } : {}),
   });
   if (!result.ok) return result;
@@ -481,6 +490,34 @@ export async function replayFixture(
     });
   }
   return { ok: true, status: result.status, data: captures };
+}
+
+/** A replay capture in the record's own shape, so the rack and the state
+ * ladder read it exactly as they read a row from the database. `validated_by`,
+ * `second_signal`, `position_corrected` and `flag_reason` are not on the replay
+ * wire: they are null here, not invented. Shared by the record's empty state
+ * and the demo screen so the two cannot drift. */
+export function replayAsRecord(capture: ReplayCapture, id: string): RecordCapture {
+  return {
+    id,
+    session_id: id,
+    format: capture.format,
+    heard: capture.heard,
+    final: capture.final,
+    status: capture.status,
+    validated_by: null,
+    second_signal: null,
+    silent: capture.silent,
+    corrected: capture.corrected,
+    position_corrected: null,
+    rung: 0,
+    questions_asked: capture.questions,
+    handed_over: capture.handed_over,
+    handover_reason: capture.handover_reason,
+    flag_reason: null,
+    latency_ms: capture.latency_ms,
+    created_at: new Date().toISOString(),
+  };
 }
 
 // ---------------------------------------------------------- the ladder -----

@@ -197,6 +197,9 @@ export interface RequestOptions {
   /** Attach the bearer token. */
   auth?: boolean;
   signal?: AbortSignal;
+  /** Override TIMEOUT_MS for a call that is known to take longer -- a replay
+   *  that asks a question and waits out the answer budget in real time. */
+  timeoutMs?: number;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -207,10 +210,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * server absent has to render an error state, and code that throws makes a
  * blank page the default outcome instead. */
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<ApiResult<T>> {
-  const { method = 'GET', body, auth = false, signal } = options;
+  const { method = 'GET', body, auth = false, signal, timeoutMs = TIMEOUT_MS } = options;
 
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   // A caller-supplied signal has to be able to cancel the request too, e.g. an
   // unmounting screen.
   const onExternalAbort = () => controller.abort();

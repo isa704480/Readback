@@ -68,10 +68,43 @@ const catalog = {
   'route.pending.formats.title': 'Formatlar maʼlumotnomasi hali qurilmagan.',
   'route.pending.formats.body':
     'Tashkilotingizda qaysi formatlar yoqilgani va har biri nimani tekshirishi bugun hisob ekranida turibdi. Har bir nazorat raqami qanday hisoblanishini tushuntiradigan maʼlumotnoma esa hali yoʻq.',
-  'route.pending.demo.title': 'Demo ekrani hali qurilmagan.',
-  'route.pending.demo.body':
-    'Demoning oʻzi haqiqiy va u ishlaydi: yozuvning boʻsh holati bitta yozib olingan fixturani boshidan oxirigacha ijro etadi va uni fixtura deb belgilaydi. Qaysi fixturani ishga tushirishni tanlaydigan alohida ekran esa hali yoʻq.',
   'route.pending.toRecord': 'Yozuvga oʻtish',
+
+  'demo.title': 'Fixturani quvur orqali ishga tushiring.',
+  'demo.intro':
+    'Soketning oʻz sim formatidagi sakkizta fixtura — har biri jonli qoʻngʻiroq oʻtadigan oʻsha runner orqali: lenta, detektor, yechuvchi, qaror qabul qiluvchi. Toʻrttasida konteyner raqami bor. Toʻrttasida esa umuman identifikator yoʻq, va ular uchun toʻgʻri javob — sukut.',
+  'demo.group.captures': 'Identifikatori bor toʻrttasi',
+  'demo.group.refusals': 'Sukut saqlashi shart toʻrttasi',
+  'demo.run': 'Ishga tushirish',
+  'demo.runAgain': 'Qayta ishga tushirish',
+  'demo.running': 'Fixtura ishlayapti',
+  'demo.failed': 'Server javob bermadi. Demo API orqali ishlaydi; u ishlab turganini tekshiring.',
+  'demo.nothing': 'Hech narsa yozilmadi.',
+  'demo.nothingRight': 'Hech narsa yozilmadi — bu holat uchun toʻgʻri javob.',
+  'demo.unexpected': 'Nimadir yozib olindi. Bu yolgʻon yozuv, va u yashirilmasdan koʻrsatilmoqda.',
+  'demo.rackTitle': 'Quvur nimani yozib oldi',
+  'demo.fx.clean.title': 'Toza konteyner raqami',
+  'demo.fx.clean.body':
+    'MSKU 4158005 NATO alifbosida, bir navbatda aytilgan. Toʻrt soʻz partiallar davomida oʻzgarib, keyin oʻrnashadi.',
+  'demo.fx.straddle.title': 'Oʻsha raqam uch navbatga boʻlingan',
+  'demo.fx.straddle.body': 'Kod ichidagi 1,9 soniyalik ikkilanish uni navbat chegaralari boʻylab uzib yuboradi.',
+  'demo.fx.visible.title': 'M oʻrniga N eshitildi',
+  'demo.fx.visible.body':
+    '1-pozitsiyada bitta harf almashgan. Qoldiq sinflari har xil, shuning uchun ISO 6346 nazorat raqami oʻtmaydi.',
+  'demo.fx.blind.title': 'K oʻrniga A eshitildi — nazorat raqami esa baribir oʻtadi',
+  'demo.fx.blind.body':
+    '3-pozitsiya 11 moduli boʻyicha oʻsha qoldiq sinfidagi harfga almashgan. Notoʻgʻri raqam arifmetik jihatdan toʻgʻri.',
+  'demo.fx.conversation.title': '126 soniya suhbat, identifikator yoʻq',
+  'demo.fx.conversation.body':
+    'Yuk joʻnatish boʻlimidagi suhbat — belgiga aylanadigan soʻzlar bilan ataylab toʻldirilgan.',
+  'demo.fx.dates.title': 'Bir nafasda ikkita sana',
+  'demo.fx.dates.body':
+    'Olib ketish oynasi. “to” 2 raqami sifatida oʻqiladi va sanalarni bitta oʻn uch raqamli qatorga payvandlaydi.',
+  'demo.fx.meter.title': 'Oʻn olti raqamli hisoblagich koʻrsatkichi',
+  'demo.fx.meter.body':
+    'Kommunal xizmat boʻlimida aytilgan. Tashuvchi ibora yoʻq, identifikator yoʻq — karta raqamiga oʻxshab ketadigan oʻn olti raqam.',
+  'demo.fx.phone.title': 'Qoʻngʻiroq oʻrtasida telefon raqami',
+  'demo.fx.phone.body': 'Oʻn bir raqamli Buyuk Britaniya mobil raqami, gap orasida aytilgan. Tashuvchi ibora yoʻq, identifikator yoʻq.',
 
   // ------------------------------------------------------- capture states --
 

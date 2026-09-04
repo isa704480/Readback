@@ -15,6 +15,7 @@ import {
   marksFromCaptures,
   marksFromEvents,
   outcomeOf,
+  replayAsRecord,
   replayFixture,
   slotsFor,
   toCsv,
@@ -241,28 +242,9 @@ function EmptyState({
   const row = useMemo<RackRow | null>(() => {
     if (example.status !== 'ok') return null;
     const capture = example.capture;
-    /* Every field below came back from POST /api/demo/replay, which runs the
-       same runner.run_session the live socket does. Nothing is filled in. */
-    const asRecord: RecordCapture = {
-      id: 'example',
-      session_id: 'example',
-      format: capture.format,
-      heard: capture.heard,
-      final: capture.final,
-      status: capture.status,
-      validated_by: null,
-      second_signal: null,
-      silent: capture.silent,
-      corrected: capture.corrected,
-      position_corrected: null,
-      rung: 0,
-      questions_asked: capture.questions,
-      handed_over: capture.handed_over,
-      handover_reason: capture.handover_reason,
-      flag_reason: null,
-      latency_ms: capture.latency_ms,
-      created_at: new Date().toISOString(),
-    };
+    /* Every field came back from POST /api/demo/replay, which runs the same
+       runner.run_session the live socket does. Nothing is filled in. */
+    const asRecord = replayAsRecord(capture, 'example');
     return {
       id: 'example',
       format: capture.format,

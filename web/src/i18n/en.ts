@@ -98,10 +98,46 @@ export const en = {
   'route.pending.formats.title': 'The format reference is not built yet.',
   'route.pending.formats.body':
     'Which formats are switched on for your organisation, and what each one checks, is on the account screen today. The reference that explains how each check digit is computed is not.',
-  'route.pending.demo.title': 'The demo screen is not built yet.',
-  'route.pending.demo.body':
-    'The demo itself is real and it runs: the record’s empty state plays one recorded fixture end to end and labels it as a fixture. A screen of its own, where you pick which fixture to run, is not.',
   'route.pending.toRecord': 'Go to the record',
+
+  /* The demo screen. Every rack on it is the answer to POST /api/demo/replay;
+   * the fixture copy describes the INPUT and never the outcome, because the
+   * screen does not know the right answer and must not pretend to. */
+  'demo.title': 'Run a fixture through the pipeline.',
+  'demo.intro':
+    'Eight fixtures in the socket’s own wire format, each pushed through the same runner a live call goes through — the tape, the detector, the solver, the decider. Four contain a container number. Four contain no identifier at all, and the right answer for those is silence.',
+  'demo.group.captures': 'Four that contain an identifier',
+  'demo.group.refusals': 'Four that must stay silent',
+  'demo.run': 'Run',
+  'demo.runAgain': 'Run again',
+  'demo.running': 'Running the fixture',
+  'demo.failed': 'The server did not answer. The demo runs on the API; check that it is up.',
+  'demo.nothing': 'Nothing was captured.',
+  'demo.nothingRight': 'Nothing was captured — the right answer for this one.',
+  'demo.unexpected': 'Something was captured. That is a false capture, and it is shown rather than hidden.',
+  'demo.rackTitle': 'What the pipeline wrote down',
+  'demo.fx.clean.title': 'A clean container number',
+  'demo.fx.clean.body':
+    'MSKU 4158005 dictated in the NATO alphabet, in one turn. Four words change across the partials before they settle.',
+  'demo.fx.straddle.title': 'The same number over three turns',
+  'demo.fx.straddle.body': 'A 1.9-second hesitation inside the code breaks it across turn boundaries.',
+  'demo.fx.visible.title': 'M heard as N',
+  'demo.fx.visible.body':
+    'One letter substituted at position 1. Different residue classes, so the ISO 6346 check digit fails.',
+  'demo.fx.blind.title': 'K heard as A — and the check digit still passes',
+  'demo.fx.blind.body':
+    'Position 3 substituted with a letter in the same residue class mod 11. The wrong number is arithmetically valid.',
+  'demo.fx.conversation.title': '126 seconds of talk, no identifier',
+  'demo.fx.conversation.body':
+    'A shipping-desk conversation seeded with the words that normalise to characters anyway.',
+  'demo.fx.dates.title': 'Two dates in one breath',
+  'demo.fx.dates.body':
+    'A collection window. “to” reads as the digit 2 and welds the dates into one thirteen-digit run.',
+  'demo.fx.meter.title': 'A sixteen-digit meter reading',
+  'demo.fx.meter.body':
+    'Dictated at a utilities desk. No carrier phrase, no identifier — sixteen digits that look like a card number.',
+  'demo.fx.phone.title': 'A phone number in the middle of a call',
+  'demo.fx.phone.body': 'An eleven-digit UK mobile, given in passing. No carrier phrase, no identifier.',
 
   // ------------------------------------------------------- capture states --
 

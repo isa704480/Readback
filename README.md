@@ -124,7 +124,10 @@ repair, the rolling tape, the detector and ARM/IDLE state machine, the replay
 source and fixture corpus, the decider, the runner, the event stream, the
 persistence layer, the FastAPI surface, sign-in and organisations, the
 browser microphone path (AudioWorklet → PCM16 → `/api/session/{id}/audio` →
-the same runner the fixtures use), the rack UI, and a trilingual interface.
+the same runner the fixtures use), the rack UI, a demo screen that runs any
+of the eight fixtures through that runner and shows what came back — four
+that contain a container number, four that must stay silent — reachable
+without an account, and a trilingual interface.
 
 Every fixture runs at **both** clocks — instant and real-time — because a gate
 that is a condition on time passing is not tested by a replay that

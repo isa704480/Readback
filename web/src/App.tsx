@@ -58,6 +58,9 @@ const AccountScreen = lazy(() =>
 const Live = lazy(() =>
   import("./screens/Live").then((m) => ({ default: m.Live })),
 );
+const Demo = lazy(() =>
+  import("./screens/Demo").then((m) => ({ default: m.Demo })),
+);
 
 // ───────────────────────────────────────────────────────── shell context ──
 
@@ -194,7 +197,7 @@ function BareRoutes() {
 /**
  * Signed-in branch. The guard lives here as well as inside the screens: one
  * gate at the route is cheaper to verify than five in five screens, and the
- * four <Pending> routes have no guard of their own.
+ * <Pending> routes have no guard of their own.
  *
  * Only the *absence* of a token routes to /login. `unreachable` means we still
  * hold a token the server could not confirm; screens show an offline notice.
@@ -213,6 +216,33 @@ function AppRoutes() {
       {/* The interface speaks three languages, the recogniser listens in one.
           Said once, in the flow, on every signed-in screen. The key keeps its
           `landing.` prefix on purpose so the sentence exists exactly once. */}
+      <p className="shell__scope">{t("landing.hero.scope")}</p>
+    </AppShell>
+  );
+}
+
+/**
+ * /demo sits in neither branch. It is reachable signed out -- DESIGN-BRIEF
+ * 4.5: a judge who arrives with no account must reach the experience in one
+ * click -- and keeps the rail when signed in, because a signed-in operator
+ * who clicks "Demo" on the rail should not lose the rail. The token on this
+ * route is attribution, never access (lib/api.ts, demoReplay).
+ */
+function DemoEntry() {
+  const { t } = useI18n();
+  const token = useToken();
+  const written = useWritten(token);
+
+  if (token === null) {
+    return (
+      <div className="shell__plain" id="main" tabIndex={-1}>
+        <Demo />
+      </div>
+    );
+  }
+  return (
+    <AppShell {...(written ? { written } : {})}>
+      <Demo />
       <p className="shell__scope">{t("landing.hero.scope")}</p>
     </AppShell>
   );
@@ -318,8 +348,10 @@ export default function App() {
               path={NAV_PATHS.formats}
               element={<Pending area="formats" />}
             />
-            <Route path={NAV_PATHS.demo} element={<Pending area="demo" />} />
           </Route>
+
+          {/* Neither branch: see DemoEntry. */}
+          <Route path={NAV_PATHS.demo} element={<DemoEntry />} />
 
           {/* Outside both branches: an unmatched URL has no presentation to
               choose, and mounting the rail around a redirect would fire the
