@@ -218,6 +218,10 @@ def summarise(frames: list[dict[str, Any]], truth: str) -> dict[str, Any]:
         "turn_is_formatted": last_final.get("turn_is_formatted") if last_final else None,
         "final_transcript": last_final.get("transcript") if last_final else None,
         "last_partial_transcript": last_partial.get("transcript") if last_partial else None,
+        # every partial, verbatim: the language-pin question ("did the model
+        # drift into another script mid-turn?") was unanswerable from the
+        # count alone and had to be re-spoken once already
+        "partial_transcripts": [t.get("transcript") for t in partials],
         "end_of_turn_confidence_values": sorted({t.get("end_of_turn_confidence") for t in turns}),
         # raw, so a wrong reading here can be re-derived without speaking again
         "final_words_raw": final_words,

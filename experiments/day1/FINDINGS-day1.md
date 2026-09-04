@@ -232,6 +232,112 @@ entirely would be better still.
 phone-number hole structurally, on its own. There is no second signal coming to
 rescue it for the bare-digit formats.
 
+## 9. The load-bearing question, answered: characters do not arrive one per word
+
+`live.py` TODO(day1-04) called this THE measurement — "Does 'em ess kay you'
+come back as four Word objects, one, or a single word? Everything downstream
+branches on it." It has now returned, twice, against the real
+`universal-3-5-pro` socket. Audio was Windows System.Speech TTS at 16 kHz, so
+this proves plumbing and token SHAPE, not human-voice accuracy.
+
+**Run 1 — letter names** (`"container number M S K U four one five eight zero zero five"`):
+
+```
+[11] eot=True  fmt=True  n=3   Container(0.89) number(0.80) RMSKU4158005.(0.80)
+```
+
+Twelve frames, `turn_is_formatted: true` on every one of them — partials
+included. The identifier arrived as ONE token with ONE confidence. The best
+partial had zero single-character words. `format_turns=false` is sent and
+ignored (section 3); there is no unformatted path on this model.
+
+**Run 2 — NATO words** (`"... Mike Sierra Kilo Uniform, four one five eight zero zero five"`):
+
+```
+[ 3] eot=False n=1   コンテイナーナンバーR二七Rキロユニフォーム。(0.65)
+[11] eot=True  n=7   Container(0.80) number(0.67) RMI(0.31) KCR(0.51) kilo(0.69) uniform(0.98) 4158005.(0.95)
+```
+
+Two partials came back in **Japanese**: the model's native code-switching,
+with no `language_code` pinned, on a synthetic voice. `kilo` and `uniform`
+survived as words; `Mike Sierra` did not; the digit run was again one token.
+
+**What survives both runs and is safe to build on:**
+
+- Per-word `confidence` exists, on partials too (`word_is_final` present).
+- A spoken digit sequence is welded into one token — `4158005` (0.95–0.99),
+  `RMSKU4158005` (0.80). Per-digit confidence from the recogniser does not exist
+  for this input.
+- Every frame is formatted. The tape's rank order `partial < final-unformatted
+  < final-formatted` (tape.py) assumed a middle tier that never arrives.
+- `normalise._one()` had no branch for a glued alphanumeric token and returned
+  only the first digit of a digit run ("caller should splice the rest" — no
+  caller did). Measured: `'Container number RMSKU4158005.'` normalised to
+  **0 cells**; the NATO transcript to **3** (`KU4`). No capture could commit.
+
+**What does NOT survive the TTS caveat:** the Japanese code-switch and the
+`Mike Sierra → RMI KCR` collapse are almost certainly artefacts of a synthetic
+voice and must not be read as "NATO spelling fails". A human reading NATO into
+`experiments/day1/listen.py` is the only instrument for that, and it has still
+not been run.
+
+**The fix, argued from the robust half:** `normalise.tokenise()` now splits a
+code-shaped token — any run of letters and digits containing at least one
+digit — into single characters. It is the one function every consumer of a
+transcript passes through (detector, normaliser, runner, arity), so the split
+reaches all of them. Letters-only tokens are left whole: they are words, and
+the NATO/LETTER tables already read them. Each split character inherits the
+token's confidence downstream, which is exactly the "flat" regime
+`RegimeDetector` names — except that with `REGIME_MIN_WORDS = 40` it will not
+fire on a single identifier, and the decider therefore treats the regime as
+unmeasured rather than flat. That is a known, documented gap and the next
+thing to look at now that the probe it was waiting for has run.
+
+**The fix was not enough, and the event stream said why.** With `tokenise()`
+splitting, the WAV was driven through the browser's own path
+(`experiments/day1/e2e_live.py`: consent, `/live`, `/audio`, `Terminate`).
+Result: `state.armed` on the carrier at 2.1 s, `format: iso6346`,
+`cues: ["carrier"]`, `commit_ok: false`, `session.end captures: 0`. The shape
+cue never fired. `detector._runs()` decides whether a word joins a run by
+asking `_one()` about the WHOLE word -- `_one("rmsku4158005")` is None by
+contract -- so the welded word never entered a run and `_normalised_chars`
+was never called on it. `_readable()` now asks the question of the word as
+the normaliser will read it: `tokenise()` first, readable iff every piece is.
+Offline, on the three real words: run `RMSKU4158005`, shape `iso6346` at
+edit distance 0, cues `{carrier, shape}`, `commit_n = 2`, in both states.
+The 74 existing tests -- the false-positive fixtures among them -- still pass.
+Pinned in `tests/test_normalise_glued.py`.
+
+**A second gap the same run exposed: `PIPELINE_DRAIN_S = 5.0` is a bet.**
+On the next attempt upstream took 11.4 s to send `Begin` (3.1 s an hour
+earlier) and transcripts lagged so far that when `Terminate` went up after
+9.6 s of audio the tape held 4.4 s of it. The pipeline waited five seconds
+for the last turn, was cancelled, and the identifier -- spoken, sent, and
+almost certainly transcribed a moment later -- was lost with
+`end_reason = "user"`. The right number is the measured `Terminate ->
+Termination` latency under lag, not five; the driver now prints it.
+
+**Third gap, the worst, and now closed: `terminate()` closed the socket in
+the same breath as sending Terminate.** The server answers Terminate by
+flushing the audio it still holds into a last Turn, then `Termination`, then
+a close -- `listen.py` saw all three on every run -- and `LiveSource` was
+hanging up before any of it arrived. Through the browser path that looked
+like `error "SourceClosed"`, `session.end reason="error"`, `billed_seconds
+0.0`, and the last turn of the call -- the one the caller pressed stop
+after, i.e. the identifier -- gone. `terminate()` now waits for the reader
+to see `Termination` (bounded by `TERMINATE_FLUSH_S = 10 s`, sized to the
+7-11 s upstream lag measured the same afternoon) and only then closes.
+Measured after the fix, upstream responsive: flush **1.5 s**, `session.end
+reason="complete"`, `billed_seconds 9.0` from the `Termination` frame
+(audio 9.63 s). Four unit tests in `tests/test_live_terminate.py` pin the
+order `Terminate -> Turn -> Termination -> close`, billing from the frame,
+the bound on a server that never answers, and idempotence. day1-12 is
+answered.
+
+**Recommendation for the live path, from run 2:** pin `language_code=en`.
+The agent listens in English only (measured and stated in the UI); leaving
+the model free to code-switch bought nothing and cost two Japanese partials.
+
 ## 9. What is still open
 
 - **(C) formatting** — the one that could move architecture. Needs speech.

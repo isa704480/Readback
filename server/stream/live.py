@@ -64,6 +64,18 @@ FORMAT_TURNS = False
 # it is the burn-credits button.
 DEFAULT_INACTIVITY_TIMEOUT_S = 15
 
+# How long terminate() waits, after sending Terminate, for the server to flush
+# its last Turn and answer with Termination before we close the socket. The
+# server does answer (measured 2026-09-04, experiments/day1/listen.py: final
+# Turn, then Termination, on every run); what varied was the lag -- upstream
+# was seen 7-11 s behind real time the same afternoon. Ten seconds is a bet
+# sized to that lag, and a socket that has been sent Terminate is no longer
+# accepting audio, so the cost of waiting is bounded by this number and paid
+# only when the server is slow. The cost of NOT waiting is the identifier the
+# caller pressed stop after. LiveSource records the actual flush time on the
+# terminate control event so this can be tightened from evidence.
+TERMINATE_FLUSH_S = 10.0
+
 
 class LiveSource(BaseTranscriptSource):
     """AssemblyAI Universal Streaming STT over a WebSocket.
@@ -85,6 +97,7 @@ class LiveSource(BaseTranscriptSource):
         speech_model: str = DEFAULT_SPEECH_MODEL,
         inactivity_timeout: int = DEFAULT_INACTIVITY_TIMEOUT_S,
         connect_timeout: float = 10.0,
+        terminate_flush_s: float = TERMINATE_FLUSH_S,
         extra_params: dict[str, Any] | None = None,
         record_raw: bool = True,
     ) -> None:
@@ -98,12 +111,16 @@ class LiveSource(BaseTranscriptSource):
         self.speech_model = speech_model
         self.inactivity_timeout = inactivity_timeout
         self.connect_timeout = connect_timeout
+        self.terminate_flush_s = terminate_flush_s
         self._extra_params = dict(extra_params or {})
         self._ws: Any = None
         self._send_lock = asyncio.Lock()
         self._connected_at: float | None = None
         self.expires_at: int | None = None
         self.audio_duration_seconds: float | None = None
+        # Set by the reader when the server's Termination frame arrives -- or
+        # when the frame loop ends for any other reason. terminate() waits on it.
+        self._terminated = asyncio.Event()
         # The day-1 experiment computes its two numbers off this list, and a
         # recorded session becomes a replay fixture from it. Turned off for long
         # production sessions, where the tape's 45 s bound is the whole point.
@@ -145,13 +162,26 @@ class LiveSource(BaseTranscriptSource):
         If a config message is required instead, `_open()` gains one send and
         nothing else in this class moves.
 
-        TODO(day1-03): confirm which of `mode`, `voice_focus`,
-        `voice_focus_threshold`, `vad_threshold`, `continuous_partials`,
-        `include_partial_turns`, `previous_context_n_turns`, `prompt`,
-        `session_heartbeat` and `language_codes` are accepted by
-        universal-3-5-pro, and their exact parameter names. An unrecognised
-        parameter must be observed to be ignored rather than fatal -- if it is
-        fatal, this dict has to be trimmed to the confirmed set before the demo.
+        day1-03, resolved by measurement (experiments/day1/FINDINGS-day1.md):
+        an unrecognised parameter name is NOT fatal -- the server drops it
+        silently, which is the control that makes "it connected" worthless as
+        evidence. What is confirmed, and how:
+          * `mode`, `voice_focus`, `domain`, `filter_profanity` -- echoed back
+            in `Begin.configuration` (sections 4, 7).
+          * `keyterms_prompt` (JSON array, <=100 items, no per-item char cap)
+            and `prompt` (<=1750 chars) -- their limits produce 3006 error
+            frames, so the names are live (sections 5, 7).
+          * `language_code` -- SINGULAR; the plural was silently dropped for
+            weeks and the model code-switched into Japanese on a TTS reading
+            (section 9). Behaviourally confirmed by the partials going Latin
+            once the singular was sent.
+          * `format_turns`, `end_of_turn_confidence_threshold` -- accepted
+            without error but Universal-Streaming-only per the reference;
+            every frame arrives formatted regardless (section 9).
+        Not measured: `voice_focus_threshold`, `vad_threshold`,
+        `continuous_partials`, `include_partial_turns`,
+        `previous_context_n_turns`, `session_heartbeat`. They are not echoed
+        and produce no error, so they are believed, not known.
         """
         params: dict[str, Any] = {
             "sample_rate": self.sample_rate,
@@ -159,7 +189,13 @@ class LiveSource(BaseTranscriptSource):
             "speech_model": self.speech_model,
             "format_turns": _bool_param(FORMAT_TURNS),
             "mode": "max_accuracy",
-            "language_codes": "en",
+            # SINGULAR. The plural form was sent for weeks and the server dropped
+            # it silently (the day-1 control: unknown parameter names are not
+            # errors). The measurement that caught it: with no language pinned,
+            # a TTS reading of "Mike Sierra Kilo Uniform" came back as two
+            # partials in Japanese script (experiments/day1/FINDINGS-day1.md
+            # section 9). The agent listens in English only, and says so.
+            "language_code": "en",
             "voice_focus": "near-field",
             "voice_focus_threshold": 0.7,
             "vad_threshold": 0.2,
@@ -295,9 +331,22 @@ class LiveSource(BaseTranscriptSource):
         if self._ws is not None:
             try:
                 await self._send_json({"type": "Terminate"})
-                # TODO(day1-12): confirm the server replies with a Termination
-                # frame and closes, and how long it takes. If it does not close,
-                # this needs a timeout before close() or the socket keeps billing.
+                # day1-12, measured: the server answers Terminate by flushing the
+                # audio it still holds into a last Turn, then a Termination
+                # frame, then a close. Closing here the moment Terminate was
+                # sent -- which this method did until 2026-09-04 -- threw that
+                # last Turn away, and the last turn of a call is the one the
+                # caller pressed stop after: the identifier. So wait for the
+                # reader to see Termination (it sets the event; so does the
+                # frame loop ending for any other reason), bounded by
+                # `terminate_flush_s`, and only THEN close.
+                flush_started = time.monotonic()
+                try:
+                    await asyncio.wait_for(self._terminated.wait(),
+                                           timeout=self.terminate_flush_s)
+                except asyncio.TimeoutError:
+                    event.detail["flush_timeout"] = True
+                event.detail["flush_seconds"] = round(time.monotonic() - flush_started, 3)
                 await asyncio.wait_for(self._ws.close(), timeout=5.0)
             except Exception as exc:                            # pragma: no cover
                 event.detail["close_error"] = repr(exc)
@@ -369,6 +418,7 @@ class LiveSource(BaseTranscriptSource):
                     # wrong field here understates the bill by 2x.
                     self.audio_duration_seconds = message.get("audio_duration_seconds")
                     self.billed_seconds = message.get("session_duration_seconds")
+                    self._terminated.set()
                     break
                 elif kind in ("Error", "error"):
                     # TODO(day1-10): confirm the error frame shape and the close
@@ -388,6 +438,9 @@ class LiveSource(BaseTranscriptSource):
                             self.unknown_frame_types.get(kind, 0) + 1
                         )
         finally:
+            # Whatever ended the loop -- Termination, a server close, an error --
+            # nobody will be reading more frames, so terminate() must not wait.
+            self._terminated.set()
             if not self._closed:
                 await self.terminate()
 

@@ -447,10 +447,30 @@ class _Run:
 _FILLERS = frozenset({"uh", "um", "er", "erm", "ah", "eh", "hmm", "hm", "mm", "sorry"})
 
 
-def _readable(token: str) -> bool:
-    """Could the normaliser turn this token into one or more characters?"""
+def _readable_token(token: str) -> bool:
     return (token in _IDENTIFIER_TOKENS or token in TENS
             or _one(token) is not None)
+
+
+def _readable(token: str) -> bool:
+    """Could the normaliser turn this word into one or more characters?
+
+    Asked of the word the way the normaliser will read it, not the way the
+    recogniser wrote it. universal-3-5-pro welds a spoken identifier into one
+    formatted word -- "RMSKU4158005", "4158005" -- and `_one()` has one cell per
+    token by contract, so asking it about the whole word says "no", the word
+    never joins a run, and the shape cue can never fire on live audio. Measured
+    2026-09-04: a real reading armed on its carrier and ended with zero
+    captures (experiments/day1/FINDINGS-day1.md section 9).
+
+    `tokenise()` splits a code-shaped word into its characters; a word is
+    readable iff every piece is. For every ordinary word that is one piece,
+    and the answer is what it always was.
+    """
+    pieces = tokenise(token)
+    if not pieces:
+        return False
+    return all(_readable_token(p) for p in pieces)
 
 
 def _runs(words: Sequence[Word], armed: bool) -> list[_Run]:

@@ -75,11 +75,47 @@ NATO = {"alfa": "A", "alpha": "A", "bravo": "B", "charlie": "C", "delta": "D", "
 Cell = list      # a cell is [(char, weight), ...] -- one output position
 
 
+# A token the recogniser has already welded into a code. Measured against the
+# live universal-3-5-pro socket on 2026-09-04 (experiments/day1/FINDINGS-day1.md
+# section 9): every Turn frame arrives with turn_is_formatted=true, partials
+# included, and the formatter emits a spoken identifier as ONE word --
+# "RMSKU4158005." for letter-name spelling, "4158005" for the digit run under
+# NATO spelling -- with a single confidence for the whole token. There is no
+# unformatted path; format_turns=false is ignored by this model (measured).
+#
+# So a code-shaped token is split back into characters HERE, in the one function
+# every consumer of a transcript goes through (detector, normaliser, runner,
+# arity), rather than in _one(), whose contract is one cell per token. Each
+# character inherits the token's confidence downstream (runner.py attaches the
+# Word's confidence to every token it yields), which is the "flat" regime the
+# RegimeDetector exists to name.
+#
+# The rule is deliberately narrow: a token is code-shaped only if it contains a
+# DIGIT. Letters-only tokens are left whole because they are words -- "container",
+# "kilo", "uniform" -- and the NATO/LETTER tables read those correctly; splitting
+# them would turn "container" into nine characters of garbage. The cost of the
+# narrow rule is that an all-letter glued prefix ("MSKU" on its own) is not split
+# here; it is short, and the shape cue's edit distance absorbs it.
+_CODE_SHAPED = re.compile(r"^[a-z0-9]{2,32}$")
+
+
+def _split_code(tok):
+    """'rmsku4158005' -> ['r','m','s','k','u','4','1','5','8','0','0','5'].
+    Only for code-shaped tokens; everything else is returned as itself."""
+    if _CODE_SHAPED.match(tok) and any(c.isdigit() for c in tok):
+        return list(tok)
+    return [tok]
+
+
 def tokenise(text):
     t = text.lower().replace("-", " ").replace(".", " ")
     t = t.replace("double u", "doubleu").replace("double you", "doubleu")
     t = t.replace("x ray", "xray").replace("as in", "asin").replace("like in", "asin")
-    return [w for w in re.split(r"[\s,]+", t) if w]
+    out = []
+    for w in re.split(r"[\s,]+", t):
+        if w:
+            out.extend(_split_code(w))
+    return out
 
 
 def pass1(text):
