@@ -66,7 +66,9 @@ from server.readback.normalise import (
     NATO,
     TENS,
     _one,          # the single-token reader; imported rather than re-listed,
+    dissolve_spelled_caps,
     pass1,         # because a second copy of the spoken vocabulary would drift
+    spelled_caps_mask,
     tokenise,
 )
 from server.readback.solver import IBANGB, ISO, LUHN16, NHS, VIN, Fmt
@@ -158,7 +160,11 @@ def carrier_cue(text: str) -> tuple[str, str | None] | None:
     Last, not first: two identifiers can sit inside one 45 s window, and when
     they do the later carrier is the one that governs what is being said now.
     """
-    hits = _CARRIER_RE.findall(_flatten(text))
+    # Spelled letters first, so a prefix the formatter emitted as its own
+    # capitalised token -- "RM SKU 4158005" -- is not read as the carrier
+    # phrase "sku". Measured 2026-09-04: that flip, from the "container
+    # number" said six seconds earlier to catalogue, cost the capture.
+    hits = _CARRIER_RE.findall(_flatten(dissolve_spelled_caps(text)))
     if not hits:
         return None
     phrase = hits[-1].lower()
@@ -476,9 +482,14 @@ def _readable(token: str) -> bool:
 def _runs(words: Sequence[Word], armed: bool) -> list[_Run]:
     groups: list[list[int]] = []
     cur: list[int] = []
+    # A spelled all-caps block ("RM", "SKU") is readable only because of the
+    # digit token beside it, so that judgement is made over the sequence
+    # before any word is looked at alone. Without it the prefix never joined
+    # the run and the rack filled with digits from slot 0 (FINDINGS section 9).
+    spelled = spelled_caps_mask([w.text for w in words])
     for i, w in enumerate(words):
         t = _norm(w.text)
-        if _readable(t):
+        if spelled[i] or _readable(t):
             cur.append(i)
         elif t in _FRAME_WORDS and cur and i + 1 < len(words):
             cur.append(i)                       # "S as in Sugar" is one character

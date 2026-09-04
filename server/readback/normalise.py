@@ -93,9 +93,9 @@ Cell = list      # a cell is [(char, weight), ...] -- one output position
 # The rule is deliberately narrow: a token is code-shaped only if it contains a
 # DIGIT. Letters-only tokens are left whole because they are words -- "container",
 # "kilo", "uniform" -- and the NATO/LETTER tables read those correctly; splitting
-# them would turn "container" into nine characters of garbage. The cost of the
-# narrow rule is that an all-letter glued prefix ("MSKU" on its own) is not split
-# here; it is short, and the shape cue's edit distance absorbs it.
+# them would turn "container" into nine characters of garbage. A letters-only
+# prefix beside the digits ("RMSKU 4158005") is the one exception, handled by
+# dissolve_spelled_caps below on the evidence of its capitals.
 _CODE_SHAPED = re.compile(r"^[a-z0-9]{2,32}$")
 
 
@@ -107,8 +107,66 @@ def _split_code(tok):
     return [tok]
 
 
+# The formatter's other habit, seen in the same session's partials and final
+# (experiments/day1/FINDINGS-day1.md section 9): the letter prefix of an
+# identifier comes out as its OWN capitalised token beside the digit block --
+# "RMSKU 4158005", and once "RM SKU 4158005". A letters-only token is left
+# whole by _split_code on purpose (it is usually a word), so those prefixes
+# were invisible: the rack filled with digits from slot 0, and the standalone
+# "SKU" matched the catalogue carrier phrase and flipped the format away from
+# the "container number" said six seconds earlier.
+#
+# The formatter capitalises words it takes for spelled letters and nothing
+# else, so ALL-CAPS is the signal -- but only next to digits. A run of
+# all-caps, letters-only tokens that touches a digit-bearing token is a
+# spelled prefix (or suffix) and is dissolved into single letters before the
+# text is lowercased. "RMI KCR kilo uniform 4158005" is untouched: "KCR" is
+# two words away from the digits. "The NHS number" is untouched: no digits.
+_CAPS_TOKEN = re.compile(r"^[A-Z]{1,8}[.,;:]?$")
+_HAS_DIGIT = re.compile(r"\d")
+
+
+def spelled_caps_mask(toks):
+    """Which of these whitespace tokens are a spelled all-caps block beside a
+    digit-bearing token. The decision needs the NEIGHBOURS, which is why it
+    is a function of the sequence: anything that judges tokens one at a time
+    (the detector's run builder, the runner's per-word token merge) has to
+    ask this first, or "RM" on its own is just an unreadable word."""
+    spelled = [False] * len(toks)
+    if not any(_HAS_DIGIT.search(t) for t in toks):
+        return spelled
+    for i, t in enumerate(toks):
+        if not _HAS_DIGIT.search(t):
+            continue
+        for step in (-1, 1):
+            j = i + step
+            while 0 <= j < len(toks) and _CAPS_TOKEN.match(toks[j]):
+                spelled[j] = True
+                j += step
+    return spelled
+
+
+def spelled_letters(tok):
+    """'SKU.' -> ['s', 'k', 'u'] -- the tokens a spelled caps block yields,
+    byte-identical to what tokenise() produces for it inside a sentence."""
+    return [c for c in tok.lower() if c.isalpha()]
+
+
+def dissolve_spelled_caps(text):
+    """'Container number RM SKU 4158005.' -> 'Container number R M S K U 4158005.'
+
+    Pure text -> text, so the carrier matcher and the tokeniser can both
+    apply it and agree on what is a word and what is being spelled."""
+    toks = text.split()
+    spelled = spelled_caps_mask(toks)
+    if not any(spelled):
+        return text
+    return " ".join(" ".join(t.rstrip(".,;:")) if s else t
+                    for t, s in zip(toks, spelled))
+
+
 def tokenise(text):
-    t = text.lower().replace("-", " ").replace(".", " ")
+    t = dissolve_spelled_caps(text).lower().replace("-", " ").replace(".", " ")
     t = t.replace("double u", "doubleu").replace("double you", "doubleu")
     t = t.replace("x ray", "xray").replace("as in", "asin").replace("like in", "asin")
     out = []

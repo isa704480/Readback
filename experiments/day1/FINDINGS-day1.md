@@ -334,6 +334,51 @@ order `Terminate -> Turn -> Termination -> close`, billing from the frame,
 the bound on a server that never answers, and idempotence. day1-12 is
 answered.
 
+**Fourth: the prefix arrives as its own capitalised token, and "SKU" is a
+carrier phrase.** With the last turn now surviving, `e2e_live.py --dump`
+showed the pipeline's own view of the same WAV. During the partials the ISO
+rack filled with digits only -- `4 1 5`, then `4 1 5 8 0 0 5`, from slot 0
+-- so the recogniser was emitting the letter prefix as a separate,
+letters-only token (`RMSKU`) that the digit-only split rule left whole and
+`_one()` could not read. Then the final arrived and the event stream said
+`format hypothesis -> catalogue`, `cues: ["carrier"]`. The carrier regex is
+word-bounded, so the final must have carried `SKU` as a word of its own
+(`RM SKU 4158005`), and "last carrier wins" let a three-letter phrase
+spelled from inside the identifier overrule the "container number" said
+six seconds earlier. MSKU is Maersk's prefix; it is on a large share of the
+containers in the world, and this would have happened on most of them.
+
+The formatter capitalises what it takes for spelled letters and nothing
+else, so the signal is capitals -- but only touching digits.
+`normalise.dissolve_spelled_caps()` turns a run of all-caps letters-only
+tokens adjacent to a digit-bearing token into single letters (`RM SKU
+4158005` -> `R M S K U 4158005`) before the text is lowercased;
+`tokenise()` and `carrier_cue()` both apply it, so the dissolved "SKU" is
+not a phrase anywhere, while "the SKU is 4158005" -- capitals not touching
+the digits -- keeps its carrier. `RMI KCR kilo uniform` is untouched: two
+words from the digits. The judgement needs the neighbours, so it is made
+over the word SEQUENCE (`spelled_caps_mask`) in the detector's run builder
+and in the runner's per-word token merge alike -- asked of "RM" alone it is
+just an unreadable word, which is exactly how the first attempt failed its
+own test.
+
+**Measured through the browser path, both fixes live, same WAV:**
+
+```
+[4575 ms] capture.update   rack=MSKU4158___                       (partials)
+[5885 ms] candidate.seen   MSKU4158005  complete  checksum_ok  aligned  second_signal=carrier
+[6198 ms] capture.commit   value=MSKU4158005  heard=MSKU4158005
+[6198 ms] state.idle       identifier settled
+          session.end      reason=complete  captures=1  silent=1  billed_seconds=9.0
+```
+
+The first identifier this system has ever captured from live audio. Four
+defects stood between the fixtures and that line, none of them visible from
+a fixture, all of them visible from one measured session: the welded word,
+the per-word readability test, the socket closed before its last turn, and
+the capitalised prefix beside the digits. 85 tests; the false-positive
+fixtures unchanged throughout.
+
 **Recommendation for the live path, from run 2:** pin `language_code=en`.
 The agent listens in English only (measured and stated in the UI); leaving
 the model free to code-switch bought nothing and cost two Japanese partials.

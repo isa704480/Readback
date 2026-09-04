@@ -155,6 +155,11 @@ async def _attempt(args: argparse.Namespace, pcm: bytes, rate: int, ws_base: str
                           for e in events):
             return RELOAD_RACE
 
+        if args.dump:
+            with open(args.dump, "w", encoding="utf-8") as fh:
+                for e in events:
+                    fh.write(json.dumps(e, ensure_ascii=False) + "\n")
+            print(f"  ({len(events)} events written to {args.dump})")
         kinds: dict[str, int] = {}
         for e in events:
             kinds[e.get("type")] = kinds.get(e.get("type"), 0) + 1
@@ -192,6 +197,8 @@ async def main() -> int:
                     help="send demo_mode=true (stored on the row; the pipeline ignores it)")
     ap.add_argument("--tail-silence", type=float, default=2.5,
                     help="seconds of silence appended so the turn can end")
+    ap.add_argument("--dump", default="",
+                    help="write every /live event, verbatim, to this JSON-lines file")
     ap.add_argument("--drain", type=float, default=25.0,
                     help="seconds to wait for the server to close the audio socket "
                          "after Terminate; upstream has been seen to lag 10 s+")

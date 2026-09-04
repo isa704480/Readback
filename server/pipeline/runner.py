@@ -75,7 +75,9 @@ from server.pipeline.store import (
     QuestionRecord,
 )
 from server.pipeline.tape import Tape, Word
-from server.readback.normalise import FRAME, MULT, NATO, _one, pass1, pass2, tokenise
+from server.readback.normalise import (
+    FRAME, MULT, NATO, _one, pass1, pass2, spelled_caps_mask, spelled_letters, tokenise,
+)
 from server.readback.question import ICAO, SAY
 from server.readback.question import NATO as NATO_SPOKEN
 from server.readback.question import question as make_question
@@ -202,8 +204,13 @@ def align_run(words: Sequence[Word], idx: Sequence[int]) -> Aligned:
 
 def _merge_tokens(run_words: Sequence[Word]) -> list[tuple[str, float, int]]:
     flat: list[tuple[str, float, int]] = []
+    # Per word, but the spelled-caps judgement needs the neighbours: "RM" beside
+    # "4158005" is two letters, "RM" alone is a word tokenise() leaves whole.
+    # Ask over the run first so the per-word tokens concatenate to exactly
+    # tokenise(joined text) -- the consistency check in align_run demands it.
+    spelled = spelled_caps_mask([w.text for w in run_words])
     for j, w in enumerate(run_words):
-        for t in tokenise(w.text):
+        for t in (spelled_letters(w.text) if spelled[j] else tokenise(w.text)):
             flat.append((t, w.confidence, j))
     out: list[tuple[str, float, int]] = []
     i = 0

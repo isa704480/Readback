@@ -18,7 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from server.readback.normalise import pass1, tokenise
+from server.readback.normalise import dissolve_spelled_caps, pass1, tokenise
 from server.pipeline.detector import COMMIT_MIN_CUES, evaluate, readable_runs, shape_cue
 from server.pipeline.tape import Word
 from server.readback.solver import ISO, LUHN16, NHS
@@ -160,7 +160,53 @@ def test_the_mangled_nato_reading_is_read_as_far_as_it_goes() -> None:
     assert shape_cue(words, True) is None
 
 
+# ------------------------------------------------- the prefix as its own token --
+# The same session's partials and final carried the letter prefix as a
+# separate capitalised token beside the digit block. Two forms were seen.
+def test_a_capital_letter_block_beside_digits_is_spelled() -> None:
+    expect = ["container", "number", "r", "m", "s", "k", "u", "4", "1", "5", "8", "0", "0", "5"]
+    assert tokenise("Container number RMSKU 4158005.") == expect
+    assert tokenise("Container number RM SKU 4158005.") == expect
+    assert tokenise("PO 12345") == ["p", "o", "1", "2", "3", "4", "5"]
+
+
+def test_capital_blocks_away_from_digits_stay_whole() -> None:
+    """'KCR' is two words from the digits; 'NHS' has no digits near it.
+    Neither is being spelled, and the formatter's capitals alone are not
+    evidence -- only capitals touching a digit block are."""
+    assert tokenise("RMI KCR kilo uniform 4158005.") == \
+        ["rmi", "kcr", "kilo", "uniform", "4", "1", "5", "8", "0", "0", "5"]
+    assert tokenise("The NHS number please") == ["the", "nhs", "number", "please"]
+    assert dissolve_spelled_caps("no digits HERE at all") == "no digits HERE at all"
+
+
+def test_a_spelled_sku_inside_a_container_number_is_not_a_carrier() -> None:
+    """The live final that flipped the format: 'container number' six
+    seconds earlier, then the identifier with its 'SKU' as a token of its
+    own. The letters are being spelled; the phrase must not be heard."""
+    words = [_word("Container", .89, 0), _word("number", .80, 1), _word("RM", .6, 2),
+             _word("SKU", .6, 3), _word("4158005.", .9, 4)]
+    report = evaluate(words, True)
+    assert report.carrier == "container number", report
+    assert report.fmt == "iso6346", report
+    assert {c.value for c in report.cues} >= {"carrier", "shape"}, report
+    assert [r.chars for r in readable_runs(words, True)] == ["RMSKU4158005"]
+
+
+def test_a_spoken_sku_carrier_still_names_the_catalogue() -> None:
+    """'the SKU is ...' -- capitals not touching the digits are a word, and
+    the carrier phrase keeps its job."""
+    words = [_word(w, .9, i) for i, w in enumerate("the SKU is".split())] + \
+            [_word("4158005", .9, 3)]
+    report = evaluate(words, True)
+    assert report.carrier == "sku" and report.fmt == "catalogue", report
+
+
 TESTS = [
+    test_a_capital_letter_block_beside_digits_is_spelled,
+    test_capital_blocks_away_from_digits_stay_whole,
+    test_a_spelled_sku_inside_a_container_number_is_not_a_carrier,
+    test_a_spoken_sku_carrier_still_names_the_catalogue,
     test_a_welded_identifier_forms_a_run_and_fires_the_shape_cue,
     test_ordinary_words_still_do_not_form_runs,
     test_the_mangled_nato_reading_is_read_as_far_as_it_goes,
