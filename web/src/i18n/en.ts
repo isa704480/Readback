@@ -133,6 +133,19 @@ export const en = {
   'sessions.detail.loading': 'Loading the session…',
   'sessions.detail.failed': 'This session could not be loaded.',
 
+  /* The format reference. Per-format copy is reused from account.format.*; these
+   * are only the page chrome and the shape-strip labels. */
+  'formats.title': 'Formats',
+  'formats.intro':
+    'The identifier formats Readback can hear, and how each one proves itself. Every format carries a check that catches a misheard character before it is written — the reason a captured number can be trusted, or a doubt raised out loud.',
+  'formats.legend.letter': 'letter',
+  'formats.legend.digit': 'digit',
+  'formats.legend.check': 'check',
+  'formats.example': 'A valid example',
+  'formats.method': 'How the check works',
+  'formats.advantage': 'What the check buys',
+  'formats.sensitive': 'Identifies a person',
+
   /* The demo screen. Every rack on it is the answer to POST /api/demo/replay;
    * the fixture copy describes the INPUT and never the outcome, because the
    * screen does not know the right answer and must not pretend to. */

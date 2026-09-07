@@ -101,6 +101,17 @@ const catalog = {
   'sessions.detail.loading': 'Seans yuklanmoqda…',
   'sessions.detail.failed': 'Bu seansni yuklab boʻlmadi.',
 
+  'formats.title': 'Formatlar',
+  'formats.intro':
+    'Readback eshita oladigan identifikator formatlari va har biri oʻzini qanday isbotlashi. Har bir formatda nazorat bor: notoʻgʻri eshitilgan belgini yozishdan oldin ilib oladi — capture qilingan raqamga ishonish yoki shubhani ovoz chiqarib aytish sababi shu.',
+  'formats.legend.letter': 'harf',
+  'formats.legend.digit': 'raqam',
+  'formats.legend.check': 'nazorat',
+  'formats.example': 'Haqiqiy misol',
+  'formats.method': 'Nazorat qanday ishlaydi',
+  'formats.advantage': 'Nazorat nima beradi',
+  'formats.sensitive': 'Shaxsni aniqlaydi',
+
   'demo.title': 'Fixturani quvur orqali ishga tushiring.',
   'demo.intro':
     'Soketning oʻz sim formatidagi sakkizta fixtura — har biri jonli qoʻngʻiroq oʻtadigan oʻsha runner orqali: lenta, detektor, yechuvchi, qaror qabul qiluvchi. Toʻrttasida konteyner raqami bor. Toʻrttasida esa umuman identifikator yoʻq, va ular uchun toʻgʻri javob — sukut.',

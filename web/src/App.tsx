@@ -49,9 +49,6 @@ const Auth = lazy(() =>
 const Dashboard = lazy(() =>
   import("./screens/Dashboard").then((m) => ({ default: m.Dashboard })),
 );
-const Pending = lazy(() =>
-  import("./screens/Pending").then((m) => ({ default: m.Pending })),
-);
 const AccountScreen = lazy(() =>
   import("./routes/Account").then((m) => ({ default: m.AccountScreen })),
 );
@@ -63,6 +60,9 @@ const Demo = lazy(() =>
 );
 const Sessions = lazy(() =>
   import("./screens/Sessions").then((m) => ({ default: m.Sessions })),
+);
+const Formats = lazy(() =>
+  import("./screens/Formats").then((m) => ({ default: m.Formats })),
 );
 
 // ───────────────────────────────────────────────────────── shell context ──
@@ -344,10 +344,7 @@ export default function App() {
             <Route path={NAV_PATHS.account} element={<AccountScreen />} />
             <Route path={NAV_PATHS.live} element={<Live />} />
             <Route path={NAV_PATHS.sessions} element={<Sessions />} />
-            <Route
-              path={NAV_PATHS.formats}
-              element={<Pending area="formats" />}
-            />
+            <Route path={NAV_PATHS.formats} element={<Formats />} />
           </Route>
 
           {/* Neither branch: see DemoEntry. */}
