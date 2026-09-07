@@ -1,0 +1,265 @@
+/* The session list and its drill-down. Painted on the page ground like the
+ * record and the demo: the rack inside a row is the product surface, the rest
+ * is a hairline-separated list of sentences. */
+
+.sessions {
+  padding-block: var(--sp-5) var(--sp-7);
+}
+
+.sessions__title {
+  margin: 0;
+  font-size: var(--text-2xl);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-h2);
+  color: var(--text); /* 15.46:1 on G */
+  overflow-wrap: anywhere;
+}
+
+.sessions__intro {
+  margin: 0;
+  font-size: var(--text-body-size);
+  line-height: var(--leading-read);
+  color: var(--text-2); /* 4.66:1 on G */
+}
+
+.sessions__empty {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: var(--sp-4) 0 0;
+  color: var(--text-2);
+}
+
+.sessions__empty--alert {
+  color: var(--alert); /* 5.62:1 on G */
+}
+
+.sessions__list {
+  list-style: none;
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sessions__row {
+  border-top: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+}
+
+.sessions__row:last-child {
+  border-bottom: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+}
+
+/* The whole head is the toggle: a wide target, and the chevron only signals. */
+.sessions__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-3) var(--sp-1);
+  background: none;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text);
+  font: inherit;
+}
+
+.sessions__head:hover {
+  background: color-mix(in srgb, var(--text) 4%, transparent);
+}
+
+.sessions__head:focus-visible {
+  outline: 2px solid var(--focus, var(--text));
+  outline-offset: 2px;
+  border-radius: var(--r-thumb);
+}
+
+.sessions__when {
+  flex: 0 0 auto;
+  font-size: var(--text-body-size);
+  color: var(--text);
+}
+
+.sessions__source {
+  flex: 0 0 auto;
+  padding: 2px var(--sp-2);
+  background: var(--bg);
+  border-radius: var(--r-full);
+  font-size: var(--text-meta);
+  letter-spacing: var(--tracking-code);
+  color: var(--text-2);
+}
+
+.sessions__counts {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--text-meta);
+  color: var(--text-2);
+}
+
+.sessions__flag {
+  flex: 0 0 auto;
+  display: inline-flex;
+  color: var(--alert);
+}
+
+/* One chevron glyph, rotated when the row is open -- there is no chevron-up in
+   the sprite, and a rotation is the same signal with half the icons. */
+.sessions__chev {
+  flex: 0 0 auto;
+  color: var(--text-2);
+  transition: transform 120ms ease;
+}
+
+.sessions__head[aria-expanded='true'] .sessions__chev {
+  transform: rotate(180deg);
+}
+
+/* --- the drill-down --------------------------------------------------- */
+.sessions__detail {
+  padding: var(--sp-2) var(--sp-1) var(--sp-5);
+}
+
+.sessions__detail-note {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: var(--sp-3) var(--sp-1);
+  color: var(--text-2);
+}
+
+.sessions__detail-note--alert {
+  color: var(--alert);
+}
+
+.sessions__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-5);
+  margin: 0;
+}
+
+.sessions__meta div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sessions__meta dt {
+  font-size: var(--text-meta);
+  letter-spacing: var(--tracking-code);
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.sessions__meta dd {
+  margin: 0;
+  font-size: var(--text-body-size);
+  color: var(--text);
+}
+
+.sessions__section {
+  margin: 0;
+  font-size: var(--text-meta);
+  letter-spacing: var(--tracking-code);
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.sessions__questions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.sessions__question {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: baseline;
+}
+
+.sessions__q-pos {
+  flex: 0 0 auto;
+  font-size: var(--text-meta);
+  color: var(--text-2);
+}
+
+.sessions__q-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--text-body-size);
+  color: var(--text);
+}
+
+.sessions__q-answer {
+  color: var(--settled, var(--text-2));
+}
+
+.sessions__q-answer--none {
+  color: var(--alert);
+}
+
+.sessions__audit {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.sessions__audit-row {
+  display: flex;
+  gap: var(--sp-3);
+  font-size: var(--text-meta);
+  color: var(--text-2);
+}
+
+.sessions__audit-at {
+  flex: 0 0 5.5ch;
+  text-align: right;
+  color: var(--text-3, var(--text-2));
+}
+
+.sessions__no-transcript {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: var(--sp-3);
+  background: var(--bg);
+  border-radius: var(--r-thumb);
+  font-size: var(--text-body-size);
+  line-height: var(--leading-read);
+  color: var(--text-body, var(--text-2));
+}
+
+.sessions__more {
+  margin: var(--sp-3) 0 0;
+  font-size: var(--text-meta);
+  color: var(--text-2);
+}
+
+@media (min-width: 660px) {
+  .sessions__title {
+    font-size: var(--text-3xl);
+    letter-spacing: var(--tracking-title);
+  }
+}
+
+/* THE 375px RULE: the head wraps rather than pushing the page sideways. */
+@media (max-width: 559px) {
+  .sessions__head {
+    flex-wrap: wrap;
+  }
+  .sessions__counts {
+    flex-basis: 100%;
+  }
+}

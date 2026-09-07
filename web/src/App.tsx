@@ -61,6 +61,9 @@ const Live = lazy(() =>
 const Demo = lazy(() =>
   import("./screens/Demo").then((m) => ({ default: m.Demo })),
 );
+const Sessions = lazy(() =>
+  import("./screens/Sessions").then((m) => ({ default: m.Sessions })),
+);
 
 // ───────────────────────────────────────────────────────── shell context ──
 
@@ -340,10 +343,7 @@ export default function App() {
             <Route path={NAV_PATHS.record} element={<Dashboard />} />
             <Route path={NAV_PATHS.account} element={<AccountScreen />} />
             <Route path={NAV_PATHS.live} element={<Live />} />
-            <Route
-              path={NAV_PATHS.sessions}
-              element={<Pending area="sessions" />}
-            />
+            <Route path={NAV_PATHS.sessions} element={<Sessions />} />
             <Route
               path={NAV_PATHS.formats}
               element={<Pending area="formats" />}

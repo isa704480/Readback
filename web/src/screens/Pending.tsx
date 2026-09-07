@@ -35,20 +35,18 @@ import './Pending.css';
  * NO DATE, NO ROADMAP, NO PROGRESS BAR. This project has been burned twice by
  * numbers nobody re-measured. "Q3" is a number nobody measured. */
 
-export type PendingArea = 'live' | 'sessions' | 'formats';
+export type PendingArea = 'live' | 'formats';
 
 /* `as const satisfies`, never an annotation: an annotation widens the values to
  * the whole TranslationKey union and t() then demands every placeholder in the
  * catalog. Same reason as CAPTURE_STATES in lib/api.ts. */
 const TITLE = {
   live: 'route.pending.live.title',
-  sessions: 'route.pending.sessions.title',
   formats: 'route.pending.formats.title',
 } as const satisfies Record<PendingArea, TranslationKey>;
 
 const BODY = {
   live: 'route.pending.live.body',
-  sessions: 'route.pending.sessions.body',
   formats: 'route.pending.formats.body',
 } as const satisfies Record<PendingArea, TranslationKey>;
 

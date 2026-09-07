@@ -636,9 +636,14 @@ def test_stop_route_ends_the_ingress_with_one_terminate() -> None:
             ws.send_bytes(_pcm(100))
             src = fx.sources[0]
             # The real route, on the app's own loop -- see StubSource.connect.
+            # user=None is the anonymous caller (the demo tenant), which owns
+            # this session: fx.start() opened it without a token. The route
+            # gained that dependency when the detail/stop endpoints became
+            # organisation-scoped; driven directly rather than through FastAPI,
+            # it is supplied here rather than injected.
             with fx.Factory() as db:
                 fut = asyncio.run_coroutine_threadsafe(
-                    main.session_stop(sid, False, db), src.loop)
+                    main.session_stop(sid, False, None, db), src.loop)
                 assert fut.result(timeout=5) == {"ok": True, "deleted": False}
             exc = _closed_with(ws)
         assert exc.code == WS_AUDIO_ENDED, exc

@@ -100,6 +100,39 @@ export const en = {
     'Which formats are switched on for your organisation, and what each one checks, is on the account screen today. The reference that explains how each check digit is computed is not.',
   'route.pending.toRecord': 'Go to the record',
 
+  /* The session list (DESIGN-BRIEF 4.4, the team-leader view). Drawn from a
+   * session query, so the calls that correctly captured nothing are on it. */
+  'sessions.title': 'Sessions',
+  'sessions.intro':
+    'Every call this organisation ran, newest first — including the ones that correctly captured nothing. Open one to see what the pipeline wrote down, which decisions were silent and which asked, and the audit of how. There is no transcript.',
+  'sessions.loading': 'Loading sessions…',
+  'sessions.failed': 'The session list could not be loaded. The record runs on the API; check that it is up.',
+  'sessions.empty': 'No sessions yet. Run a call or a demo fixture, and it appears here.',
+  'sessions.more': 'Older sessions are not shown — this is the latest page.',
+  'sessions.source.live': 'live',
+  'sessions.source.replay': 'fixture',
+  'sessions.source.unknown': 'session',
+  'sessions.count.captured': '{n} captured',
+  'sessions.count.silent': '{n} silent',
+  'sessions.count.asked': '{n} asked',
+  'sessions.count.flagged': '{n} flagged',
+  'sessions.meta.started': 'Started',
+  'sessions.meta.ended': 'Ended',
+  'sessions.meta.ongoing': 'Still open',
+  'sessions.meta.regime': 'Confidence regime',
+  'sessions.section.captures': 'What it captured',
+  'sessions.section.questions': 'Questions it asked',
+  'sessions.section.audit': 'Decision timeline',
+  'sessions.rackTitle': 'What it wrote down',
+  'sessions.noCaptures': 'This call captured nothing — the right outcome when there was no identifier to hear.',
+  'sessions.noTranscript':
+    'No transcript exists. The record keeps what was captured and the audit of how it was reached, and nothing that could reconstruct the conversation.',
+  'sessions.q.position': 'Position {n}',
+  'sessions.q.answered': 'answered {char}',
+  'sessions.q.timedout': 'no answer',
+  'sessions.detail.loading': 'Loading the session…',
+  'sessions.detail.failed': 'This session could not be loaded.',
+
   /* The demo screen. Every rack on it is the answer to POST /api/demo/replay;
    * the fixture copy describes the INPUT and never the outcome, because the
    * screen does not know the right answer and must not pretend to. */

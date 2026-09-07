@@ -54,7 +54,7 @@ from fastapi import Body, Depends, FastAPI, HTTPException, Request, WebSocket, W
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import and_, case, func, or_, select
 from sqlalchemy.orm import Session as SASession
 
 from server import audit, auth
@@ -1201,16 +1201,104 @@ def list_captures(limit: str | None = None,
     return [capture_row(row, source) for row, source in db.execute(stmt).all()]
 
 
+# ------------------------------------------------------------ session list ---
+SESSIONS_LIMIT_DEFAULT: Final = 50
+SESSIONS_LIMIT_MAX: Final = 200
+
+
+@app.get("/api/session-summaries")
+def session_summaries(limit: str | None = None,
+                      user: User | None = Depends(auth.optional_user),
+                      db: SASession = Depends(get_db)) -> dict[str, Any]:
+    """Every session this organisation ran, newest first, one bounded page, each
+    carrying the counts a team leader reads before opening it.
+
+    This is the list `GET /api/sessions/{id}` drills into, and it is a session
+    query rather than the capture query `list_captures` runs, for one reason
+    that is the product: a call that correctly captured NOTHING -- a
+    conversation with no identifier in it, a number that was a phone number --
+    is a session with zero capture rows, and a list built by grouping captures
+    could never show it. Half of what this system claims is the calls on which
+    it stayed silent, so the list is drawn from `session`, and the silent ones
+    are in it.
+
+    Organisation-scoped by the same rule as every other read here; anonymous
+    callers are the demo tenant. Bounded, and it says whether more remain rather
+    than dropping the tail in silence.
+    """
+    org_id = acting_organisation(user)
+    page = _parse_limit(limit)
+
+    rows = list(db.scalars(
+        select(Session)
+        .where(Session.organisation_id == org_id)
+        .order_by(Session.started_at.desc(), Session.id.desc())
+        .limit(page + 1)))
+    more = len(rows) > page
+    rows = rows[:page]
+    ids = [r.id for r in rows]
+
+    # Two grouped aggregates rather than a subquery per session: a page is up to
+    # 200 rows and N+1 counting queries is the shape that looks fine in dev and
+    # falls over on a busy tenant.
+    caps: dict[uuid.UUID, tuple[int, int, int]] = {}
+    quests: dict[uuid.UUID, int] = {}
+    if ids:
+        for sid, total, silent, needs_human in db.execute(
+            select(
+                Capture.session_id,
+                func.count(),
+                func.sum(case((Capture.silent, 1), else_=0)),
+                func.sum(case((or_(Capture.handed_over,
+                                   Capture.status == "flagged"), 1), else_=0)),
+            )
+            .where(Capture.session_id.in_(ids))
+            .group_by(Capture.session_id)).all():
+            caps[sid] = (int(total), int(silent or 0), int(needs_human or 0))
+        quests = {sid: int(n) for sid, n in db.execute(
+            select(QuestionEvent.session_id, func.count())
+            .where(QuestionEvent.session_id.in_(ids))
+            .group_by(QuestionEvent.session_id)).all()}
+
+    def summary(row: Session) -> dict[str, Any]:
+        total, silent, needs_human = caps.get(row.id, (0, 0, 0))
+        return {
+            "id": str(row.id),
+            "started_at": row.started_at.isoformat() if row.started_at else None,
+            "ended_at": row.ended_at.isoformat() if row.ended_at else None,
+            "end_reason": row.end_reason,
+            "source": row.source,
+            "demo_mode": row.demo_mode,
+            "captures": total,
+            "silent": silent,
+            "flagged": needs_human,
+            "questions": quests.get(row.id, 0),
+        }
+
+    return {"sessions": [summary(r) for r in rows], "more": more}
+
+
 # ------------------------------------------------------------------ record ---
 @app.get("/api/sessions/{session_id}")
 def session_record(session_id: uuid.UUID,
+                   user: User | None = Depends(auth.optional_user),
                    db: SASession = Depends(get_db)) -> dict[str, Any]:
     """The team-leader view (DESIGN-BRIEF 4.4): what was captured, and the audit.
 
     No transcript, and there is no column that could produce one.
+
+    Organisation-scoped, exactly like the list this drills into: `capture` and
+    the session's audit carry another tenant's identifiers, and a session id is
+    not a secret -- it is handed back in a response body and sits in a URL. The
+    same guard `list_captures` documents as "the whole security model" applies
+    here one level deeper. `acting_organisation` folds an anonymous caller into
+    the demo tenant, so the demo/replay flow reads its own fixtures unchanged
+    while a real account's sessions require that account's token. 404 rather
+    than 403, so the endpoint never confirms a foreign session exists.
     """
+    org_id = acting_organisation(user)
     row = db.get(Session, session_id)
-    if row is None:
+    if row is None or row.organisation_id != org_id:
         raise HTTPException(404, "unknown session")
     captures = list(db.scalars(
         select(Capture).where(Capture.session_id == session_id)
@@ -1278,15 +1366,23 @@ def session_record(session_id: uuid.UUID,
 # ------------------------------------------------------------------- stop ----
 @app.post("/api/session/{session_id}/stop")
 async def session_stop(session_id: uuid.UUID, delete: bool = Body(False, embed=True),
+                       user: User | None = Depends(auth.optional_user),
                        db: SASession = Depends(get_db)) -> dict[str, Any]:
     """ARCH 3.12's stop-and-delete. Terminates the socket and visibly deletes.
 
     The audit row survives the deletion by construction: `audit_event` has no
     foreign keys, so the cascade that removes the captures cannot reach it. A
     record of a deletion destroyed by that deletion is not a record.
+
+    Organisation-scoped like the read and the replay path: a session id alone
+    must not let one tenant end or hard-delete another's session. Anonymous
+    callers act as the demo tenant (the demo/replay flow stops its own
+    fixtures), and a foreign session answers 404 before anything is terminated
+    or deleted.
     """
+    org_id = acting_organisation(user)
     row = db.get(Session, session_id)
-    if row is None:
+    if row is None or row.organisation_id != org_id:
         raise HTTPException(404, "unknown session")
     live = _SESSIONS.pop(session_id, None)
     if live is not None:

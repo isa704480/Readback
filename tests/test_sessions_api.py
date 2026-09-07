@@ -452,7 +452,95 @@ def test_a_half_cursor_and_a_malformed_one_are_flat_400s() -> None:
         fx.close()
 
 
+# ------------------------------------------ the detail view and stop, scoped --
+def test_session_detail_and_stop_are_scoped_to_the_organisation() -> None:
+    """The list is organisation-scoped; the detail view it drills into and the
+    stop-and-delete it offers must be too. A session id is not a secret -- it is
+    returned by /api/session/start and sits in a URL -- so before this guard,
+    GET /api/sessions/{id} handed any tenant another's captures, questions and
+    audit trail by id, and POST /api/session/{id}/stop let any caller end or
+    hard-delete another's session. Both are answered 404 for a foreign session,
+    never 403, so the endpoint never confirms one exists."""
+    fx = _Fixture()
+    try:
+        docks_org, docks_token = fx.organisation("Docks Ltd", "ada@docks.example")
+        _rival_org, rival_token = fx.organisation("Rival Freight", "eve@rival.example")
+        docks_session = fx.session_row(docks_org)
+        fx.capture(docks_session, "MSKU4158005", at=T0)
+
+        def detail(token: str | None) -> object:
+            headers = {"Authorization": f"Bearer {token}"} if token else {}
+            return fx.client.get(f"/api/sessions/{docks_session}", headers=headers)
+
+        def stop(token: str | None) -> object:
+            headers = {"Authorization": f"Bearer {token}"} if token else {}
+            return fx.client.post(f"/api/session/{docks_session}/stop",
+                                  json={"delete": True}, headers=headers)
+
+        owned = detail(docks_token)
+        assert owned.status_code == 200, owned.text
+        assert owned.json()["captures"][0]["heard"] == "MSKU4158005"
+
+        # A rival with a perfectly valid token of its own, and an anonymous
+        # caller (the demo tenant, not Docks), are both refused.
+        assert detail(rival_token).status_code == 404, "a rival read another tenant's session"
+        assert detail(None).status_code == 404, "an anonymous caller read a real tenant's session"
+
+        # The refused stop must not have terminated or deleted anything.
+        assert stop(rival_token).status_code == 404, "a rival stopped another tenant's session"
+        assert detail(docks_token).status_code == 200, "the refused stop still deleted the row"
+
+        deleted = stop(docks_token)
+        assert deleted.status_code == 200, deleted.text
+        assert deleted.json()["deleted"] is True
+        assert detail(docks_token).status_code == 404, "the owner's delete did not take"
+    finally:
+        fx.close()
+
+
+# ------------------------------------ the session list, silent sessions and all --
+def test_session_summaries_list_every_session_including_the_silent_ones() -> None:
+    """The list the detail view drills into is drawn from `session`, not from
+    `capture`, so a call that correctly captured nothing is on it. It is
+    organisation-scoped like every other read, and it carries the counts a team
+    leader reads before opening a row."""
+    fx = _Fixture()
+    try:
+        docks_org, docks_token = fx.organisation("Docks Ltd", "ada@docks.example")
+        _rival_org, rival_token = fx.organisation("Rival Freight", "eve@rival.example")
+
+        captured = fx.session_row(docks_org)
+        fx.capture(captured, "MSKU4158005", at=T0)          # committed, silent
+        silent_session = fx.session_row(docks_org)          # a refusal: no captures
+
+        def summaries(token: str | None) -> object:
+            headers = {"Authorization": f"Bearer {token}"} if token else {}
+            return fx.client.get("/api/session-summaries", headers=headers)
+
+        r = summaries(docks_token)
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert body["more"] is False
+        by_id = {s["id"]: s for s in body["sessions"]}
+        # BOTH sessions are present -- the zero-capture one is the whole point.
+        assert str(captured) in by_id and str(silent_session) in by_id, by_id
+        assert by_id[str(captured)]["captures"] == 1
+        assert by_id[str(captured)]["silent"] == 1
+        assert by_id[str(silent_session)]["captures"] == 0
+
+        # A rival organisation's token sees none of Docks' sessions.
+        rival = summaries(rival_token).json()["sessions"]
+        assert all(s["id"] not in (str(captured), str(silent_session)) for s in rival)
+        # And an anonymous caller is the demo tenant, not Docks.
+        anon = summaries(None).json()["sessions"]
+        assert all(s["id"] not in (str(captured), str(silent_session)) for s in anon)
+    finally:
+        fx.close()
+
+
 TESTS = [
+    test_session_summaries_list_every_session_including_the_silent_ones,
+    test_session_detail_and_stop_are_scoped_to_the_organisation,
     test_captures_are_scoped_to_the_signed_in_organisation,
     test_a_token_is_required_and_the_401_is_flat,
     test_row_shape_is_exactly_the_client_contract,

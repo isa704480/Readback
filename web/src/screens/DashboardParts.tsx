@@ -424,6 +424,68 @@ export async function fetchSession(
   };
 }
 
+/** One row of GET /api/session-summaries: a session and the counts a team
+ * leader reads before opening it. Drawn from `session`, so a call that captured
+ * nothing is here too. */
+export interface SessionSummary {
+  id: string;
+  started_at: string | null;
+  ended_at: string | null;
+  end_reason: string | null;
+  source: string | null;
+  demo_mode: boolean;
+  captures: number;
+  silent: number;
+  /** Captures that were handed over or flagged -- the ones that need a human. */
+  flagged: number;
+  questions: number;
+}
+
+export interface SessionSummaryPage {
+  sessions: SessionSummary[];
+  /** True when the bounded page left older sessions behind, said rather than
+   *  dropped silently. */
+  more: boolean;
+}
+
+/** GET /api/session-summaries. Newest first, bounded, organisation-scoped. */
+export async function fetchSessionSummaries(
+  signal?: AbortSignal,
+): Promise<ApiResult<SessionSummaryPage>> {
+  const result = await request<unknown>('/api/session-summaries', {
+    auth: true,
+    ...(signal ? { signal } : {}),
+  });
+  if (!result.ok) return result;
+  const body = result.data;
+  if (!isRecordObject(body) || !Array.isArray(body['sessions'])) {
+    return malformed(result.status);
+  }
+  const sessions: SessionSummary[] = [];
+  for (const raw of body['sessions']) {
+    if (!isRecordObject(raw)) continue;
+    const id = str(raw, 'id');
+    if (id === null) continue;
+    sessions.push({
+      id,
+      started_at: str(raw, 'started_at'),
+      ended_at: str(raw, 'ended_at'),
+      end_reason: str(raw, 'end_reason'),
+      source: str(raw, 'source'),
+      demo_mode: bool(raw, 'demo_mode'),
+      captures: num(raw, 'captures', 0),
+      silent: num(raw, 'silent', 0),
+      flagged: num(raw, 'flagged', 0),
+      questions: num(raw, 'questions', 0),
+    });
+  }
+  return {
+    ok: true,
+    status: result.status,
+    data: { sessions, more: bool(body, 'more') },
+  };
+}
+
 /** One capture out of POST /api/demo/replay, which needs no key and no login. */
 export interface ReplayCapture {
   format: string;
