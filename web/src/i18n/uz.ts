@@ -77,6 +77,7 @@ const catalog = {
   'sessions.failed': 'Seanslar roʻyxatini yuklab boʻlmadi. Yozuv API orqali ishlaydi; u ishlab turganini tekshiring.',
   'sessions.empty': 'Hali seanslar yoʻq. Qoʻngʻiroq yoki demo fixturani ishga tushiring — u shu yerda paydo boʻladi.',
   'sessions.more': 'Eskiroq seanslar koʻrsatilmayapti — bu eng soʻnggi sahifa.',
+  'sessions.loadMore': 'Eskiroq seanslarni koʻrsatish',
   'sessions.source.live': 'jonli',
   'sessions.source.replay': 'fixtura',
   'sessions.source.unknown': 'seans',

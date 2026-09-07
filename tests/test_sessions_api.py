@@ -538,7 +538,43 @@ def test_session_summaries_list_every_session_including_the_silent_ones() -> Non
         fx.close()
 
 
+def test_session_summaries_page_by_keyset_cursor_including_a_tie() -> None:
+    """Three sessions all started at T0 -- a three-way tie on the sort key, the
+    case an offset cursor would skip or repeat. Walked two at a time with the
+    (started_at, id) cursor the endpoint hands back, every row is seen exactly
+    once, and a half cursor is the same flat 400 the capture list gives."""
+    fx = _Fixture()
+    try:
+        org, token = fx.organisation("Docks Ltd", "ada@docks.example")
+        ids = {str(fx.session_row(org)) for _ in range(3)}
+        headers = {"Authorization": f"Bearer {token}"}
+
+        seen: list[str] = []
+        params: dict[str, str] = {"limit": "2"}
+        for _ in range(5):
+            r = fx.client.get("/api/session-summaries", params=params, headers=headers)
+            assert r.status_code == 200, r.text
+            body = r.json()
+            seen += [s["id"] for s in body["sessions"]]
+            if not body["more"]:
+                assert body["next_before"] is None and body["next_before_id"] is None
+                break
+            assert body["next_before"] and body["next_before_id"], body
+            params = {"limit": "2", "before": body["next_before"],
+                      "before_id": body["next_before_id"]}
+        assert sorted(seen) == sorted(ids), (seen, ids)
+        assert len(seen) == len(set(seen)) == 3
+
+        half = fx.client.get("/api/session-summaries",
+                             params={"before": T0.isoformat()}, headers=headers)
+        assert half.status_code == 400, half.text
+        assert half.json().get("error") == "invalid_cursor"
+    finally:
+        fx.close()
+
+
 TESTS = [
+    test_session_summaries_page_by_keyset_cursor_including_a_tie,
     test_session_summaries_list_every_session_including_the_silent_ones,
     test_session_detail_and_stop_are_scoped_to_the_organisation,
     test_captures_are_scoped_to_the_signed_in_organisation,

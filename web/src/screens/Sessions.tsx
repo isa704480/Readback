@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Icon, Rack } from '../components';
+import { Button, Icon, Rack } from '../components';
 import type { RackRow } from '../components';
 import { useI18n } from '../i18n';
 import type { ApiResult } from '../lib/api';
@@ -9,7 +9,12 @@ import {
   outcomeOf,
   slotsFor,
 } from './DashboardParts';
-import type { RecordDetail, SessionSummary } from './DashboardParts';
+import type {
+  RecordDetail,
+  SessionCursor,
+  SessionSummary,
+  SessionSummaryPage,
+} from './DashboardParts';
 import './Sessions.css';
 
 /* The team-leader view (DESIGN-BRIEF 4.4): every session this organisation
@@ -35,8 +40,31 @@ import './Sessions.css';
 
 type ListState =
   | { status: 'loading' }
-  | { status: 'ok'; sessions: SessionSummary[]; more: boolean }
+  | {
+      status: 'ok';
+      sessions: SessionSummary[];
+      more: boolean;
+      /** Where the next page starts; null once the last page is in. */
+      cursor: SessionCursor | null;
+      loadingMore: boolean;
+    }
   | { status: 'failed' };
+
+/** Pages are appended, never replaced: the cursor guarantees the next page is
+ *  strictly older than everything already shown, so the list only grows. */
+function pageState(prior: readonly SessionSummary[], page: SessionSummaryPage): ListState {
+  const cursor =
+    page.more && page.next_before && page.next_before_id
+      ? { before: page.next_before, before_id: page.next_before_id }
+      : null;
+  return {
+    status: 'ok',
+    sessions: [...prior, ...page.sessions],
+    more: cursor !== null,
+    cursor,
+    loadingMore: false,
+  };
+}
 
 function sourceLabel(t: ReturnType<typeof useI18n>['t'], s: SessionSummary): string {
   if (s.source === 'replay' || s.demo_mode) return t('sessions.source.replay');
@@ -221,13 +249,23 @@ export function Sessions() {
     setList({ status: 'loading' });
     void fetchSessionSummaries(signal).then((result) => {
       if (signal?.aborted) return;
-      setList(
-        result.ok
-          ? { status: 'ok', sessions: result.data.sessions, more: result.data.more }
-          : { status: 'failed' },
-      );
+      setList(result.ok ? pageState([], result.data) : { status: 'failed' });
     });
   }, []);
+
+  const loadMore = useCallback(() => {
+    if (list.status !== 'ok' || list.cursor === null || list.loadingMore) return;
+    const { cursor, sessions } = list;
+    setList({ ...list, loadingMore: true });
+    void fetchSessionSummaries(undefined, cursor).then((result) => {
+      setList((latest) => {
+        // Only the page this click asked for may append. A response that lands
+        // after a reload would otherwise duplicate rows under a fresh list.
+        if (latest.status !== 'ok' || latest.cursor?.before_id !== cursor.before_id) return latest;
+        return result.ok ? pageState(sessions, result.data) : { ...latest, loadingMore: false };
+      });
+    });
+  }, [list]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -260,7 +298,18 @@ export function Sessions() {
               <Row key={s.id} s={s} open={open === s.id} onToggle={onToggle} />
             ))}
           </ul>
-          {list.more ? <p className="sessions__more">{t('sessions.more')}</p> : null}
+          {list.more ? (
+            <p className="sessions__more">
+              <Button
+                variant="secondary"
+                onClick={loadMore}
+                busy={list.loadingMore}
+                busyLabel={t('sessions.loading')}
+              >
+                {t('sessions.loadMore')}
+              </Button>
+            </p>
+          ) : null}
         </>
       )}
     </section>

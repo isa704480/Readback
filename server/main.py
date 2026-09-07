@@ -1208,6 +1208,8 @@ SESSIONS_LIMIT_MAX: Final = 200
 
 @app.get("/api/session-summaries")
 def session_summaries(limit: str | None = None,
+                      before: str | None = None,
+                      before_id: str | None = None,
                       user: User | None = Depends(auth.optional_user),
                       db: SASession = Depends(get_db)) -> dict[str, Any]:
     """Every session this organisation ran, newest first, one bounded page, each
@@ -1224,16 +1226,27 @@ def session_summaries(limit: str | None = None,
 
     Organisation-scoped by the same rule as every other read here; anonymous
     callers are the demo tenant. Bounded, and it says whether more remain rather
-    than dropping the tail in silence.
+    than dropping the tail in silence -- and hands back the keyset cursor
+    (`next_before`, `next_before_id` = the last row's started_at and id) that
+    fetches the next page, the same (moment, id) pair `list_captures` pages by.
     """
     org_id = acting_organisation(user)
     page = _parse_limit(limit)
+    cursor = _parse_cursor(before, before_id)
 
-    rows = list(db.scalars(
+    stmt = (
         select(Session)
         .where(Session.organisation_id == org_id)
         .order_by(Session.started_at.desc(), Session.id.desc())
-        .limit(page + 1)))
+        .limit(page + 1)
+    )
+    if cursor is not None:
+        moment, row_id = cursor
+        stmt = stmt.where(
+            or_(Session.started_at < moment,
+                and_(Session.started_at == moment, Session.id < row_id))
+        )
+    rows = list(db.scalars(stmt))
     more = len(rows) > page
     rows = rows[:page]
     ids = [r.id for r in rows]
@@ -1275,7 +1288,13 @@ def session_summaries(limit: str | None = None,
             "questions": quests.get(row.id, 0),
         }
 
-    return {"sessions": [summary(r) for r in rows], "more": more}
+    last = rows[-1] if rows and more else None
+    return {
+        "sessions": [summary(r) for r in rows],
+        "more": more,
+        "next_before": last.started_at.isoformat() if last else None,
+        "next_before_id": str(last.id) if last else None,
+    }
 
 
 # ------------------------------------------------------------------ record ---

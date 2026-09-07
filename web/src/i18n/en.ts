@@ -109,6 +109,7 @@ export const en = {
   'sessions.failed': 'The session list could not be loaded. The record runs on the API; check that it is up.',
   'sessions.empty': 'No sessions yet. Run a call or a demo fixture, and it appears here.',
   'sessions.more': 'Older sessions are not shown — this is the latest page.',
+  'sessions.loadMore': 'Show older sessions',
   'sessions.source.live': 'live',
   'sessions.source.replay': 'fixture',
   'sessions.source.unknown': 'session',

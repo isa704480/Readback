@@ -446,13 +446,26 @@ export interface SessionSummaryPage {
   /** True when the bounded page left older sessions behind, said rather than
    *  dropped silently. */
   more: boolean;
+  /** The keyset cursor for the next page -- the last row's started_at and id,
+   *  the same (moment, id) pair the capture list pages by. Null on the last
+   *  page. */
+  next_before: string | null;
+  next_before_id: string | null;
 }
 
-/** GET /api/session-summaries. Newest first, bounded, organisation-scoped. */
+export interface SessionCursor {
+  before: string;
+  before_id: string;
+}
+
+/** GET /api/session-summaries. Newest first, bounded, organisation-scoped;
+ *  pass the previous page's cursor to fetch the one before it. */
 export async function fetchSessionSummaries(
   signal?: AbortSignal,
+  cursor?: SessionCursor,
 ): Promise<ApiResult<SessionSummaryPage>> {
-  const result = await request<unknown>('/api/session-summaries', {
+  const query = cursor ? `?${new URLSearchParams(cursor).toString()}` : '';
+  const result = await request<unknown>(`/api/session-summaries${query}`, {
     auth: true,
     ...(signal ? { signal } : {}),
   });
@@ -482,7 +495,12 @@ export async function fetchSessionSummaries(
   return {
     ok: true,
     status: result.status,
-    data: { sessions, more: bool(body, 'more') },
+    data: {
+      sessions,
+      more: bool(body, 'more'),
+      next_before: str(body, 'next_before'),
+      next_before_id: str(body, 'next_before_id'),
+    },
   };
 }
 
