@@ -534,6 +534,10 @@ class RunnerConfig:
     # bare-digit formats the model is measured anti-correlated on.
     identify: Callable[[str, str | None], Awaitable[Any]] | None = None
     identify_timeout_s: float = 2.5
+    # ARCH 3.9: the part catalogue (readback.catalogue.CatalogueIndex) that
+    # stands in for a check digit on the `catalogue` format. None when the
+    # deployment has no catalogue, and then that format never commits.
+    catalogue: Any = None
 
 
 @dataclass(slots=True)
@@ -737,6 +741,21 @@ async def run_session(
             # sentence is about what is written down, not about what the armed
             # state is willing to show as still being heard.
             shape = verdict.report.shape
+            # ARCH 3.9: a format with no checksum has no shape for shape_cue to
+            # find; the catalogue is its constraint. Consulted only while ARMED
+            # on a carrier that named it, with 3.6's two cues in hand, once per
+            # distinct finished run -- and a run the catalogue cannot place
+            # uniquely writes nothing, which is the silence the product sells.
+            if (cfg.catalogue is not None and shape is None
+                    and verdict.state is State.ARMED and verdict.commit_ok
+                    and verdict.fmt == "catalogue"):
+                hit = _catalogue_candidate(tape, cfg.catalogue, decided)
+                if hit is not None:
+                    heard_run, match = hit
+                    _commit_catalogue(heard_run, match, stream, st, summary, tape.now_ms)
+                    decided.add(heard_run)
+                    await _disarm(detector, source, stream, tape)
+                    continue
             if verdict.state is not State.ARMED or shape is None or not verdict.commit_ok:
                 closed = False
                 if pending is not None:
@@ -1412,6 +1431,70 @@ async def _ask_human(answerer: Answerer | None, q: Question,
 def _candidates(result: dict[str, Any]) -> list[dict[str, Any]]:
     return [{"value": c, "p": round(float(pr), 4)}
             for c, pr in zip(result.get("cands", [])[:5], result.get("probs", [])[:5])]
+
+
+# ------------------------------------------------------------- catalogue ---
+CATALOGUE_MIN_CHARS: Final = 4
+
+
+def _catalogue_candidate(tape: Tape, index: Any,
+                         decided: set[str]) -> tuple[str, Any] | None:
+    """ARCH 3.9: the longest finished readable run the catalogue recognises.
+
+    Finished means the run's last word is final -- a partial may still change
+    under it -- and recognised means CatalogueIndex.match found exactly one row
+    within edit distance 2. Runs already decided are skipped, so a settled part
+    number sitting on the 45 s tape is not written once per frame.
+    """
+    runs = [r for r in readable_runs(tape.words, armed=True)
+            if len(r.chars) >= CATALOGUE_MIN_CHARS and r.chars not in decided
+            and tape.words[r.last].is_final]
+    for run in sorted(runs, key=lambda r: len(r.chars), reverse=True):
+        match = index.match(run.chars)
+        if match is not None:
+            return run.chars, match
+    return None
+
+
+def _commit_catalogue(heard: str, match: Any, stream: ev.EventStream,
+                      st: CaptureStore, summary: RunSummary, at_ms: int) -> None:
+    """Write a part number the catalogue vouched for.
+
+    Two signals by construction -- the catalogue row (validated_by) and the
+    carrier phrase that armed on it (second_signal) -- so the row satisfies the
+    same CHECK a check-digit commit does. A row the catalogue corrected is a
+    diff, drawn as every diff is (4.8: always show the diff); with no single
+    position to name -- edit distance may be a dropped character -- the whole
+    pair is shown and position_corrected stays null.
+    """
+    capture_id = str(uuid.uuid4())
+    corrected = match.distance > 0
+    st.open_capture(uuid.UUID(capture_id), "catalogue", heard)
+    stream.emit(ev.CANDIDATE_SEEN, at_ms, capture_id=capture_id, format="catalogue",
+                value=heard, complete=True, checksum_ok=True, aligned=True,
+                second_signal="carrier")
+    if corrected:
+        stream.emit(ev.REPAIR_SILENT, at_ms, capture_id=capture_id, position=None,
+                    heard=None, written=None,
+                    diff={"heard": heard, "written": match.sku}, silent=True)
+    record = CaptureRecord(
+        capture_id=uuid.UUID(capture_id), format_type="catalogue",
+        heard_value=heard, final_value=match.sku,
+        validated_by="catalogue", second_signal="carrier", status="committed",
+        rung=int(dec.Rung.WRITE), silent=True, corrected=corrected,
+        position_corrected=None, questions_asked=0, spans=0,
+        handed_over=False, handover_reason=None, flag_reason=None,
+        confidence_at_write=None, candidates=[], latency_ms=0,
+    )
+    st.write_capture(record)
+    summary.captures.append(record)
+    summary.characters += len(match.sku)
+    summary.silent_captures += 1
+    stream.emit(ev.CAPTURE_COMMIT, at_ms, capture_id=capture_id, format="catalogue",
+                value=match.sku, heard=heard, validated_by="catalogue",
+                second_signal="carrier", silent=True, corrected=corrected,
+                position_corrected=None, questions=0, rung=int(dec.Rung.WRITE),
+                latency_ms=0)
 
 
 def _commit(p: _Pending, result: dict[str, Any], top: str, moment: dec.Moment,

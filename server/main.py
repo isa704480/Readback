@@ -63,12 +63,16 @@ from server.db import create_all, get_db, get_sessionmaker
 from server.models import (
     AuditEvent,
     Capture,
+    CataloguePart,
     Organisation,
     QuestionEvent,
     Session,
     User,
     utcnow,
 )
+from server.readback.catalogue import CatalogueIndex
+from server.readback.catalogue import normalise as catalogue_normalise
+from server.readback.catalogue import signature as catalogue_signature
 from server.pipeline import events as ev
 from server.pipeline.detector import FORMAT_TOKENS, State
 from server.pipeline.detector import configuration as detector_configuration
@@ -883,6 +887,7 @@ async def session_audio(websocket: WebSocket, session_id: uuid.UUID,
     try:
         try:
             vocabulary = tuple(vocabulary_for(db, row.organisation_id))
+            catalogue = _catalogue_index(db)
             source = open_source(settings, None, config=_connect_config(vocabulary))
             await source.connect()
         except Exception:
@@ -907,6 +912,9 @@ async def session_audio(websocket: WebSocket, session_id: uuid.UUID,
                            cap_seconds=settings.session_cap_seconds,
                            source_label="live",
                            vocabulary=vocabulary,
+                           catalogue=catalogue if len(catalogue) else None,
+                           format_tokens=({"catalogue": catalogue.skus}
+                                          if len(catalogue) else None),
                            identify=_identifier(settings))
         pipeline = asyncio.create_task(run_session(
             source, live.stream, store=store, answerer=live.answerer(), config=cfg))
@@ -1520,6 +1528,83 @@ def put_vocabulary(body: VocabularyRequest,
     return _vocabulary_payload(terms)
 
 
+# --------------------------------------------------------------- catalogue ---
+CATALOGUE_MAX_ROWS: Final = 500
+CATALOGUE_MAX_SKU_CHARS: Final = 64
+
+
+class CataloguePartIn(BaseModel):
+    sku: str
+    description: str = ""
+
+
+class CatalogueRequest(BaseModel):
+    parts: list[CataloguePartIn]
+
+
+def _catalogue_index(db: SASession) -> CatalogueIndex:
+    """The catalogue as the runner matches against it, read once per session."""
+    return CatalogueIndex((r.sku, r.description) for r in db.scalars(select(CataloguePart)))
+
+
+def _catalogue_payload(db: SASession) -> dict[str, Any]:
+    rows = list(db.scalars(select(CataloguePart).order_by(CataloguePart.sku)))
+    return {
+        "parts": [{"sku": r.sku, "description": r.description} for r in rows],
+        "max_rows": CATALOGUE_MAX_ROWS,
+        "max_sku_chars": CATALOGUE_MAX_SKU_CHARS,
+    }
+
+
+@app.get("/api/catalogue")
+def get_catalogue(user: User = Depends(auth.current_user),
+                  db: SASession = Depends(get_db)) -> dict[str, Any]:
+    """ARCH 3.9: the part catalogue that stands in for a check digit.
+
+    One per deployment: `catalogue_part` carries no organisation, by the
+    model's own design (the rhyme-signature index is the point, and it is
+    global). So it is read and replaced by any signed-in account, and a row
+    here is exactly what the runner will vouch for on the `catalogue` format.
+    """
+    del user
+    return _catalogue_payload(db)
+
+
+@app.put("/api/catalogue")
+def put_catalogue(body: CatalogueRequest,
+                  user: User = Depends(auth.current_user),
+                  db: SASession = Depends(get_db)) -> dict[str, Any]:
+    """Replace the catalogue. Whole-list, like the vocabulary, and for the same
+    reason. Takes effect on the next session."""
+    kept: dict[str, tuple[str, str]] = {}
+    for part in body.parts:
+        sku = " ".join(part.sku.split())
+        key = catalogue_normalise(sku)
+        if not key:
+            continue
+        if len(sku) > CATALOGUE_MAX_SKU_CHARS:
+            raise _bad_request(
+                "sku_too_long",
+                f"a part number is {len(sku)} characters; the cap is {CATALOGUE_MAX_SKU_CHARS}.",
+            )
+        if key in kept:
+            continue
+        kept[key] = (sku, " ".join(part.description.split())[:255])
+    if len(kept) > CATALOGUE_MAX_ROWS:
+        raise _bad_request(
+            "too_many_parts",
+            f"{len(kept)} parts; the cap is {CATALOGUE_MAX_ROWS}.",
+        )
+    db.execute(delete(CataloguePart))
+    for sku, description in kept.values():
+        db.add(CataloguePart(sku=sku, description=description,
+                             rhyme_signature=catalogue_signature(sku)))
+    audit.record(db, audit.CATALOGUE_SET, organisation_id=user.organisation_id,
+                 session_id=None, actor="human", detail={"parts": len(kept)})
+    db.commit()
+    return _catalogue_payload(db)
+
+
 # ------------------------------------------------------------------ record ---
 @app.get("/api/sessions/{session_id}")
 def session_record(session_id: uuid.UUID,
@@ -1665,8 +1750,8 @@ def _connect_config(vocabulary: tuple[str, ...]) -> SourceConfig:
     at all -- `SourceConfig(keyterms=())` -- while the detector believed the
     IDLE list had gone up with CONNECT, so a live session ran its whole IDLE
     phase, carriers and NATO alphabet included, with nothing biasing the
-    recogniser. Measured on a real socket that is the difference between
-    "container" and "contain a".
+    recogniser. Found by reading, not measured: the before/after effect on
+    recognition is not known and is not claimed here.
     """
     idle = detector_configuration(State.IDLE, None, FORMAT_TOKENS, vocabulary)
     return SourceConfig(keyterms=tuple(idle["keyterms_prompt"]))
@@ -1811,6 +1896,7 @@ async def demo_replay(body: ReplayRequest,
         _SESSIONS[row.id] = live
 
     vocabulary = tuple(vocabulary_for(db, row.organisation_id))
+    catalogue = _catalogue_index(db)
     source = open_source(settings, path.stem, speed=body.speed,
                          config=_connect_config(vocabulary))
     live.source = source
@@ -1837,6 +1923,9 @@ async def demo_replay(body: ReplayRequest,
                        cap_seconds=settings.session_cap_seconds,
                        source_label="replay",
                        vocabulary=vocabulary,
+                       catalogue=catalogue if len(catalogue) else None,
+                       format_tokens=({"catalogue": catalogue.skus}
+                                      if len(catalogue) else None),
                        **({"answer_timeout_ms": body.answer_timeout_ms}
                           if body.answer_timeout_ms else {}))
     wait = body.wait if body.wait is not None else (body.speed <= 0.0)
