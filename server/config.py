@@ -174,7 +174,11 @@ class Settings(BaseSettings):
         # in with a token anyone can forge. SQLite with a key is left alone on
         # purpose -- that is a developer's laptop, and the tests construct
         # Settings with placeholder keys against the default database.
-        if self.live_capture_possible and not self.database_url.startswith("sqlite"):
+        # Key or no key: a replay-only deployment on a real database still
+        # issues tokens, and a placeholder session secret makes every one of
+        # them forgeable. The audit of 2026-09-07 found the `and` above this
+        # line left exactly that shape unguarded.
+        if not self.database_url.startswith("sqlite"):
             for name, value in _PLACEHOLDER_SECRETS:
                 # Empty counts as placeholder: pydantic-settings hands an env var
                 # that is set-but-blank through as "", not as the default, and

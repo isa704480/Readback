@@ -103,5 +103,14 @@ def client_ip(request) -> str:
     """
     forwarded = request.headers.get("x-forwarded-for", "")
     if forwarded:
-        return forwarded.split(",")[0].strip()
+        # The RIGHTMOST entry: a proxy appends the address it saw, so that one
+        # is the proxy's word; the leftmost is whatever the client wrote into
+        # its own request. Leftmost made every per-IP limit bypassable by
+        # setting the header (measured in the 2026-09-07 audit).
+        return forwarded.split(",")[-1].strip()
     return getattr(request.client, "host", "unknown") or "unknown"
+
+# ARCH 3.11: a demo replay writes a session row and runs a pipeline, anonymously.
+# Generous -- a judge clicking through eight fixtures several times -- and per
+# address, the same identity the sign-in limits key on.
+REPLAY_PER_IP = Limit("replay_ip", max_hits=120, window_seconds=3600)

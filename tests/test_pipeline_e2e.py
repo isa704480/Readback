@@ -802,8 +802,16 @@ def check_api(c: Checks) -> None:
         gone = client.post(f"/api/session/{uuid.uuid4()}/answer",
                            json={"question_id": str(uuid.uuid4()), "text": "kilo"})
         c.eq("api: and an answer to no session is a 404", gone.status_code, 404)
-        c.ok("api: the started session still exists on the record",
-             client.get(f"/api/sessions/{session_id}").status_code == 200)
+        # Existence, checked where it lives: the row. The record does not show
+        # a LIVE-source session to the anonymous (the demo tenant is shared, and
+        # a live session there is a real person's identifiers -- 2026-09-07
+        # audit), so the old `GET /api/sessions/{id} == 200` probe now asserts
+        # the opposite, and the row itself says the session still exists.
+        with main.get_sessionmaker()() as db:
+            c.ok("api: the started session still exists on the record",
+                 db.get(main.Session, uuid.UUID(session_id)) is not None)
+        c.eq("api: and its record is not anonymously readable, being a live session",
+             client.get(f"/api/sessions/{session_id}").status_code, 404)
 
         # ARCH 3.12's stop-and-delete: it terminates and it visibly deletes, and
         # the audit row survives because audit_event has no foreign keys.

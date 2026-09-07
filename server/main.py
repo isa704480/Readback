@@ -48,7 +48,7 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Final
+from typing import Any, Final, Literal
 
 from fastapi import Body, Depends, FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -58,6 +58,7 @@ from sqlalchemy import and_, case, delete, func, or_, select
 from sqlalchemy.orm import Session as SASession
 
 from server import audit, auth, llm
+from server import ratelimit as rl
 from server.config import Settings, get_settings
 from server.db import create_all, get_db, get_sessionmaker
 from server.models import (
@@ -353,7 +354,9 @@ class StartRequest(BaseModel):
     consent: Consent = Field(default_factory=Consent)
     demo_mode: bool = True
     ab: bool = False               # 3.11: the A/B demo runs two sockets
-    channel: str = "clean"
+    # The same three values models.CHANNELS' CHECK constraint accepts. Bound at
+    # the edge so a bad channel is a 422 at parse time, not a 500 at commit.
+    channel: Literal["clean", "phone", "dual"] = "clean"
 
 
 class StartResponse(BaseModel):
@@ -374,12 +377,16 @@ class AnswerRequest(BaseModel):
 class ReplayRequest(BaseModel):
     fixture: str
     session_id: uuid.UUID | None = None
-    speed: float = 0.0             # 0 = as fast as the CPU allows
+    # 0 = as fast as the CPU allows. Bounded, and NaN/inf refused: a replay is
+    # a demonstration, and a speed the loop cannot reason about (NaN compares
+    # false to everything) turned a demo into a stalled task holding a slot.
+    speed: float = Field(default=0.0, ge=0.0, le=100.0, allow_inf_nan=False)
     wait: bool | None = None       # None: wait iff the replay is instant
     answers: dict[str, str] = Field(default_factory=dict)
     # ARCHITECTURE 7's dead-man timer, exposed because a demo without a human in
-    # the room needs it shorter than a call with one does.
-    answer_timeout_ms: int | None = None
+    # the room needs it shorter than a call with one does. Bounded to two
+    # minutes: an unbounded timer is a task that never finishes.
+    answer_timeout_ms: int | None = Field(default=None, ge=0, le=120_000)
 
 
 # ------------------------------------------------------------------ gates ----
@@ -490,16 +497,27 @@ def session_start(body: StartRequest, request: Request = None,  # type: ignore[a
 
 # ------------------------------------------------------------------- live ----
 @app.websocket("/api/session/{session_id}/live")
-async def session_live(websocket: WebSocket, session_id: uuid.UUID) -> None:
+async def session_live(websocket: WebSocket, session_id: uuid.UUID,
+                       db: SASession = Depends(get_db),
+                       settings: Settings = Depends(get_settings)) -> None:
     """The event stream, verbatim.
 
     Backlog first, then live. A judge who opens the page after clicking replay
     still sees the beats that explain it, and a UI written against this socket
     needs no special case for "joined late" -- the two are the same list.
+
+    Organisation-scoped like the audio socket beside it: the stream carries
+    every captured value and every question, and a session id is not a
+    secret. The token arrives the way the audio socket's does (header or the
+    token subprotocol); anonymous viewers are the demo tenant and see demo
+    sessions. A foreign session is "unknown", never "forbidden".
     """
     await websocket.accept()
+    user = auth.resolve_user(_ws_token(websocket), db, settings)
+    org_id = acting_organisation(user)
+    row = db.get(Session, session_id)
     live = _SESSIONS.get(session_id)
-    if live is None:
+    if live is None or row is None or row.organisation_id != org_id:
         await websocket.send_json({"type": ev.ERROR, "seq": -1, "at_ms": 0,
                                    "wall_ms": 0, "message": "unknown session"})
         await websocket.close(code=4404)
@@ -875,6 +893,33 @@ async def session_audio(websocket: WebSocket, session_id: uuid.UUID,
     if live.producer is not None or (live.task is not None and not live.task.done()):
         await websocket.close(WS_AUDIO_BUSY, "session already has an audio producer")
         return
+    # Admission is re-checked at attach, not only at /start. `_running_sessions`
+    # stops counting an idle admission after cap + ABANDON_GRACE_S, so a socket
+    # attaching to one later would run outside every concurrency and budget
+    # gate (found by the 2026-09-07 audit). The same cutoff, the same answer,
+    # and the daily budget asked again because the day may have moved on.
+    if time.monotonic() - live.opened_at > settings.session_cap_seconds + ABANDON_GRACE_S:
+        live.stream.emit(ev.ERROR, 0, message="admission_expired")
+        live.stream.close()
+        row.ended_at = utcnow()
+        row.end_reason = "error"
+        audit.record(db, audit.SESSION_ENDED, organisation_id=row.organisation_id,
+                     session_id=row.id, actor="api",
+                     detail={"reason": "admission_expired"})
+        db.commit()
+        await websocket.close(WS_AUDIO_ENDED, "admission expired")
+        return
+    _remaining, _alarm, exhausted = _budget(db, settings)
+    if exhausted:
+        live.stream.emit(ev.ERROR, 0, message="budget_exhausted")
+        live.stream.close()
+        row.ended_at = utcnow()
+        row.end_reason = "error"
+        audit.record(db, audit.BUDGET_EXHAUSTED, organisation_id=row.organisation_id,
+                     session_id=row.id, actor="api", detail={"at": "attach"})
+        db.commit()
+        await websocket.close(WS_AUDIO_CAP, "daily budget exhausted")
+        return
     # Claimed before the first await below, so two sockets racing for the same
     # session cannot both pass the check above.
     live.producer = websocket
@@ -997,7 +1042,8 @@ def _ingress_ms(ingress: _AudioIngress | None) -> int:
 
 # ----------------------------------------------------------------- answer ----
 @app.post("/api/session/{session_id}/answer")
-def session_answer(session_id: uuid.UUID, body: AnswerRequest,
+async def session_answer(session_id: uuid.UUID, body: AnswerRequest,
+                   user: User | None = Depends(auth.optional_user),
                    db: SASession = Depends(get_db)) -> dict[str, Any]:
     """The human's one character.
 
@@ -1006,9 +1052,15 @@ def session_answer(session_id: uuid.UUID, body: AnswerRequest,
     `answered`, `answer_in_grammar` and `answer_char`, and nothing else, because
     the answer is the one moment a human speaks directly to the agent and is
     therefore the most tempting thing in the system to keep.
+
+    Organisation-scoped: an answer changes what gets written, and before this
+    guard any caller holding a session id could answer another tenant's
+    question. Anonymous callers are the demo tenant; a foreign session is 404.
     """
+    org_id = acting_organisation(user)
+    row = db.get(Session, session_id)
     live = _SESSIONS.get(session_id)
-    if live is None:
+    if live is None or row is None or row.organisation_id != org_id:
         raise HTTPException(404, "unknown session")
     text = body.text
     if text is None and body.choice is not None:
@@ -1256,6 +1308,12 @@ def session_summaries(limit: str | None = None,
         .order_by(Session.started_at.desc(), Session.id.desc())
         .limit(page + 1)
     )
+    if user is None:
+        # The demo tenant is shared by every anonymous caller. Its replayed
+        # fixtures are fictional by construction and fine to list; a live
+        # microphone session that landed there (no account, or a token that
+        # expired mid-call) is a real person's identifiers and is not.
+        stmt = stmt.where(Session.source == "replay")
     if cursor is not None:
         moment, row_id = cursor
         stmt = stmt.where(
@@ -1627,6 +1685,10 @@ def session_record(session_id: uuid.UUID,
     row = db.get(Session, session_id)
     if row is None or row.organisation_id != org_id:
         raise HTTPException(404, "unknown session")
+    if user is None and row.source != "replay":
+        # See session_summaries: the shared demo tenant lists fixtures to the
+        # anonymous, never a real call's identifiers.
+        raise HTTPException(404, "unknown session")
     captures = list(db.scalars(
         select(Capture).where(Capture.session_id == session_id)
         .order_by(Capture.created_at)))
@@ -1829,6 +1891,7 @@ def _fixture_path(name: str) -> Path:
 
 @app.post("/api/demo/replay")
 async def demo_replay(body: ReplayRequest,
+                      request: Request,
                       user: User | None = Depends(auth.optional_user),
                       db: SASession = Depends(get_db),
                       settings: Settings = Depends(get_settings)) -> dict[str, Any]:
@@ -1858,6 +1921,15 @@ async def demo_replay(body: ReplayRequest,
     # A demo gets clicked repeatedly and every click leaves a readable record
     # behind. Reaping here rather than only in `session_start` keeps the bound on
     # a path that never passes through the admission gate.
+    # It does pass a rate gate: a replay writes a session row and runs a
+    # pipeline, and anonymously. Per address, generous -- a judge clicking
+    # through eight fixtures twice is forty runs -- and the same flat 429 the
+    # sign-in routes give.
+    try:
+        rl.check(rl.REPLAY_PER_IP, rl.client_ip(request),
+                 "Too many demo runs from this address. Wait a while, then try again.")
+    except rl.RateLimited as exc:
+        raise auth._too_many(exc) from None
     _reap_finished()
 
     org_id = acting_organisation(user)

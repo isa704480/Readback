@@ -413,6 +413,44 @@ the organisation's vocabulary included, so the seed and the wire agree. The
 effect on recognition is not measured and is not claimed; the two live
 captures above were made under the old behaviour, which is a lower bound.
 
+**Seventh: a route-by-route audit of the API, adversarially verified.** Five
+readers, one per route family, then three independent refuters per finding;
+19 findings survived all three, 0 were refuted. Closed the same day:
+
+- `POST /api/session/{id}/answer` and `WS /api/session/{id}/live` had no
+  caller resolution at all -- any holder of a session id (returned by `/start`,
+  in every URL) could read another tenant's captures and questions off the
+  stream and answer its pending question, deciding what gets written. Both now
+  resolve the caller the way the audio socket does and call a foreign session
+  "unknown". A test pins owner / rival / anonymous on each.
+- `/audio` never re-checked admission: an idle admission older than cap +
+  grace is dropped from the concurrency count, so a socket attaching to it
+  later ran outside every gate. Re-checked at attach, budget included.
+- `speed=NaN` and an unbounded `answer_timeout_ms` on replay could wedge a
+  pipeline slot or hold a request open indefinitely: bounded at the schema.
+  Replay itself had no rate gate: per-address, 120 an hour.
+- Rate limits keyed on the LEFTMOST `X-Forwarded-For` entry -- the one the
+  client writes -- so every per-IP limit was bypassable by header: rightmost.
+- The placeholder session secret was refused only when an AssemblyAI key was
+  also present, so a replay-only deployment on Postgres issued forgeable
+  tokens: refused on any non-SQLite database.
+- PBKDF2 (600k iterations, ~220 ms) ran inside `async` sign-in handlers,
+  stalling the single worker's loop for everyone: threadpool.
+- A non-ASCII bearer token raised instead of returning None -- a 500 on every
+  authenticated route: one None for every way a token is wrong.
+- `StartRequest.channel` reached a CHECK constraint as a free string (500 at
+  commit): a Literal at the edge (422).
+- The shared demo tenant listed anonymous LIVE sessions to any anonymous
+  reader; the record and the summaries now show the anonymous only replayed
+  fixtures, which are fictional by construction.
+
+Left as they are, on purpose, and recorded: `optional_user` degrading an
+unusable token to anonymous is a documented, tested design decision
+(attribution, never access) -- its harmful consequence is the listing above,
+now closed; the per-email login limit counting attempts before verification
+(a known 15-minute lockout trade-off); `consent.version` unbounded at the
+edge (low).
+
 **Recommendation for the live path, from run 2:** pin `language_code=en`.
 The agent listens in English only (measured and stated in the UI); leaving
 the model free to code-switch bought nothing and cost two Japanese partials.

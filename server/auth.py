@@ -42,6 +42,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session as SASession
+from starlette.concurrency import run_in_threadpool
 
 from server import password as pw
 from server import ratelimit as rl
@@ -149,8 +150,14 @@ def verify_token(token: str, settings: Settings) -> dict[str, Any] | None:
     if prefix != TOKEN_PREFIX:
         return None
 
-    expected = _b64u(hmac.new(_secret(settings), body.encode("ascii"), hashlib.sha256).digest())
-    if not hmac.compare_digest(sig, expected):
+    try:
+        expected = _b64u(hmac.new(_secret(settings), body.encode("ascii"),
+                                  hashlib.sha256).digest())
+        if not hmac.compare_digest(sig, expected):
+            return None
+    except (UnicodeEncodeError, TypeError, ValueError):
+        # A non-ASCII token is not ours. It is also not a 500: this function's
+        # contract is one None for every way a token can be wrong.
         return None
 
     try:
@@ -423,11 +430,15 @@ async def signup_route(
     # deliberately impossible rather than half-possible by matching on a name two
     # unrelated firms could share.
     org = Organisation(name=body.company.strip())
+    # PBKDF2 at 600k iterations is ~220 ms of CPU. In an async handler that is
+    # 220 ms during which the single worker's loop serves nobody -- every
+    # socket, every partial. The threadpool releases the GIL for it.
+    password_hash = await run_in_threadpool(hash_password, body.password)
     user = User(
         organisation=org,
         email=email,
         name=body.name.strip(),
-        password_hash=hash_password(body.password),
+        password_hash=password_hash,
         role="owner",
         last_login_at=utcnow(),
     )
@@ -465,7 +476,8 @@ async def login_route(
     # cost the same wall-clock. Skipping it turns login timing into an
     # account-existence oracle that no rate limit hides.
     stored = user.password_hash if user is not None else _DUMMY_HASH
-    ok = verify_password(body.password, stored)
+    # Off the event loop, for the reason given at signup.
+    ok = await run_in_threadpool(verify_password, body.password, stored)
 
     if user is None or not ok or not user.active:
         raise HTTPException(
