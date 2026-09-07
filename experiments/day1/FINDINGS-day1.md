@@ -399,6 +399,20 @@ span re-read instead of a guess. Six tests in `tests/test_block_regime.py`.
 The 40-word statistic stays as it was: it is still the right instrument for
 a long call, and nothing here re-tunes it.
 
+**Sixth, found by reading while wiring the vocabulary pack, not by
+measurement: the CONNECT frame of a live session carried no keyterms.**
+`session_audio` opened the socket with `SourceConfig(keyterms=())`, while
+the Detector seeds its "already pushed" state with the IDLE configuration on
+the assumption that CONNECT carried it (detector.py, `_pushed`) and only
+pushes an `UpdateConfiguration` when the state changes. So the whole IDLE
+phase of every live session -- the carrier phrases and the NATO alphabet
+that let the detector notice a code at all -- ran with nothing biasing the
+recogniser; the first keyterms the socket ever saw arrived with the ARM.
+`_connect_config()` now builds CONNECT from the detector's own IDLE payload,
+the organisation's vocabulary included, so the seed and the wire agree. The
+effect on recognition is not measured and is not claimed; the two live
+captures above were made under the old behaviour, which is a lower bound.
+
 **Recommendation for the live path, from run 2:** pin `language_code=en`.
 The agent listens in English only (measured and stated in the UI); leaving
 the model free to code-switch bought nothing and cost two Japanese partials.

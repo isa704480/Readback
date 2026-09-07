@@ -129,6 +129,22 @@ of the eight fixtures through that runner and shows what came back — four
 that contain a container number, four that must stay silent — reachable
 without an account, and a trilingual interface.
 
+Since then: a sessions screen with the team-leader drill-down (every session,
+the silent ones included, each opening to its rack, questions, decision
+timeline and an explicit "no transcript"); the formats reference with a
+checksum-valid example per format and a "try one" validator (`POST
+/api/validate`, the solver's own arithmetic); outcome / format / period
+filters on the record with a filtered CSV export; `GET /api/usage` (the
+deployment's daily ceiling beside the organisation's spend); the vocabulary
+pack (`GET/PUT /api/vocabulary`, ARCH 3.9) carried into every keyterm push;
+the part catalogue (`GET/PUT /api/catalogue`) as the constraint for
+checksum-less part numbers, in the runner; and the LLM Gateway format
+identification wired in as ARCH 3.8's third second-signal, gated by the
+measured bare-digit refusal. Two bugs found on the way and closed: the
+session detail and stop endpoints had no organisation check, and a live
+session's CONNECT frame carried no keyterms at all while the detector
+believed the IDLE list had gone up with it.
+
 Every fixture runs at **both** clocks — instant and real-time — because a gate
 that is a condition on time passing is not tested by a replay that
 fast-forwards. That check found the bug that would have lost the demo: the agent
