@@ -696,3 +696,20 @@ def assert_no_audio_or_tape_columns(metadata: Any = None) -> None:
 
 
 assert_no_audio_or_tape_columns()
+
+
+class VocabularyTerm(Base):
+    """ARCH 3.9: an organisation's own words for the recogniser -- owner
+    prefixes, part numbers, the names its callers actually say. Pushed as
+    keyterms after the state's own terms on every session the organisation
+    runs (detector.keyterms `extra`). One row per term and the pair is the key,
+    so a term cannot be stored twice; `position` keeps the order the operator
+    chose, which is the order the 100-term budget is spent in."""
+
+    __tablename__ = "vocabulary_term"
+
+    organisation_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("organisation.id", ondelete="CASCADE"), primary_key=True)
+    term: Mapped[str] = mapped_column(String(50), primary_key=True)
+    position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(TS, nullable=False, default=utcnow)

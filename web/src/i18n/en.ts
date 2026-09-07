@@ -146,6 +146,18 @@ export const en = {
   'formats.method': 'How the check works',
   'formats.advantage': 'What the check buys',
   'formats.sensitive': 'Identifies a person',
+  /* "Try one": the solver's own arithmetic on whatever is typed. Nothing typed
+   * here is kept. */
+  'formats.try.title': 'Try one',
+  'formats.try.format': 'Format',
+  'formats.try.value': 'Identifier',
+  'formats.try.placeholder': 'Type or paste one',
+  'formats.try.button': 'Check',
+  'formats.try.valid': 'Valid. The check agrees.',
+  'formats.try.length': 'Wrong length: {expected} characters expected, {got} given.',
+  'formats.try.badChar': 'Position {n} cannot hold “{char}”.',
+  'formats.try.checkFails': 'Every character is legal here, and the check still does not agree — one of them was misheard or mistyped.',
+  'formats.try.failed': 'The server did not answer.',
 
   /* The demo screen. Every rack on it is the answer to POST /api/demo/replay;
    * the fixture copy describes the INPUT and never the outcome, because the
@@ -651,6 +663,19 @@ export const en = {
 
   /* Hours and minutes, never decimal hours: nobody reconciles a bill against
    * 3.47 hours. Each language brings its own unit letters. */
+  /* GET /api/usage: the deployment's daily ceiling beside the organisation's
+   * own spend. ARCH 3.11's kill switch, made visible. */
+  'account.usage.live.kicker': 'TODAY, THIS DEPLOYMENT',
+  'account.usage.live.body':
+    '{remaining} of {budget} listening time left today across every organisation on this deployment; {spent} spent since midnight UTC.',
+  'account.usage.live.alarm': 'Close to the daily ceiling.',
+  'account.usage.live.exhausted': 'The daily ceiling is reached: new live calls are refused until midnight UTC.',
+  'account.usage.live.replay': 'Live capture is switched off (replay mode); nothing is being billed.',
+  /* GET/PUT /api/vocabulary: the pack is stored and reaches the next call. */
+  'account.vocab.sync.loading': 'Loading the pack…',
+  'account.vocab.sync.saving': 'Saving…',
+  'account.vocab.sync.saved': 'Saved. It reaches the recogniser on the next call.',
+  'account.vocab.sync.error': 'The pack could not be saved; what you see is this tab’s copy.',
   'account.usage.secs': '{s}s',
   'account.usage.mins': '{m}m {s}s',
   'account.usage.hrs': '{h}h {m}m',
@@ -928,6 +953,15 @@ export const en = {
   'record.empty.exampleTitle': 'One worked example',
   'record.empty.run': 'Run the demo call',
   'record.empty.running': 'Running the fixture',
+  /* Filters narrow the list and the export, never the headline counters. */
+  'record.filter.state': 'Outcome',
+  'record.filter.format': 'Format',
+  'record.filter.period': 'When',
+  'record.filter.any': 'All',
+  'record.filter.day': 'Last 24 hours',
+  'record.filter.week': 'Last 7 days',
+  'record.filter.showing': '{shown} of {total} shown',
+  'record.export.filtered': 'Filtered: {filters}.',
   'record.empty.explain': 'How a capture is decided',
   'record.empty.failed':
     'The example could not be fetched from the server, so nothing is shown in its place.',

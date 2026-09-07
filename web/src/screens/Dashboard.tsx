@@ -130,6 +130,130 @@ type ExampleState =
 /** The README's own headline result, and it is in the database. Run, not typed. */
 const EXAMPLE_FIXTURE = 'iso_visible_substitution';
 
+// -------------------------------------------------------------- filters --
+
+/* Filters narrow the LIST and the EXPORT, never the headline counters. The
+ * counters describe the window the server aggregated over; a filter that
+ * quietly changed their denominator would turn "1 of 2 silent" into a claim
+ * about a set the reader chose. 'all' is the absence of a filter, spelled out
+ * so every select has a real option. */
+type CaptureOutcome = ReturnType<typeof outcomeOf>;
+type Period = 'all' | 'day' | 'week';
+interface RecordFilter {
+  state: 'all' | CaptureOutcome;
+  format: 'all' | string;
+  period: Period;
+}
+const NO_FILTER: RecordFilter = { state: 'all', format: 'all', period: 'all' };
+const DAY_MS = 24 * 60 * 60 * 1000;
+const OUTCOMES: readonly CaptureOutcome[] = ['settled', 'repaired', 'asking', 'flagged', 'heard'];
+const PERIODS: readonly Period[] = ['all', 'day', 'week'];
+
+type TKey = Parameters<ReturnType<typeof useI18n>['t']>[0];
+const OUTCOME_LABEL: Readonly<Record<CaptureOutcome, TKey>> = {
+  heard: 'capture.state.heard',
+  repaired: 'capture.state.repaired',
+  asking: 'capture.state.asking',
+  settled: 'capture.state.settled',
+  flagged: 'capture.state.flagged',
+};
+const PERIOD_LABEL: Readonly<Record<Period, TKey>> = {
+  all: 'record.filter.any',
+  day: 'record.filter.day',
+  week: 'record.filter.week',
+};
+
+function isFiltered(f: RecordFilter): boolean {
+  return f.state !== 'all' || f.format !== 'all' || f.period !== 'all';
+}
+
+function applyFilter(rows: readonly RecordCapture[], f: RecordFilter): RecordCapture[] {
+  if (!isFiltered(f)) return rows.slice();
+  const since =
+    f.period === 'day' ? Date.now() - DAY_MS : f.period === 'week' ? Date.now() - 7 * DAY_MS : null;
+  return rows.filter(
+    (c) =>
+      (f.state === 'all' || outcomeOf(c) === f.state) &&
+      (f.format === 'all' || c.format === f.format) &&
+      (since === null || Date.parse(c.created_at) >= since),
+  );
+}
+
+/** The filter, in words, for the CSV's disclosure line. */
+function describeFilter(f: RecordFilter, t: ReturnType<typeof useI18n>['t']): string {
+  const parts: string[] = [];
+  if (f.state !== 'all') parts.push(`${t('record.filter.state')}: ${t(OUTCOME_LABEL[f.state])}`);
+  if (f.format !== 'all') parts.push(`${t('record.filter.format')}: ${f.format}`);
+  if (f.period !== 'all') parts.push(`${t('record.filter.period')}: ${t(PERIOD_LABEL[f.period])}`);
+  return parts.join(' · ');
+}
+
+function RecordFilters({
+  filter,
+  formats,
+  shown,
+  total,
+  onChange,
+}: {
+  filter: RecordFilter;
+  formats: readonly string[];
+  shown: number;
+  total: number;
+  onChange: (next: RecordFilter) => void;
+}) {
+  const { t, n } = useI18n();
+  return (
+    <div className="record__filters">
+      <label className="record__filter">
+        <span className="record__filter-label">{t('record.filter.state')}</span>
+        <select
+          value={filter.state}
+          onChange={(e) => onChange({ ...filter, state: e.target.value as RecordFilter['state'] })}
+        >
+          <option value="all">{t('record.filter.any')}</option>
+          {OUTCOMES.map((s) => (
+            <option key={s} value={s}>
+              {t(OUTCOME_LABEL[s])}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="record__filter">
+        <span className="record__filter-label">{t('record.filter.format')}</span>
+        <select
+          value={filter.format}
+          onChange={(e) => onChange({ ...filter, format: e.target.value })}
+        >
+          <option value="all">{t('record.filter.any')}</option>
+          {formats.map((f) => (
+            <option key={f} value={f}>
+              {f}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="record__filter">
+        <span className="record__filter-label">{t('record.filter.period')}</span>
+        <select
+          value={filter.period}
+          onChange={(e) => onChange({ ...filter, period: e.target.value as Period })}
+        >
+          {PERIODS.map((p) => (
+            <option key={p} value={p}>
+              {t(PERIOD_LABEL[p])}
+            </option>
+          ))}
+        </select>
+      </label>
+      {isFiltered(filter) ? (
+        <p className="record__showing" role="status">
+          {t('record.filter.showing', { shown: n(shown), total: n(total) })}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 const SMALL_N = 20;
 const WINDOW_DAYS = 30;
 
@@ -454,6 +578,14 @@ export function Dashboard() {
   const payload = state.status === 'ok' ? state.payload : null;
   const captures = useMemo(() => payload?.captures ?? [], [payload]);
 
+  const [filter, setFilter] = useState<RecordFilter>(NO_FILTER);
+  const filterActive = isFiltered(filter);
+  const formatsPresent = useMemo(
+    () => Array.from(new Set(captures.map((c) => c.format))).sort(),
+    [captures],
+  );
+  const visible = useMemo(() => applyFilter(captures, filter), [captures, filter]);
+
   const sessions = useMemo(() => {
     const map = new Map<string, RecordSession>();
     for (const session of payload?.sessions ?? []) map.set(session.id, session);
@@ -464,14 +596,16 @@ export function Dashboard() {
    * the captures are the thing, so the group is a heading and never a route. */
   const groups = useMemo(() => {
     const byId = new Map<string, RecordCapture[]>();
-    for (const capture of captures) {
+    for (const capture of visible) {
       const list = byId.get(capture.session_id);
       if (list) list.push(capture);
       else byId.set(capture.session_id, [capture]);
     }
     // Sessions the server listed that produced nothing still get a panel: that
     // is honesty surface E and it is the commonest correct outcome in the DB.
-    for (const id of sessions.keys()) if (!byId.has(id)) byId.set(id, []);
+    // Under a filter they are left out -- a filter is a question about
+    // captures, and an empty panel would answer it with noise.
+    if (!filterActive) for (const id of sessions.keys()) if (!byId.has(id)) byId.set(id, []);
 
     return Array.from(byId.entries())
       .map(([id, rows]) => ({
@@ -486,7 +620,7 @@ export function Dashboard() {
         const bt = b.captures[0]?.created_at ?? b.session?.started_at ?? '';
         return Date.parse(bt) - Date.parse(at);
       });
-  }, [captures, sessions]);
+  }, [visible, sessions, filterActive]);
 
   /* Counters come from the server when it sends them -- models.py gives silence
    * a column rather than a derivation, and the reason is written on it. Falling
@@ -560,20 +694,24 @@ export function Dashboard() {
   }, []);
 
   const onExport = useCallback(() => {
+    // The export is the filtered set, and its first line says so: a CSV that
+    // silently held a subset would read as the whole record to whoever opens
+    // it next week.
     const disclosure = [
-      t('record.export.window', { days: n(WINDOW_DAYS), rows: n(captures.length) }),
+      t('record.export.window', { days: n(WINDOW_DAYS), rows: n(visible.length) }),
       allReplay ? t('record.export.replay.all') : t('record.export.replay.mixed'),
+      ...(filterActive ? [t('record.export.filtered', { filters: describeFilter(filter, t) })] : []),
     ].join(' ');
-    const blob = new Blob([toCsv(captures, sessions, disclosure)], {
+    const blob = new Blob([toCsv(visible, sessions, disclosure)], {
       type: 'text/csv;charset=utf-8',
     });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = 'readback-record.csv';
+    anchor.download = filterActive ? 'readback-record-filtered.csv' : 'readback-record.csv';
     anchor.click();
     URL.revokeObjectURL(url);
-  }, [allReplay, captures, n, sessions, t]);
+  }, [allReplay, visible, filter, filterActive, n, sessions, t]);
 
   // No token at all is a different thing from a token the server cannot confirm
   // right now: only the first is grounds for sending somebody to /login.
@@ -666,10 +804,17 @@ export function Dashboard() {
 
         {isEmpty ? <EmptyState example={example} onRun={runExample} /> : null}
 
-        {state.status === 'ok' && groups.length > 0 ? (
+        {state.status === 'ok' && (groups.length > 0 || filterActive) ? (
           <>
+            <RecordFilters
+              filter={filter}
+              formats={formatsPresent}
+              shown={visible.length}
+              total={captures.length}
+              onChange={setFilter}
+            />
             <div className="record__actions">
-              <Button variant="secondary" onClick={onExport}>
+              <Button variant="secondary" onClick={onExport} disabled={visible.length === 0}>
                 {t('record.export')}
               </Button>
             </div>

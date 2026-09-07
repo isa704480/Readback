@@ -25,8 +25,16 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { Button, Field, Icon } from '../components';
 import { useShell } from '../App';
 import { FAILURE_KEY } from './Auth';
-import { getSnapshot, listSessions, signOut, subscribe } from '../lib/api';
-import type { ApiErrorKind, Capture } from '../lib/api';
+import {
+  fetchUsage,
+  fetchVocabulary,
+  getSnapshot,
+  listSessions,
+  putVocabulary,
+  signOut,
+  subscribe,
+} from '../lib/api';
+import type { ApiErrorKind, Capture, UsageReport } from '../lib/api';
 import { useI18n } from '../i18n';
 import type { I18n, ParamsFor, TranslationKey } from '../i18n';
 import {
@@ -386,6 +394,12 @@ export function AccountScreen() {
   const [invites, setInvites] = useState<TeamMember[]>([]);
   const [switches, setSwitches] = useState<FormatSwitches>(defaultSwitches);
   const [terms, setTerms] = useState<string[]>([]);
+  // GET /api/usage and GET/PUT /api/vocabulary exist now; these hold their
+  // answers. `usageApi` failing leaves the estimate in place and says so.
+  const [usageApi, setUsageApi] = useState<
+    { status: 'loading' } | { status: 'ok'; report: UsageReport } | { status: 'error' }
+  >({ status: 'loading' });
+  const [vocabSync, setVocabSync] = useState<VocabSync>('loading');
   const [disclosure, setDisclosure] = useState<Disclosure>('readback_announces');
   const [retention, setRetention] = useState<Retention>('90');
 
@@ -408,14 +422,64 @@ export function AccountScreen() {
     return () => controller.abort();
   }, [token, refreshes]);
 
+  useEffect(() => {
+    if (token === null) return;
+    const controller = new AbortController();
+    setUsageApi({ status: 'loading' });
+    void fetchUsage(controller.signal).then((result) => {
+      if (controller.signal.aborted) return;
+      setUsageApi(result.ok ? { status: 'ok', report: result.data } : { status: 'error' });
+    });
+    setVocabSync('loading');
+    void fetchVocabulary(controller.signal).then((result) => {
+      if (controller.signal.aborted) return;
+      if (result.ok) {
+        setTerms(result.data.terms);
+        setVocabSync('saved');
+      } else {
+        setVocabSync('error');
+      }
+    });
+    return () => controller.abort();
+  }, [token, refreshes]);
+
   const refresh = useCallback(() => {
     reload();
     setRefreshes((n) => n + 1);
   }, [reload]);
 
+  /* The pack is saved whole on every change (PUT replaces the list), and the
+     server's cleaned copy replaces the local one so what is shown is what was
+     stored -- trimmed, deduplicated, in order. */
+  const saveTerms = useCallback((next: string[]) => {
+    setTerms(next);
+    setVocabSync('saving');
+    void putVocabulary(next).then((result) => {
+      if (result.ok) {
+        setTerms(result.data.terms);
+        setVocabSync('saved');
+      } else {
+        setVocabSync('error');
+      }
+    });
+  }, []);
+
   const captures = sessions.status === 'ok' ? sessions.captures : [];
   const counts = useMemo(() => countByFormat(captures), [captures]);
-  const usage = useMemo(() => usageFrom(captures), [captures]);
+  const usage = useMemo(() => {
+    const derived = usageFrom(captures);
+    if (usageApi.status !== 'ok') return derived;
+    // The endpoint reports what the estimate could only floor: today's
+    // socket-seconds for this organisation, and the allowance they count
+    // against -- the organisation's own ceiling when one is set, otherwise
+    // the deployment's daily budget.
+    const { deployment, organisation } = usageApi.report;
+    return {
+      ...derived,
+      accountedSeconds: organisation.seconds_today,
+      planSeconds: organisation.daily_budget_seconds ?? deployment.daily_budget_seconds,
+    };
+  }, [captures, usageApi]);
 
   const team = useMemo<TeamMember[]>(() => {
     const rows: TeamMember[] = [];
@@ -520,8 +584,9 @@ export function AccountScreen() {
 
           <VocabularySection
             terms={terms}
-            onAdd={(term) => setTerms((rows) => rows.concat(term))}
-            onRemove={(term) => setTerms((rows) => rows.filter((row) => row !== term))}
+            sync={vocabSync}
+            onAdd={(term) => saveTerms(terms.concat(term))}
+            onRemove={(term) => saveTerms(terms.filter((row) => row !== term))}
           />
 
           <ConsentSection
@@ -533,7 +598,11 @@ export function AccountScreen() {
             onRetention={setRetention}
           />
 
-          <UsageSection usage={usage} sessions={sessions} />
+          <UsageSection
+            usage={usage}
+            sessions={sessions}
+            report={usageApi.status === 'ok' ? usageApi.report : null}
+          />
         </div>
       </div>
     </div>
@@ -899,13 +968,26 @@ function FormatsSection({ switches, counts, sessions, onToggle }: FormatsProps) 
 
 // --------------------------------------------------------- 03 vocabulary --
 
+/* Where the pack stands against PUT /api/vocabulary. 'error' keeps the tab's
+ * copy on screen and says so: a list that looked saved and was not would be
+ * the failure the old "local to this tab" mark existed to prevent. */
+type VocabSync = 'loading' | 'saving' | 'saved' | 'error';
+
+const VOCAB_SYNC_KEY: Readonly<Record<VocabSync, PlainKey>> = {
+  loading: 'account.vocab.sync.loading',
+  saving: 'account.vocab.sync.saving',
+  saved: 'account.vocab.sync.saved',
+  error: 'account.vocab.sync.error',
+};
+
 interface VocabularyProps {
   terms: readonly string[];
+  sync: VocabSync;
   onAdd: (term: string) => void;
   onRemove: (term: string) => void;
 }
 
-function VocabularySection({ terms, onAdd, onRemove }: VocabularyProps) {
+function VocabularySection({ terms, sync, onAdd, onRemove }: VocabularyProps) {
   const i18n = useI18n();
   const { t, n } = i18n;
   const [draft, setDraft] = useState('');
@@ -940,7 +1022,8 @@ function VocabularySection({ terms, onAdd, onRemove }: VocabularyProps) {
       setError({ problem: check.problem, length: draft.trim().replace(/\s+/g, ' ').length });
       return;
     }
-    // AWAITING ITS ENDPOINT: PUT /api/vocabulary. Local to this tab.
+    // The parent PUTs the whole list and replaces it with the server's cleaned
+    // copy; `sync` below says where that stands.
     onAdd(check.term);
     setDraft('');
     setError(null);
@@ -1035,7 +1118,10 @@ function VocabularySection({ terms, onAdd, onRemove }: VocabularyProps) {
           </ul>
         )}
 
-        <Pending endpoint="PUT /api/vocabulary">{t('account.pending.vocab')}</Pending>
+        <p className={sync === 'error' ? 'prose prose--rule vocab__sync vocab__sync--error' : 'prose prose--rule vocab__sync'} role="status">
+          <span className="micro mono">PUT /api/vocabulary</span>
+          {t(VOCAB_SYNC_KEY[sync])}
+        </p>
       </div>
     </Section>
   );
@@ -1186,9 +1272,11 @@ function ConsentSection({
 interface UsageProps {
   usage: ReturnType<typeof usageFrom>;
   sessions: SessionsState;
+  /** GET /api/usage, or null while loading or when it failed. */
+  report: UsageReport | null;
 }
 
-function UsageSection({ usage, sessions }: UsageProps) {
+function UsageSection({ usage, sessions, report }: UsageProps) {
   const i18n = useI18n();
   const { t, n } = i18n;
   const reading = readUsage(usage);
@@ -1296,7 +1384,25 @@ function UsageSection({ usage, sessions }: UsageProps) {
           {t('account.usage.derived.after')}
         </p>
 
-        <Pending endpoint="GET /api/usage">{t('account.pending.usage')}</Pending>
+        {report ? (
+          <p className="prose prose--rule">
+            <span className="micro mono">{t('account.usage.live.kicker')}</span>
+            {report.deployment.replay_mode
+              ? t('account.usage.live.replay')
+              : t('account.usage.live.body', {
+                  remaining: humanise(report.deployment.remaining_seconds, i18n),
+                  budget: humanise(report.deployment.daily_budget_seconds, i18n),
+                  spent: humanise(report.deployment.spent_today_seconds, i18n),
+                })}
+            {report.deployment.exhausted
+              ? ` ${t('account.usage.live.exhausted')}`
+              : report.deployment.alarm
+                ? ` ${t('account.usage.live.alarm')}`
+                : null}
+          </p>
+        ) : (
+          <Pending endpoint="GET /api/usage">{t('account.pending.usage')}</Pending>
+        )}
       </div>
     </Section>
   );

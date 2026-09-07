@@ -53,7 +53,7 @@ import statistics
 import time
 import uuid
 from collections import Counter
-from collections.abc import Awaitable, Callable, Sequence
+from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any, Final
 
@@ -517,6 +517,23 @@ class RunnerConfig:
     # tape's life. Without this the identifier sits on the 45 s tape and is
     # re-detected on every subsequent frame, which is one commit per partial.
     suppress_repeat: bool = True
+    # ARCH 3.9: the organisation's own words -- owner prefixes, part numbers,
+    # customer names -- ride along in every keyterm push after the state's own
+    # terms, inside the 100/50 budget. Loaded by the session manager from
+    # vocabulary_term; empty for a tenant that has set none, and in tests.
+    vocabulary: tuple[str, ...] = ()
+    # Per-format ARMED keyterm overrides (catalogue SKUs, extra prefixes),
+    # merged over detector.FORMAT_TOKENS.
+    format_tokens: Mapping[str, Sequence[str]] | None = None
+    # ARCH 3.8's third second-signal: an out-of-band format identification for
+    # a window that has neither a carrier phrase nor a registered prefix.
+    # Injected by the session manager (server.llm.identify_with_fallback with
+    # the key); None in replay and in tests, where nothing may leave the
+    # process. Called at most once per candidate, under a timeout, and its
+    # verdict counts only when FormatID.asserts -- which already refuses the
+    # bare-digit formats the model is measured anti-correlated on.
+    identify: Callable[[str, str | None], Awaitable[Any]] | None = None
+    identify_timeout_s: float = 2.5
 
 
 @dataclass(slots=True)
@@ -583,7 +600,7 @@ async def run_session(
     cfg = config or RunnerConfig()
     st: CaptureStore = store or NullStore()
     tape = Tape()
-    detector = Detector()
+    detector = Detector(format_tokens=cfg.format_tokens, extra_terms=cfg.vocabulary)
     regime = RegimeDetector()
     speech = dec.SpeechBudget()
     summary = RunSummary(session_id=cfg.session_id)
@@ -886,6 +903,11 @@ class _Pending:
     # the loop, and the whole reason 4.8 gate 5 is reachable after a
     # ForceEndpoint.
     wake_after_ms: int | None = None
+    # 3.8's LLM second signal: asked for at most once per candidate, and only
+    # when nothing on the tape named the format. `llm` holds the FormatID (or
+    # None when nobody answered -- which is not evidence of anything).
+    llm_asked: bool = False
+    llm: Any = None
 
 
 def _second_signal(p: _Pending) -> str:
@@ -927,6 +949,16 @@ def _second_signal(p: _Pending) -> str:
     # The third signal is LLM format-ID at confidence >= 0.8 (3.8). It is an
     # out-of-band HTTP call against a key that does not exist yet, so today it
     # is absent rather than stubbed true -- a stub here would silently disable
+    # 3.8's third signal, weakest and last: the LLM Gateway's format
+    # identification, asked for by _resolve only when the two above were absent.
+    # Its own gate -- FormatID.asserts -- already refuses bare-digit formats and
+    # anything under 0.8, for the measured reason in server/llm.py (a phone
+    # number scored `nhs 0.90`; a real NHS number `not_an_identifier`), so the
+    # only question left here is whether it named THIS hypothesis.
+    verdict = p.llm
+    if (verdict is not None and getattr(verdict, "asserts", False)
+            and getattr(verdict, "fmt", None) == p.window.fmt_name):
+        return "llm"
     # the rule that ARCHITECTURE 9 calls the mitigation for its second-biggest
     # risk.
     return "none"
@@ -1035,6 +1067,19 @@ async def _resolve(p: _Pending, source: Any, tape: Tape, stream: ev.EventStream,
     """
     while True:
         fmt = p.window.fmt
+        # 3.8's third second-signal, asked for exactly once per candidate and
+        # only when the tape supplied neither a carrier phrase nor a registered
+        # prefix. Bounded by a timeout so an out-of-band call can never hold
+        # the politeness gates hostage; a timeout or a refusal is None, which
+        # `_second_signal` reads as "nobody answered", never as evidence.
+        if (cfg.identify is not None and not p.llm_asked and p.window.complete
+                and _second_signal(p) == "none"):
+            p.llm_asked = True
+            try:
+                p.llm = await asyncio.wait_for(cfg.identify(p.window.value, p.carrier),
+                                               timeout=cfg.identify_timeout_s)
+            except Exception:  # noqa: BLE001 -- network, timeout, malformed: no evidence
+                p.llm = None
         result = solve(fmt, p.heard, p.confs, locked=p.attempt.locked)
         p.last_result = result
         moment = _moment(p, source, tape, regime, forced_turns)

@@ -234,3 +234,75 @@
     min-width: 0;
   }
 }
+
+/* --- try one --------------------------------------------------------- */
+.fmt__try {
+  padding: var(--sp-4);
+  border-radius: var(--r-thumb);
+  background: var(--bg);
+}
+
+.fmt__try-title {
+  margin: 0;
+  font-size: var(--text-body-size);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.fmt__try-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-3);
+}
+
+.fmt__try-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 10rem;
+}
+
+.fmt__try-field--grow {
+  flex: 1 1 16rem;
+}
+
+.fmt__try-label {
+  font-size: var(--text-meta);
+  letter-spacing: var(--tracking-code);
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.fmt__try-field select,
+.fmt__try-field input {
+  width: 100%;
+}
+
+.fmt__try-verdict {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--text-body-size);
+}
+
+.fmt__try-verdict--ok {
+  color: var(--settled, var(--text));
+}
+
+.fmt__try-verdict--bad {
+  color: var(--alert);
+}
+
+/* A position the format cannot hold as typed: an alert border and a glyph,
+   so the fact survives without colour. */
+.fmt__slot--bad {
+  border-color: var(--alert);
+  background: color-mix(in srgb, var(--alert) 12%, transparent);
+}
+
+.fmt__tick--bad {
+  color: var(--alert);
+  opacity: 1;
+}

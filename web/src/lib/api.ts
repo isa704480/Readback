@@ -339,6 +339,103 @@ export function demoReplay(fixture: string, signal?: AbortSignal): Promise<ApiRe
   });
 }
 
+// --------------------------------------------------------------- validate --
+
+/* POST /api/validate: the formats reference's "try one". Stateless, no auth,
+ * and the solver's own arithmetic -- the page can never call a string valid
+ * that the pipeline would refuse. */
+export interface ValidatePosition {
+  index: number;
+  char: string;
+  /** The character is one this position can hold. */
+  allowed: boolean;
+  /** This position holds the computed check character. */
+  check: boolean;
+}
+
+export interface ValidateResult {
+  format: string;
+  normalised: string;
+  expected_length: number;
+  length_ok: boolean;
+  positions: ValidatePosition[];
+  check_positions: number[];
+  /** Null when the length or a character already ruled the string out. */
+  checksum_ok: boolean | null;
+  valid: boolean;
+}
+
+export function validateIdentifier(
+  format: string,
+  value: string,
+  signal?: AbortSignal,
+): Promise<ApiResult<ValidateResult>> {
+  return request<ValidateResult>('/api/validate', {
+    method: 'POST',
+    body: { format, value },
+    ...(signal ? { signal } : {}),
+  });
+}
+
+// ------------------------------------------------------------------ usage --
+
+/* GET /api/usage. The deployment's daily socket-second budget (ARCH 3.11's
+ * kill switch, one ceiling across every tenant) beside this organisation's own
+ * spend and counts, both computed the way the admission gate computes them. */
+export interface UsageReport {
+  day_started_at: string;
+  deployment: {
+    daily_budget_seconds: number;
+    spent_today_seconds: number;
+    remaining_seconds: number;
+    alarm: boolean;
+    exhausted: boolean;
+    session_socket_seconds: number;
+    cap_seconds: number;
+    live_capture: boolean;
+    replay_mode: boolean;
+  };
+  organisation: {
+    daily_budget_seconds: number | null;
+    seconds_today: number;
+    seconds_total: number;
+    sessions_today: number;
+    sessions_total: number;
+    captures_total: number;
+  };
+}
+
+export function fetchUsage(signal?: AbortSignal): Promise<ApiResult<UsageReport>> {
+  return request<UsageReport>('/api/usage', { auth: true, ...(signal ? { signal } : {}) });
+}
+
+// ------------------------------------------------------------- vocabulary --
+
+/* GET/PUT /api/vocabulary (ARCH 3.9): the organisation's own words for the
+ * recogniser. Whole-list PUT; the order is the order the keyterm budget is
+ * spent in. Takes effect on the next session. */
+export interface VocabularyPack {
+  terms: string[];
+  max_terms: number;
+  max_chars: number;
+}
+
+export function fetchVocabulary(signal?: AbortSignal): Promise<ApiResult<VocabularyPack>> {
+  return request<VocabularyPack>('/api/vocabulary', { auth: true, ...(signal ? { signal } : {}) });
+}
+
+export function putVocabulary(
+  terms: readonly string[],
+  signal?: AbortSignal,
+): Promise<ApiResult<VocabularyPack>> {
+  return request<VocabularyPack>('/api/vocabulary', {
+    method: 'PUT',
+    auth: true,
+    body: { terms },
+    ...(signal ? { signal } : {}),
+  });
+}
+
 // ----------------------------------------------------------------- health --
 
 export interface Health {

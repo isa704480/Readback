@@ -884,8 +884,17 @@ TOPIC_CHANGE_FUNCTION_WORDS = 3
 
 
 def keyterms(state: State, fmt: str | None,
-             format_tokens: Mapping[str, Sequence[str]] = FORMAT_TOKENS) -> list[str]:
-    """The keyterm list for a state, already inside the 100/50 budget."""
+             format_tokens: Mapping[str, Sequence[str]] = FORMAT_TOKENS,
+             extra: Sequence[str] = ()) -> list[str]:
+    """The keyterm list for a state, already inside the 100/50 budget.
+
+    `extra` is the organisation's own vocabulary (ARCH 3.9): owner prefixes,
+    part numbers, the names its callers actually say. It rides along in EVERY
+    state, after the state's own terms -- those are what let the detector notice
+    a code at all, so the budget is spent on them first and a long vocabulary
+    is truncated, never the carriers. The 100/50 caps are the recogniser's
+    documented ones (stream/source.py) and are enforced again at the socket.
+    """
     if state is State.IDLE:
         groups: tuple[Sequence[str], ...] = (CARRIER_TERMS, NATO_TERMS, DIGIT_TERMS)
     elif fmt is None:
@@ -898,6 +907,7 @@ def keyterms(state: State, fmt: str | None,
         # the budget forces: we already know a code is being read, so the terms
         # that told us so are the cheapest thing to spend on owner codes.
         groups = (NATO_TERMS, DIGIT_TERMS, tuple(format_tokens.get(fmt, ())))
+    groups = (*groups, tuple(extra))
     out: list[str] = []
     seen: set[str] = set()
     for group in groups:
@@ -913,7 +923,8 @@ def keyterms(state: State, fmt: str | None,
 
 
 def configuration(state: State, fmt: str | None,
-                  format_tokens: Mapping[str, Sequence[str]] = FORMAT_TOKENS) -> dict[str, Any]:
+                  format_tokens: Mapping[str, Sequence[str]] = FORMAT_TOKENS,
+                  extra: Sequence[str] = ()) -> dict[str, Any]:
     """The payload the session manager pushes. This file never opens a socket.
 
     Field names are those in 3.6. They are the one thing here that cannot be
@@ -922,7 +933,7 @@ def configuration(state: State, fmt: str | None,
     """
     cfg: dict[str, Any] = {
         "type": "UpdateConfiguration",
-        "keyterms_prompt": keyterms(state, fmt, format_tokens),
+        "keyterms_prompt": keyterms(state, fmt, format_tokens, extra),
     }
     if state is State.IDLE:
         cfg["max_turn_silence"] = IDLE_MAX_TURN_SILENCE_MS
@@ -962,11 +973,14 @@ class Detector:
     """
 
     def __init__(self, *, arm_ttl_ms: int = ARM_TTL_MS,
-                 format_tokens: Mapping[str, Sequence[str]] | None = None) -> None:
+                 format_tokens: Mapping[str, Sequence[str]] | None = None,
+                 extra_terms: Sequence[str] = ()) -> None:
         self.arm_ttl_ms = arm_ttl_ms
         self.format_tokens: Mapping[str, Sequence[str]] = dict(FORMAT_TOKENS)
         if format_tokens:
             self.format_tokens = {**self.format_tokens, **format_tokens}
+        # The organisation's vocabulary (ARCH 3.9), appended to every push.
+        self.extra_terms: tuple[str, ...] = tuple(extra_terms)
         self.state = State.IDLE
         self.fmt: str | None = None
         self._last_cue_ms = 0
@@ -979,7 +993,7 @@ class Detector:
         # Seeded with the IDLE payload because that is what the CONNECT frame
         # already carried (3.1). Without the seed the first partial of every
         # session pushes an UpdateConfiguration identical to the connect config.
-        self._pushed: dict[str, Any] | None = configuration(State.IDLE, None, self.format_tokens)
+        self._pushed: dict[str, Any] | None = configuration(State.IDLE, None, self.format_tokens, self.extra_terms)
         self._seen_finals: set[int] = set()
 
     # -- the loop -------------------------------------------------------------
@@ -1056,7 +1070,7 @@ class Detector:
         self._last_cue_ms = 0
         self._now = 0
         self._rearm_after_ms = -1
-        self._pushed = configuration(State.IDLE, None, self.format_tokens)
+        self._pushed = configuration(State.IDLE, None, self.format_tokens, self.extra_terms)
         self._seen_finals.clear()
 
     # -- internals ------------------------------------------------------------
@@ -1095,7 +1109,7 @@ class Detector:
     def _config_if_changed(self) -> dict[str, Any] | None:
         """Emit only on a real change. UpdateConfiguration is a socket write, and
         this is called several times per second."""
-        cfg = configuration(self.state, self.fmt, self.format_tokens)
+        cfg = configuration(self.state, self.fmt, self.format_tokens, self.extra_terms)
         if cfg == self._pushed:
             return None
         self._pushed = cfg

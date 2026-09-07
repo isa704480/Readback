@@ -110,6 +110,16 @@ const catalog = {
   'formats.method': 'Как работает контроль',
   'formats.advantage': 'Что даёт контроль',
   'formats.sensitive': 'Идентифицирует человека',
+  'formats.try.title': 'Проверьте свой',
+  'formats.try.format': 'Формат',
+  'formats.try.value': 'Идентификатор',
+  'formats.try.placeholder': 'Введите или вставьте',
+  'formats.try.button': 'Проверить',
+  'formats.try.valid': 'Верно. Контроль сходится.',
+  'formats.try.length': 'Неверная длина: ожидается {expected} символов, введено {got}.',
+  'formats.try.badChar': 'Позиция {n} не может содержать «{char}».',
+  'formats.try.checkFails': 'Каждый символ здесь допустим, но контроль всё равно не сходится — один из них неверно расслышан или введён.',
+  'formats.try.failed': 'Сервер не ответил.',
 
   'demo.title': 'Прогоните фикстуру через конвейер.',
   'demo.intro':
@@ -667,6 +677,16 @@ const catalog = {
   'account.pending.usage':
     'Лимита тарифа и настоящего итога прослушивания в контракте пока нет:',
 
+  'account.usage.live.kicker': 'СЕГОДНЯ, ЭТОТ ДЕПЛОЙ',
+  'account.usage.live.body':
+    'Сегодня осталось {remaining} из {budget} времени прослушивания на все организации этого деплоя; с полуночи UTC потрачено {spent}.',
+  'account.usage.live.alarm': 'Близко к дневному потолку.',
+  'account.usage.live.exhausted': 'Дневной потолок достигнут: новые живые звонки отклоняются до полуночи UTC.',
+  'account.usage.live.replay': 'Живая запись выключена (режим replay); ничего не тарифицируется.',
+  'account.vocab.sync.loading': 'Загрузка набора…',
+  'account.vocab.sync.saving': 'Сохранение…',
+  'account.vocab.sync.saved': 'Сохранено. Дойдёт до распознавателя при следующем звонке.',
+  'account.vocab.sync.error': 'Набор не удалось сохранить; вы видите копию этой вкладки.',
   'account.usage.secs': '{s} с',
   'account.usage.mins': '{m} мин {s} с',
   'account.usage.hrs': '{h} ч {m} мин',
@@ -771,6 +791,14 @@ const catalog = {
   'record.empty.exampleTitle': 'Один разобранный пример',
   'record.empty.run': 'Запустить демо-звонок',
   'record.empty.running': 'Фикстура выполняется',
+  'record.filter.state': 'Итог',
+  'record.filter.format': 'Формат',
+  'record.filter.period': 'Когда',
+  'record.filter.any': 'Все',
+  'record.filter.day': 'Последние 24 часа',
+  'record.filter.week': 'Последние 7 дней',
+  'record.filter.showing': 'Показано {shown} из {total}',
+  'record.export.filtered': 'Отфильтровано: {filters}.',
   'record.empty.explain': 'Как принимается решение по записи',
   'record.empty.failed':
     'Пример не удалось получить с сервера, поэтому вместо него ничего не показано.',

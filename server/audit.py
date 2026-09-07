@@ -53,6 +53,8 @@ CAPTURE_HANDOVER: Final = "capture.handover"
 QUESTION_ASKED: Final = "question.asked"
 QUESTION_ANSWERED: Final = "question.answered"
 DATA_PURGED: Final = "data.purged"
+# ARCH 3.9: the organisation replaced its vocabulary pack (detail: term count).
+VOCABULARY_SET: Final = "vocabulary.set"
 
 ACTIONS: Final[frozenset[str]] = frozenset({
     CONSENT_GRANTED, CONSENT_WITHDRAWN, DISCLOSURE_PLAYED,
@@ -60,7 +62,7 @@ ACTIONS: Final[frozenset[str]] = frozenset({
     SOCKET_OPENED, SOCKET_CLOSED, REGIME_DETECTED,
     BUDGET_ALARM, BUDGET_EXHAUSTED, REPLAY_ENTERED,
     CAPTURE_COMMITTED, CAPTURE_FLAGGED, CAPTURE_CORRECTED, CAPTURE_HANDOVER,
-    QUESTION_ASKED, QUESTION_ANSWERED, DATA_PURGED,
+    QUESTION_ASKED, QUESTION_ANSWERED, DATA_PURGED, VOCABULARY_SET,
 })
 
 
