@@ -1327,7 +1327,12 @@ const CSV_COLUMNS = [
 
 function csvCell(value: string | number | boolean | null): string {
   if (value === null) return '';
-  const text = String(value);
+  let text = String(value);
+  // Formula injection: a cell beginning with = + - @ (or a tab/CR) is executed
+  // by Excel and LibreOffice when the file is opened. Every value here is an
+  // identifier, an enum or an id today, so none can start that way -- and the
+  // guard is here so that stays true whatever a later column carries.
+  if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
   return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 

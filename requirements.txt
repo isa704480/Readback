@@ -1,9 +1,9 @@
 # Readback — server runtime. Pinned to the versions the suite is green on
 # (67 passed, 2026-09-04). Render installs from this file; a missing entry is a
 # failed first deploy, which is how this file came to exist.
-fastapi==0.115.6
+fastapi==0.141.1
 uvicorn[standard]==0.34.0
-starlette==0.41.3
+starlette==1.6.0
 pydantic==2.10.4
 pydantic-settings==2.7.0
 sqlalchemy==2.0.36

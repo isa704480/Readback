@@ -184,7 +184,12 @@ Decided against, from measurement rather than preference:
   input. The solver's substrate is per-position doubt; on welded output every
   position shares one number. The regime detector (ARCH 3.7) names this and
   the decider forbids a silent repair in it; a checksum-clean capture still
-  commits silently, which is what the live run did.
+  commits silently, which is what the live run did. Measured offline on 2,400
+  corrupted readings (`experiments/day1/bench_silent_wrong.py`): the repair
+  wrote a wrong number 0 times; what remains is the check digit's own blind
+  spot -- a corrupted string it already accepts -- 3.2% / 3.8% / 12% for one,
+  swapped and two errors under flat confidence, and 22 of 23 of those caught
+  when the recogniser's confidence can point at the doubtful character.
 - **The LLM Gateway as a format identifier for bare digit strings.** Measured
   anti-correlated: a phone-number window scored `nhs 0.90`, a real NHS number
   `not_an_identifier 0.70`. It is not consulted for those formats.

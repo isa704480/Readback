@@ -533,7 +533,7 @@ export const en = {
   'account.format.iso6346.note.before':
     'Characters congruent mod 11 are mathematically invisible to this check digit:',
   'account.format.iso6346.note.after':
-    'Twelve of those pairs are also acoustically confusable, B/V, K/A, F/P and nine more, which is 5.3% of measured confusion weight. Readback asks about all twelve every time. Silence there would not be confidence, it would be arithmetic that cannot see.',
+    'Twelve of those pairs are also acoustically confusable, B/V, K/A, F/P and nine more, which is 5.3% of measured confusion weight. Readback asks about all twelve whenever the recogniser marks the character doubtful — under per-character confidence that caught 22 of 23 such mishears in a 400-number bench. Under block-level confidence (one number for a whole welded word, the common case on the live socket) it cannot see which character to doubt, and a mishear the arithmetic accepts is written as heard: 13 of 400 in the same bench. Silence there is not confidence; it is arithmetic that cannot see, and it is measured.',
 
   'account.format.nhs.name': 'NHS number',
   'account.format.nhs.length': '10 digits',

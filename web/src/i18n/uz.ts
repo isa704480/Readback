@@ -553,7 +553,7 @@ const catalog = {
   'account.format.iso6346.note.before':
     'Mod 11 boʻyicha teng qoldiqli belgilar bu nazorat raqamiga matematik jihatdan koʻrinmaydi:',
   'account.format.iso6346.note.after':
-    'Shu juftlardan oʻn ikkitasi akustik jihatdan ham chalkashadi — B/V, K/A, F/P va yana toʻqqiztasi; bu oʻlchangan chalkashlik ogʻirligining 5.3% i. Readback ularning oʻn ikkitasini ham har safar soʻraydi. U yerdagi sukut ishonch emas, koʻra olmaydigan arifmetika boʻlar edi.',
+    'Shu juftlardan oʻn ikkitasi akustik jihatdan ham chalkashadi — B/V, K/A, F/P va yana toʻqqiztasi; bu oʻlchangan chalkashlik ogʻirligining 5.3% i. Readback tanigich belgini shubhali deb belgilaganda ularning oʻn ikkitasini ham soʻraydi — belgi-darajali ishonch ostida 400 raqamli benchda shunday 23 xatodan 22 tasi ushlandi. Blok-darajali ishonch ostida (butun payvand soʻzga bitta raqam — jonli soketda odatiy hol) u qaysi belgidan shubhalanishni koʻra olmaydi, va arifmetika qabul qilgan xato eshitilganidek yoziladi: oʻsha benchda 400 dan 13 tasi. U yerdagi sukut ishonch emas — koʻra olmaydigan arifmetika, va u oʻlchangan.',
 
   'account.format.nhs.name': 'NHS raqami',
   'account.format.nhs.length': '10 ta raqam',

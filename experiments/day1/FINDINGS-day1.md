@@ -451,6 +451,47 @@ now closed; the per-email login limit counting attempts before verification
 (a known 15-minute lockout trade-off); `consent.version` unbounded at the
 edge (low).
 
+**Eighth: the repair itself never wrote a wrong number; the checksum's blind
+spot did, and only under block-level confidence.** The field study named the
+risk -- "a single check-digit repair can yield multiple candidate corrections
+(ambiguity, transposition) without a confidence tiebreaker" -- so it was
+measured (`bench_silent_wrong.py`, 400 valid ISO 6346 numbers per row,
+corruptions drawn from the solver's own confusion table; offline and
+synthetic, not live STT):
+
+```
+kind             regime       n  silent_ok  silent_wrong  not_silent  heard_passes
+substitution     per_char   400    82   20%     1   0.2%   317   79%     23   5.8%
+substitution     flat       400     0    0%    13   3.2%   387   97%     13   3.2%
+transposition    per_char   400     0    0%     0   0.0%   400  100%     16   4.0%
+transposition    flat       400     0    0%    15   3.8%   385   96%     15   3.8%
+double_subst     per_char   400     0    0%     0   0.0%   400  100%     44  11.0%
+double_subst     flat       400     0    0%    48  12.0%   352   88%     48  12.0%
+```
+
+In every flat row `silent_wrong` equals `heard_passes`: the solver never
+repaired to a wrong candidate -- 0 of 800 transposed and doubly-corrupted
+readings under either regime -- it only accepted a corrupted string that
+already satisfied the check digit, which no check-digit system can see. Under
+per-character confidence the blind-pair guard caught 22 of those 23
+(BLIND_GUARD needs a doubtful position to point at); under flat confidence
+it cannot point, and 13 of 400 single mishears, 15 of 400 transpositions and
+48 of 400 double errors were written as heard. The account copy that said
+"Readback asks about all twelve every time" was true of the first regime and
+false of the second, which is the common one on the live socket; it now says
+what was measured. The residual is the arithmetic's, stated, not the
+repair's.
+
+**Ninth: dependencies.** `pip-audit` on the pinned `requirements.txt` found
+starlette 0.41.3 carrying nine published advisories (PYSEC-2026-161, -248,
+-249, -1941, -1942, -2280, -2281); fastapi 0.115.6 pinned it. Upgraded to
+fastapi 0.141.1 / starlette 1.6.0 with the full suite green; `npm audit`
+on the web build reports none. A second adversarially-verified audit round
+(web client, transport, secrets and logs, abuse, supply chain) and a
+loop-until-dry bug hunt were launched and ran out of session budget before
+any agent returned; neither produced findings, which is not the same as
+"none", and both are queued to run again.
+
 **Recommendation for the live path, from run 2:** pin `language_code=en`.
 The agent listens in English only (measured and stated in the UI); leaving
 the model free to code-switch bought nothing and cost two Japanese partials.
