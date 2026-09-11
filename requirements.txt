@@ -1,6 +1,9 @@
-# Readback — server runtime. Pinned to the versions the suite is green on
-# (67 passed, 2026-09-04). Render installs from this file; a missing entry is a
-# failed first deploy, which is how this file came to exist.
+# Readback — server runtime. The DIRECT dependencies, each with the reason it
+# is here. Render does NOT install this file any more: it installs
+# requirements.lock, which is compiled from this one and carries every
+# transitive package pinned with its artefact hashes. Change a version here and
+# regenerate the lock with the command in its header, or the deploy keeps the
+# resolution it already had.
 fastapi==0.141.1
 uvicorn[standard]==0.34.0
 starlette==1.6.0

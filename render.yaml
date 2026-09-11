@@ -85,7 +85,18 @@ services:
     # deploy needs no PYTHONPATH. The replay fixtures are located from the
     # package itself (server/stream/replay.py -> tests/fixtures), which is why
     # tests/ must be committed and deployed with the code.
-    buildCommand: "pip install --upgrade pip && pip install -r requirements.txt"
+    # Installs the LOCK, not requirements.txt, and refuses anything whose hash
+    # is not in it. requirements.txt pins nine direct dependencies and says why
+    # each is there; it pinned nothing underneath them, so about twenty
+    # transitive packages resolved to whatever was newest at each deploy and a
+    # compromised or yanked release would have arrived without anyone looking.
+    # --require-hashes makes that impossible: pip verifies every artefact
+    # against requirements.lock and fails the build on a mismatch.
+    #
+    # pip itself is pinned for the same reason -- an unpinned `--upgrade pip`
+    # is one more thing that changes under the deploy. To regenerate after a
+    # dependency change, see the header of requirements.lock.
+    buildCommand: "pip install --upgrade pip==24.3.1 && pip install --require-hashes -r requirements.lock"
     # 0.0.0.0 so the container accepts traffic from Render's proxy; $PORT
     # because Render assigns the port.
     #

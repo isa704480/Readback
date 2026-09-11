@@ -51,12 +51,38 @@ Two invariants the platform must not break:
 
 ## Step 0 — repository hygiene (do this first)
 
-### 0a. `requirements.txt` does not exist yet — create it
+### 0a. `requirements.txt` and `requirements.lock` — both exist now
 
-`render.yaml` builds with `pip install -r requirements.txt`, and **the
-repository has no such file** (checked: no `requirements*.txt`, no
-`pyproject.toml`). The first Render build will fail in seconds with
-`Could not open requirements file` until it exists.
+**This step is done.** Both files are in the repository, and the note below is
+kept because it records why they are shaped the way they are.
+
+What changed on 2026-09-11: `render.yaml` no longer builds with
+`pip install -r requirements.txt`. It builds with
+
+```
+pip install --upgrade pip==24.3.1 && pip install --require-hashes -r requirements.lock
+```
+
+`requirements.txt` is the human list — nine direct dependencies, each with the
+reason it is there. `requirements.lock` is compiled from it and carries all
+twenty-nine packages, transitive ones included, pinned with their artefact
+hashes; `--require-hashes` makes pip refuse anything else. Before that, about
+twenty transitive packages resolved to whatever was newest at each deploy with
+no verification at all, which is how a compromised or yanked release reaches
+production without anyone looking.
+
+Regenerate after any dependency change (the command is also in the lock's
+header):
+
+```
+uv pip compile requirements.txt --universal --generate-hashes --python-version 3.12 --output-file requirements.lock
+```
+
+`--universal` matters: `uvicorn[standard]` needs `uvloop` only off Windows and
+`colorama` only on it, so a lock compiled on a Windows machine would omit
+`uvloop` and the Linux build would fail on a package pip is forbidden to fetch.
+
+The original note, for the record:
 
 `>> HUMAN:` create `requirements.txt` at the repository root. These are the
 runtime imports of `server/` (SQLAlchemy, FastAPI, pydantic, pydantic-settings,
@@ -535,8 +561,9 @@ Then run `curl -s $API/health` again and read `sessions_open`. It must be
 None of this can be scripted from here. Every item needs a browser, an
 account, or a value that does not exist until something else is deployed.
 
-- [ ] Create `requirements.txt` at the root (step 0a) — **the build cannot
-      start without it**
+- [x] `requirements.txt` and `requirements.lock` are both in the repository
+      (step 0a). If you change a dependency, regenerate the lock before
+      pushing, or the build installs the resolution it already had.
 - [ ] Confirm `.env` and `*.db` are not staged; push to GitHub (step 0b, 0c)
 - [ ] Create an AssemblyAI account, copy the key, run the socket check (step 1)
 - [ ] Generate two secrets only if Render does not offer `generateValue` (step 2)
@@ -607,4 +634,5 @@ the URL derivation). These were not:
 | `web/.env.example` | `VITE_READBACK_API` for local development |
 | `server/config.py` | Settings; refuses placeholder or empty secrets on a deployment shape |
 | `server/db.py` | URL normalisation to psycopg 3, Postgres pool settings |
-| `requirements.txt` | **Must be created (step 0a)** |
+| `requirements.txt` | The nine direct dependencies, each with its reason |
+| `requirements.lock` | All 29 packages with artefact hashes; what Render installs, with `--require-hashes` |
