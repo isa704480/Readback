@@ -53,7 +53,7 @@ from typing import Any, Final, Literal
 from fastapi import Body, Depends, FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import and_, case, delete, func, or_, select
 from sqlalchemy.orm import Session as SASession
 
@@ -78,7 +78,7 @@ from server.pipeline import events as ev
 from server.pipeline.detector import FORMAT_TOKENS, State
 from server.pipeline.detector import configuration as detector_configuration
 from server.pipeline.runner import Question, RunSummary, RunnerConfig, run_session
-from server.pipeline.store import SqlCaptureStore, apply_observations
+from server.pipeline.store import SqlCaptureStore, apply_observations, mask_pan
 from server.models import Organisation as OrganisationRow
 from server.models import VocabularyTerm
 from server.readback.solver import IBANGB, ISO, LUHN16, NHS, VIN
@@ -138,11 +138,20 @@ def ip_hash(request: Request | None, settings: Settings) -> str | None:
     """Salted hash of the caller's address. The address itself never leaves this
     function, and the salt rotates daily so re-identification is bounded to one
     day -- the same window as `ip_hash_retention_hours`, by design."""
-    if request is None or request.client is None:
+    if request is None:
+        return None
+    # `rl.client_ip` rather than `request.client.host`: under
+    # --forwarded-allow-ips="*" uvicorn sets client.host from the LEFTMOST
+    # X-Forwarded-For entry, which the caller writes, so the per-IP admission
+    # gate keyed on this hash was bypassable with one header. One client
+    # identity for both limiters, and it is the proxy's word, not the
+    # caller's.
+    host = rl.client_ip(request)
+    if not host or host == "unknown":
         return None
     salt = settings.ip_hash_salt.get_secret_value()
     day = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    return hashlib.sha256(f"{salt}:{day}:{request.client.host}".encode()).hexdigest()
+    return hashlib.sha256(f"{salt}:{day}:{host}".encode()).hexdigest()
 
 
 # ------------------------------------------------------------ live sessions --
@@ -190,12 +199,15 @@ class LiveSession:
             self.pending[q.question_id] = fut
             try:
                 return await fut
-            except asyncio.CancelledError:
-                # The runner's answer timeout expired. Not an error: 4.7 counts
-                # an unanswered question against the budget and re-asks, which
-                # is a decision the loop makes, not an exception it handles.
-                return None
             finally:
+                # CancelledError is deliberately NOT caught. The runner awaits
+                # this inside `asyncio.wait_for`, which converts its own
+                # deadline into TimeoutError -- 4.7's unanswered question, which
+                # `_ask_human` already handles -- and re-raises anything else.
+                # Swallowing it here returned None for BOTH, so a /stop or a
+                # shutdown that cancelled the pipeline task was absorbed and the
+                # loop carried on past its own cancellation: the stop button did
+                # not stop the session.
                 self.pending.pop(q.question_id, None)
 
         return _ask
@@ -398,16 +410,29 @@ class AnswerRequest(BaseModel):
     choice: int | None = None      # index into the question's `choices`
 
 
+REPLAY_MIN_SPEED: Final = 0.5
+
+
 class ReplayRequest(BaseModel):
     fixture: str
     session_id: uuid.UUID | None = None
     # 0 = as fast as the CPU allows. Bounded, and NaN/inf refused: a replay is
     # a demonstration, and a speed the loop cannot reason about (NaN compares
     # false to everything) turned a demo into a stalled task holding a slot.
-    # A floor as well as a ceiling. 0 is "as fast as the CPU allows"; anything
-    # above 0 is a real-time multiple, and 1e-9 is a task that never finishes
-    # while holding a capacity slot.
     speed: float = Field(default=0.0, ge=0.0, le=100.0, allow_inf_nan=False)
+
+    @field_validator("speed")
+    @classmethod
+    def _speed_floor(cls, value: float) -> float:
+        """A floor as well as a ceiling. 0 is "as fast as the CPU allows";
+        anything above 0 is a real-time multiple, and 1e-9 is a task that runs
+        for a century while holding a live-capacity slot. Half real time is the
+        slowest a demonstration has any use for."""
+        if 0.0 < value < REPLAY_MIN_SPEED:
+            raise ValueError(
+                f"speed must be 0 (as fast as possible) or at least {REPLAY_MIN_SPEED}"
+            )
+        return value
     wait: bool | None = None       # None: wait iff the replay is instant
     answers: dict[str, str] = Field(default_factory=dict)
     # ARCHITECTURE 7's dead-man timer, exposed because a demo without a human in
@@ -1794,7 +1819,7 @@ def session_record(session_id: uuid.UUID,
              "action": e.action, "detail": e.detail}
             for e in events
         ],
-        "events": [e.as_dict() for e in live.stream.history] if live else [],
+        "events": [_masked_event(e.as_dict()) for e in live.stream.history] if live else [],
         "counters": {
             "captures": len(captures),
             "silent": sum(1 for c in captures if c.silent),
@@ -1845,10 +1870,15 @@ async def session_stop(session_id: uuid.UUID, delete: bool = Body(False, embed=T
         db.delete(row)
         db.commit()
         return {"ok": True, "deleted": True}
-    row.ended_at = utcnow()
-    row.end_reason = "user"
-    audit.record(db, audit.SESSION_ENDED, organisation_id=row.organisation_id,
-                 session_id=session_id, actor="human", detail={"reason": "stopped"})
+    # Only if it had not already ended. The pipeline records session.ended when
+    # it finishes, and recording a second one here gave a stopped session two
+    # rows -- so "how many sessions ended" counted it twice, and this log is
+    # read by counting.
+    if row.ended_at is None:
+        row.ended_at = utcnow()
+        row.end_reason = "user"
+        audit.record(db, audit.SESSION_ENDED, organisation_id=row.organisation_id,
+                     session_id=session_id, actor="human", detail={"reason": "stopped"})
     db.commit()
     return {"ok": True, "deleted": False}
 
@@ -1996,7 +2026,15 @@ async def demo_replay(body: ReplayRequest,
         if row is None or row.organisation_id != org_id:
             raise HTTPException(404, "unknown session")
         live = _SESSIONS.get(body.session_id)
-        if live is None:
+        if live is not None and live.task is not None and not live.task.done():
+            # A second pipeline on one session would have two runners writing
+            # captures for it and would replace the source under the first.
+            # The audio socket refuses a second producer for the same reason.
+            raise HTTPException(409, "that session is already running")
+        if live is None or live.stream.closed:
+            # A finished session's stream is closed, and emitting into a closed
+            # stream is a run nobody can see -- not on /live, not in the
+            # record's event history. A re-run gets a fresh one.
             live = LiveSession(session_id=row.id, stream=ev.EventStream())
             _SESSIONS[row.id] = live
     else:
@@ -2074,6 +2112,37 @@ async def demo_replay(body: ReplayRequest,
             "ws": f"/api/session/{row.id}/live"}
 
 
+# The value-bearing keys on an event. `store.mask_pan` is a no-op on every
+# format except a card number, so this masks a PAN and leaves a container
+# number, a VIN and an NHS number exactly as they are.
+_EVENT_VALUE_KEYS: Final = ("value", "heard", "written", "final")
+
+
+def _masked_event(event: dict[str, Any]) -> dict[str, Any]:
+    """A retained event on its way out of the process.
+
+    `store.write_capture` masks a PAN before it reaches a column, so the
+    database never holds one -- but the in-memory event history and the replay
+    summary are built from the runner's own records, which are not masked, and
+    both are returned by the API. A card number the database refused to keep
+    was being handed back in clear to whoever read the session (ARCH 3.9).
+    """
+    out = dict(event)
+    for key in _EVENT_VALUE_KEYS:
+        if isinstance(out.get(key), str):
+            out[key] = mask_pan(out[key])
+    diff = out.get("diff")
+    if isinstance(diff, dict):
+        out["diff"] = {k: (mask_pan(v) if isinstance(v, str) else v)
+                       for k, v in diff.items()}
+    slots = out.get("slots")
+    if isinstance(slots, list) and out.get("format") == "luhn16":
+        # A rack for a card draws it character by character, which would put
+        # the PAN back together one slot at a time.
+        out["slots"] = [{**s, "char": ""} if isinstance(s, dict) else s for s in slots]
+    return out
+
+
 def _replay_response(session_id: uuid.UUID, fixture: str, summary: RunSummary,
                      live: LiveSession) -> dict[str, Any]:
     return {
@@ -2093,7 +2162,8 @@ def _replay_response(session_id: uuid.UUID, fixture: str, summary: RunSummary,
             "speech_ms": summary.speech_ms,
         },
         "captures": [
-            {"format": c.format_type, "heard": c.heard_value, "final": c.final_value,
+            {"format": c.format_type,
+             "heard": mask_pan(c.heard_value), "final": mask_pan(c.final_value),
              "status": c.status, "silent": c.silent, "corrected": c.corrected,
              "position_corrected": c.position_corrected,
              "validated_by": c.validated_by, "second_signal": c.second_signal,
@@ -2101,5 +2171,5 @@ def _replay_response(session_id: uuid.UUID, fixture: str, summary: RunSummary,
              "handover_reason": c.handover_reason, "latency_ms": c.latency_ms}
             for c in summary.captures
         ],
-        "events": [e.as_dict() for e in live.stream.history],
+        "events": [_masked_event(e.as_dict()) for e in live.stream.history],
     }

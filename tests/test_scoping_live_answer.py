@@ -27,7 +27,7 @@ from starlette.websockets import WebSocketDisconnect
 from server import auth
 from server.config import Settings, get_settings
 from server.db import create_all, get_db, make_engine
-from server.main import DEMO_ORG_ID, DEMO_ORG_NAME, LIVE_SUBPROTOCOL, app
+from server.main import _SESSIONS, DEMO_ORG_ID, DEMO_ORG_NAME, LIVE_SUBPROTOCOL, app
 from server.models import Organisation, User
 
 PLACEHOLDER_HASH = "pbkdf2_sha256$1$00$00"
@@ -63,6 +63,12 @@ class _Fixture:
 
     def close(self) -> None:
         app.dependency_overrides.clear()
+        # `_SESSIONS` is module-global and outlives this fixture. Leaving
+        # entries in it makes the NEXT test file's concurrency and
+        # single-producer assertions depend on what ran before it --
+        # measured: two live-ingress tests passed alone and failed in the
+        # full suite until this line existed.
+        _SESSIONS.clear()
         self.engine.dispose()
 
     def organisation(self, name: str, email: str) -> str:
