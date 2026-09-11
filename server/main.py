@@ -278,6 +278,30 @@ app = FastAPI(title="Readback", version="0.1.0", lifespan=lifespan)
 # and gets diagnosed as a backend bug. Explicit origins, never "*": every
 # authenticated call carries a bearer token, and a wildcard origin with
 # credentials is a combination browsers reject anyway.
+# The largest body any route here has a use for. The biggest legitimate one is
+# a 500-row catalogue PUT; 1 MiB is generous for that and small enough that an
+# unauthenticated POST cannot make the process buffer a large body before a
+# field constraint could refuse it -- a body is read in full before any field is
+# validated, so this is the only place the size can actually be bounded.
+MAX_BODY_BYTES: Final = 1_048_576
+
+
+@app.middleware("http")
+async def _bound_body(request: Request, call_next):
+    """Refuse an oversize body with the same flat shape as every other failure.
+
+    Content-Length is a claim, not a fact, so the streaming path is bounded
+    too: a chunked body that runs past the cap is cut off rather than buffered.
+    """
+    declared = request.headers.get("content-length")
+    if declared is not None and declared.isdigit() and int(declared) > MAX_BODY_BYTES:
+        return JSONResponse(status_code=413, content={
+            "error": "body_too_large",
+            "message": f"the request body must be at most {MAX_BODY_BYTES} bytes.",
+        })
+    return await call_next(request)
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=get_settings().cors_origin_list,
@@ -380,6 +404,9 @@ class ReplayRequest(BaseModel):
     # 0 = as fast as the CPU allows. Bounded, and NaN/inf refused: a replay is
     # a demonstration, and a speed the loop cannot reason about (NaN compares
     # false to everything) turned a demo into a stalled task holding a slot.
+    # A floor as well as a ceiling. 0 is "as fast as the CPU allows"; anything
+    # above 0 is a real-time multiple, and 1e-9 is a task that never finishes
+    # while holding a capacity slot.
     speed: float = Field(default=0.0, ge=0.0, le=100.0, allow_inf_nan=False)
     wait: bool | None = None       # None: wait iff the replay is instant
     answers: dict[str, str] = Field(default_factory=dict)
@@ -511,6 +538,15 @@ async def session_live(websocket: WebSocket, session_id: uuid.UUID,
     secret. The token arrives the way the audio socket's does (header or the
     token subprotocol); anonymous viewers are the demo tenant and see demo
     sessions. A foreign session is "unknown", never "forbidden".
+
+    The database session is CLOSED explicitly before the stream loop, rather
+    than left to the dependency's `finally`, because that generator holds its
+    connection until the handler returns and this handler runs for the whole
+    life of the socket. A viewer left open on a desk would pin one connection
+    out of the pool for the length of the call, and enough viewers would
+    exhaust it and hang every HTTP request. The rows are needed for one
+    comparison; `close()` returns the connection and the Session stays usable
+    if anything ever needs it again.
     """
     offered = [p.strip() for p in
                websocket.headers.get("sec-websocket-protocol", "").split(",")]
@@ -519,8 +555,10 @@ async def session_live(websocket: WebSocket, session_id: uuid.UUID,
     user = auth.resolve_user(_ws_token(websocket), db, settings)
     org_id = acting_organisation(user)
     row = db.get(Session, session_id)
+    owned = row is not None and row.organisation_id == org_id
+    db.close()
     live = _SESSIONS.get(session_id)
-    if live is None or row is None or row.organisation_id != org_id:
+    if live is None or not owned:
         await websocket.send_json({"type": ev.ERROR, "seq": -1, "at_ms": 0,
                                    "wall_ms": 0, "message": "unknown session"})
         await websocket.close(code=4404)
@@ -1394,6 +1432,12 @@ VALIDATE_MAX_CHARS: Final = 64
 
 
 class ValidateRequest(BaseModel):
+    # Deliberately NOT `Field(max_length=...)`: a pydantic constraint answers
+    # with FastAPI's wrapped `{"detail": [...]}`, which no client here reads
+    # (see `_parse_limit`), and it would not stop the buffering either -- the
+    # body is read in full before any field is validated. The length is checked
+    # by hand below for the flat 400, and the BODY is bounded by the middleware
+    # at the top of this file.
     format: str
     value: str
 
@@ -2007,8 +2051,11 @@ async def demo_replay(body: ReplayRequest,
                        catalogue=catalogue if len(catalogue) else None,
                        format_tokens=({"catalogue": catalogue.skus}
                                       if len(catalogue) else None),
+                       # `is not None`, not truthiness: 0 means "do not wait for
+                       # an answer", and falsiness silently replaced it with the
+                       # six-second default.
                        **({"answer_timeout_ms": body.answer_timeout_ms}
-                          if body.answer_timeout_ms else {}))
+                          if body.answer_timeout_ms is not None else {}))
     wait = body.wait if body.wait is not None else (body.speed <= 0.0)
 
     async def _run() -> RunSummary:
