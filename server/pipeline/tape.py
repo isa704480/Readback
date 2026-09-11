@@ -319,11 +319,21 @@ class Tape:
         while len(self._turns) > 1:
             stored = [t for t in self._turns.values() if t.words]
             n = sum(len(t.words) for t in stored)
-            if stored:
-                span = max(t.words[-1].end for t in stored) - min(t.words[0].start for t in stored)
+            oldest_key = min(self._turns)
+            oldest = self._turns[oldest_key]
+            # Staleness is measured from the oldest turn's LAST word, not from
+            # the first word on the tape. Against the first word, a turn that
+            # opened 46 s ago and whose closing word arrived one second ago was
+            # evicted WHOLE -- and a caller who pauses in the middle of a long
+            # code is exactly that turn, so the identifier still being read was
+            # the thing thrown away. A turn is only as stale as its newest word.
+            if stored and oldest.words:
+                newest_end = max(t.words[-1].end for t in stored)
+                stale = (newest_end - oldest.words[-1].end) > self.max_span_ms
             else:
-                span = 0
-            if n <= self.max_words and span <= self.max_span_ms:
+                # An empty turn holds nothing worth keeping and blocks nothing.
+                stale = not oldest.words
+            if n <= self.max_words and not stale:
                 return
             oldest = min(self._turns)
             del self._turns[oldest]

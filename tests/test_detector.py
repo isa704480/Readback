@@ -625,7 +625,23 @@ def section_d_tape(seed: int = 3) -> None:
     for order, i in enumerate(range(0, 300, 10)):
         span.ingest(_frame(order, long_words[i:i + 10], True))
     print(f"  a 120 s utterance -> tape spans {span.span_ms} ms, {len(span)} words")
-    check(span.span_ms <= 45_000, f"span bound broken: {span.span_ms} ms")
+    # The bound is on how STALE a word may be, so it is measured end to end:
+    # every word the tape presents ended within the span of the newest one.
+    # `span_ms` measures first START to last end, so it reads up to one word's
+    # duration longer -- the word that straddles the cutoff began before it and
+    # ended after. Asserting the end-to-end window keeps the guarantee exact
+    # rather than trusting a figure that depends on how long a word happens to
+    # be. (Before 2026-09-11 eviction dropped whole turns on the age of their
+    # FIRST word, which held span_ms under 45 s by throwing away turns whose
+    # last words were seconds old -- the identifier still being read.)
+    words = span.words
+    oldest_end = min(w.end for w in words)
+    newest_end = max(w.end for w in words)
+    check(newest_end - oldest_end <= 45_000,
+          f"span bound broken end to end: {newest_end - oldest_end} ms")
+    longest_word = max(w.end - w.start for w in words)
+    check(span.span_ms <= 45_000 + longest_word,
+          f"span bound broken by more than one word: {span.span_ms} ms")
 
 
 def section_e_cost(seed: int = 5) -> None:

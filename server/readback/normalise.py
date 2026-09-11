@@ -9,7 +9,7 @@ import re
 
 # ---- 1. tokens that are UNAMBIGUOUS once you know they are an identifier ----
 LETTER = {
- "ay": "A", "eh": "A", "aye": "A",
+ "ay": "A", "aye": "A",
  "be": "B", "bee": "B", "b": "B",
  "cee": "C", "c": "C",
  "dee": "D", "de": "D", "d": "D",
@@ -125,8 +125,17 @@ def _split_code(tok):
 _CAPS_TOKEN = re.compile(r"^[A-Z]{1,8}[.,;:]?$")
 _HAS_DIGIT = re.compile(r"\d")
 
+# Single-word names of formats. An all-caps token that IS one of these and
+# stands ALONE beside the digits is the word that names the format -- "IBAN
+# GB82WEST...", "VIN 1HGCM..." -- not letters being spelled, so it is left
+# whole: dissolving it deleted the carrier phrase from the sentence and added
+# four characters to the run. A caps run of TWO OR MORE is a spelled prefix
+# whatever the words look like ("RM SKU 4158005"), which is the case this
+# whole mechanism exists for, so length is what separates them.
+CARRIER_WORDS = frozenset({"iban", "vin", "nhs", "sku"})
 
-def spelled_caps_mask(toks):
+
+def spelled_caps_mask(toks, protect=CARRIER_WORDS):
     """Which of these whitespace tokens are a spelled all-caps block beside a
     digit-bearing token. The decision needs the NEIGHBOURS, which is why it
     is a function of the sequence: anything that judges tokens one at a time
@@ -143,6 +152,19 @@ def spelled_caps_mask(toks):
             while 0 <= j < len(toks) and _CAPS_TOKEN.match(toks[j]):
                 spelled[j] = True
                 j += step
+    if protect:
+        # A run of exactly one, and that one a format's name, is the name.
+        i = 0
+        while i < len(spelled):
+            if not spelled[i]:
+                i += 1
+                continue
+            j = i
+            while j < len(spelled) and spelled[j]:
+                j += 1
+            if j - i == 1 and toks[i].rstrip(".,;:").lower() in protect:
+                spelled[i] = False
+            i = j
     return spelled
 
 
@@ -152,23 +174,51 @@ def spelled_letters(tok):
     return [c for c in tok.lower() if c.isalpha()]
 
 
-def dissolve_spelled_caps(text):
+def dissolve_spelled_caps(text, protect=CARRIER_WORDS):
     """'Container number RM SKU 4158005.' -> 'Container number R M S K U 4158005.'
 
     Pure text -> text, so the carrier matcher and the tokeniser can both
     apply it and agree on what is a word and what is being spelled."""
-    toks = text.split()
-    spelled = spelled_caps_mask(toks)
+    toks = _SEPARATORS.sub(" ", text).split()
+    spelled = spelled_caps_mask(toks, protect)
     if not any(spelled):
         return text
     return " ".join(" ".join(t.rstrip(".,;:")) if s else t
                     for t, s in zip(toks, spelled))
 
 
-def tokenise(text):
-    t = dissolve_spelled_caps(text).lower().replace("-", " ").replace(".", " ")
-    t = t.replace("double u", "doubleu").replace("double you", "doubleu")
-    t = t.replace("x ray", "xray").replace("as in", "asin").replace("like in", "asin")
+# Punctuation the recogniser's formatter attaches to a word, turned into
+# separators BEFORE the spelled-caps mask is computed so that the mask sees
+# the token boundaries the tokeniser will. Two measured failures, both silent:
+# "MSKU4158005?" matched no code shape at all and normalised to NOTHING (only
+# "." was being replaced), and "MSKU-4158005" left the letters as a word two
+# tokens from the digits, so the mask never marked them and the capture lost
+# its prefix. The apostrophe is deliberately absent: it is word-internal.
+_SEPARATORS = re.compile(r"[-‐-―./\\,;:!?()\[\]{}\"]+")
+
+# Word-boundary folds. As plain str.replace these matched inside longer words:
+# "double uniform" became "doubleuniform", losing both the doubling and the U.
+_FOLDS = (
+    (re.compile(r"\bdouble\s+(?:u|you)\b"), "doubleu"),
+    (re.compile(r"\bx\s+ray\b"), "xray"),
+    (re.compile(r"\b(?:as|like)\s+in\b"), "asin"),
+)
+
+
+def _frame_agrees(head, c):
+    """Does the head of a disambiguator frame read as the character its tail
+    names? "B for Bravo" is one character said twice; "four for five" is three
+    tokens that happen to sit in that order. An ambiguous head agrees if ANY
+    of its readings does -- "oh for Oscar" is still O."""
+    cell = _one(head)
+    return bool(cell) and any(ch == c for ch, _weight in cell)
+
+
+def tokenise(text, protect=CARRIER_WORDS):
+    t = _SEPARATORS.sub(" ", text)
+    t = dissolve_spelled_caps(t, protect).lower()
+    for pattern, replacement in _FOLDS:
+        t = pattern.sub(replacement, t)
     out = []
     for w in re.split(r"[\s,]+", t):
         if w:
@@ -187,6 +237,13 @@ def pass1(text):
         if i + 2 < len(toks) and (FRAME.match(toks[i + 1]) or toks[i + 1] == "asin"):
             head, tail = w, toks[i + 2]
             c = NATO.get(tail) or (tail[0].upper() if tail[:1].isalpha() else None)
+            # The frame DISAMBIGUATES a character, so the two halves have to
+            # agree about which one. Without that test "for" is just a word,
+            # and any "X for Y" in ordinary speech was swallowed: measured,
+            # "four for five" read as the single character F instead of 4, 5 --
+            # two characters gone from the middle of a code and one invented.
+            if c and not _frame_agrees(head, c):
+                c = None
             if c:
                 out.append([(c, 1.0)])
                 notes.append("frame '%s %s %s' -> %s" % (head, toks[i + 1], tail, c))
