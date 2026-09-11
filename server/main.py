@@ -41,6 +41,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import logging
 import time
 import uuid
 from collections.abc import AsyncIterator, Awaitable
@@ -51,13 +52,14 @@ from pathlib import Path
 from typing import Any, Final, Literal
 
 from fastapi import Body, Depends, FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import and_, case, delete, func, or_, select
 from sqlalchemy.orm import Session as SASession
 
-from server import audit, auth, llm
+from server import audit, auth, llm, purge
 from server import ratelimit as rl
 from server.config import Settings, get_settings
 from server.db import create_all, get_db, get_sessionmaker
@@ -257,6 +259,16 @@ def _reap_finished() -> None:
     that ends a running session is the cap, the source, or a human, and none of
     them is a dictionary size.
     """
+    # An admission that never attached a socket keeps an OPEN stream, so it
+    # counts as running and nothing ever collected it: the dictionary grew for
+    # the life of the process. Past the same cutoff `_running_sessions` uses to
+    # stop counting it, it is finished in every sense that matters.
+    cutoff = get_settings().session_cap_seconds + ABANDON_GRACE_S
+    for sid, s in list(_SESSIONS.items()):
+        if (s.task is None and s.producer is None and not s.stream.closed
+                and time.monotonic() - s.opened_at > cutoff):
+            s.stream.close()
+
     finished = [sid for sid, s in _SESSIONS.items() if not s.running]
     for sid in finished[: max(0, len(finished) - FINISHED_RETAINED)]:
         _SESSIONS.pop(sid, None)
@@ -277,7 +289,25 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         # and nowhere else. A request handler mutating `solver.W` would change
         # one caller's posterior from inside another caller's call.
         apply_observations(db)
+        # ARCH 3.12's auto-purge, at startup and then on a timer. A deployment
+        # that never restarts must still enforce its own windows, and one that
+        # restarts often must not skip the sweep -- so both.
+        purge.purge(db, settings)
+
+    async def _purge_loop() -> None:
+        while True:
+            await asyncio.sleep(PURGE_INTERVAL_S)
+            try:
+                with factory() as db:
+                    purge.purge(db, get_settings())
+            except asyncio.CancelledError:
+                raise
+            except Exception:  # noqa: BLE001 -- a failed sweep must not end the app
+                log.exception("purge sweep failed; it will run again")
+
+    purger = asyncio.create_task(_purge_loop())
     yield
+    purger.cancel()
     for live in list(_SESSIONS.values()):
         if live.task is not None and not live.task.done():
             live.task.cancel()
@@ -296,6 +326,46 @@ app = FastAPI(title="Readback", version="0.1.0", lifespan=lifespan)
 # field constraint could refuse it -- a body is read in full before any field is
 # validated, so this is the only place the size can actually be bounded.
 MAX_BODY_BYTES: Final = 1_048_576
+
+
+@app.middleware("http")
+async def _security_headers(request: Request, call_next):
+    """The headers a token-bearing API should send, which it sent none of.
+
+    HSTS only over HTTPS: sending it on a plain-HTTP development origin is
+    ignored by browsers at best and pins localhost to HTTPS at worst. No CSP
+    here -- this origin serves JSON, never a document; the SPA's own CSP is in
+    web/vercel.json.
+    """
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("Referrer-Policy", "no-referrer")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    if request.url.scheme == "https":
+        response.headers.setdefault(
+            "Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+    return response
+
+
+@app.exception_handler(RequestValidationError)
+async def _flat_validation_errors(request: Request,
+                                  exc: RequestValidationError) -> JSONResponse:
+    """A 422 in the same two-key shape as every other failure, and WITHOUT the
+    submitted value.
+
+    FastAPI's default body echoes `input` verbatim, so a signup or login whose
+    password failed a length constraint answered with the plaintext password --
+    into the client's console, any error tracker and any log that keeps bodies.
+    The field names are enough to fix the request; the value was never ours to
+    repeat.
+    """
+    where = [".".join(str(p) for p in e.get("loc", ())[1:]) or "body"
+             for e in exc.errors()]
+    return JSONResponse(status_code=422, content={
+        "error": "invalid_request",
+        "message": "Some of those details were not accepted: " + ", ".join(
+            dict.fromkeys(where)) + ".",
+    })
 
 
 @app.middleware("http")
@@ -409,6 +479,13 @@ class AnswerRequest(BaseModel):
     text: str | None = None
     choice: int | None = None      # index into the question's `choices`
 
+
+log = logging.getLogger("readback.api")
+
+# How often the retention sweep runs while the process is up. Hourly: the
+# shortest window is 24 h, so an hour is fine-grained enough to honour it and
+# coarse enough to be invisible.
+PURGE_INTERVAL_S: Final = 3600
 
 REPLAY_MIN_SPEED: Final = 0.5
 
@@ -1944,8 +2021,16 @@ def open_source(settings: Settings, fixture: str | None = None,
     if fixture is None and settings.live_capture:
         from server.stream.live import LiveSource
 
+        # record_raw=False. `raw_frames` keeps every decoded frame so the
+        # day-1 falsification experiment can compute its figures from a
+        # recorded session -- which is what the experiment harness wants and
+        # exactly what a SERVING process must not do: the frames are the
+        # conversation, held in memory for as long as the LiveSession is
+        # retained (ARCH 3.9's never-stored list). The experiments construct
+        # LiveSource themselves and keep the default.
         return LiveSource(settings.assemblyai_api_key.get_secret_value(),
-                          config=config, url=settings.assemblyai_url)
+                          config=config, url=settings.assemblyai_url,
+                          record_raw=False)
     if fixture is None:
         raise HTTPException(
             503,

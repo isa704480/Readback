@@ -492,6 +492,50 @@ loop-until-dry bug hunt were launched and ran out of session budget before
 any agent returned; neither produced findings, which is not the same as
 "none", and both are queued to run again.
 
+**Tenth: a second audit round and a bug hunt, and what they cost.** Five
+readers over the web client, transport, secrets, abuse and supply chain, and
+eight over the pipeline modules; both ran out of session budget before their
+verifiers did, so the 41 candidates were re-verified afterwards by three
+independent refuters each. 23 stood, 6 were refuted -- three of those six
+because they had already been fixed while the verifiers were reading.
+
+Two of the confirmed findings were regressions from the round before, both in
+the same commit that scoped the sockets: the browser opened `/live` with no
+token subprotocol, so a signed-in operator's viewer was told "unknown session"
+about their own call while the audio socket streamed on; and `/live` took
+`Depends(get_db)`, whose connection is held for the life of the handler --
+which is the life of the socket. A viewer left open pinned a pooled connection
+for the whole call.
+
+Seven silent defects in the reading path: a code ending in "?" normalised to
+nothing (only "." was a separator); a hyphenated code lost its letters (the
+mask ran before hyphens became separators); "X for Y" collapsed three tokens
+into one invented character; "double u" matched inside "double uniform"; a
+format's own name beside the digits was dissolved into letters, deleting the
+carrier phrase and lengthening the run; "eh" read as the letter A while the
+detector called it a hesitation; and the tape evicted a turn for having
+STARTED long ago, throwing away the identifier still being read.
+
+A card number the database refuses to keep (`store.mask_pan`) was handed back
+in clear by the retained event history and the replay summary, which are built
+from the runner's own records. The stop button did not stop a session that was
+asking, because the answerer swallowed the task's own cancellation. ARCH
+3.12's auto-purge was documented as implemented and did not exist; it does
+now, with one audit row per sweep. `ip_hash` keyed on the leftmost
+X-Forwarded-For entry, so the admission gate moved with a header. The SPA had
+no CSP and shipped full source maps; the API sent no security headers; a 422
+echoed the submitted password back.
+
+**What this cost, stated:** the starlette upgrade that closed nine advisories
+also appears to have made two websocket tests flaky -- they pass alone and in
+their own file every time, and fail roughly one full-suite run in five, with a
+traceback entirely inside `starlette/testclient.py`'s `__exit__` and no
+Readback frame but the `with` line. Clearing the module-global `_SESSIONS` in
+the new fixtures removed one real cause; the residual was not confirmed
+against the old version because installing the vulnerable release to A/B it is
+blocked, correctly. It is a harness race, not a product one, and it is
+recorded here rather than hidden.
+
 **Recommendation for the live path, from run 2:** pin `language_code=en`.
 The agent listens in English only (measured and stated in the UI); leaving
 the model free to code-switch bought nothing and cost two Japanese partials.

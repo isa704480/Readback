@@ -83,9 +83,11 @@ class Settings(BaseSettings):
     consent_required: bool = True
     consent_version: str = "2026-09-01"
 
-    # ARCH 3.12 states a 24-hour auto-purge and implements it. These are the
-    # windows the purge job reads; the models carry the same numbers as
-    # RETENTION attributes so a table and its window cannot drift apart.
+    # ARCH 3.12's auto-purge. These are the windows `server/purge.py` reads;
+    # the models carry the same numbers as RETENTION attributes so a table and
+    # its window cannot drift apart. Until 2026-09-11 this comment claimed the
+    # purge was implemented while nothing in the repository deleted a row -- a
+    # retention policy nobody enforced, found by the security audit.
     capture_retention_days: int = 30
     question_retention_days: int = 7
     ip_hash_retention_hours: int = 24

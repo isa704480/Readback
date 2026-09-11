@@ -15,6 +15,11 @@ export default defineConfig({
   },
   build: {
     target: 'es2022',
-    sourcemap: true,
+    /* Not in the published bundle. Vercel serves whatever lands in dist/, and a
+       .map carries `sourcesContent` -- the full TypeScript, comments included,
+       which in this repository means the reasoning behind every gate, written
+       out for anyone who opens devtools. A build that wants them asks:
+       `npx vite build --sourcemap`. */
+    sourcemap: false,
   },
 });
