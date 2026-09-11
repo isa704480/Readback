@@ -512,7 +512,10 @@ async def session_live(websocket: WebSocket, session_id: uuid.UUID,
     token subprotocol); anonymous viewers are the demo tenant and see demo
     sessions. A foreign session is "unknown", never "forbidden".
     """
-    await websocket.accept()
+    offered = [p.strip() for p in
+               websocket.headers.get("sec-websocket-protocol", "").split(",")]
+    await websocket.accept(
+        subprotocol=LIVE_SUBPROTOCOL if LIVE_SUBPROTOCOL in offered else None)
     user = auth.resolve_user(_ws_token(websocket), db, settings)
     org_id = acting_organisation(user)
     row = db.get(Session, session_id)
@@ -575,6 +578,12 @@ PIPELINE_DRAIN_S: Final = 5.0
 # `readback.token.<token>`, beside `readback.audio`, and the server selects
 # `readback.audio` in reply. A non-browser client may send Authorization instead.
 AUDIO_SUBPROTOCOL: Final = "readback.audio"
+# The event stream is organisation-scoped too, so it needs the same token, and
+# therefore the same handshake: the browser offers `readback.live` plus the
+# token, and the server selects `readback.live`. A socket that offered a
+# subprotocol the server does not select is failed by the browser, so the
+# selection is not decoration.
+LIVE_SUBPROTOCOL: Final = "readback.live"
 AUDIO_TOKEN_PROTOCOL_PREFIX: Final = "readback.token."
 
 # Close codes on the audio socket. 4xxx is the range RFC 6455 leaves to the

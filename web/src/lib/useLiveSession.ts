@@ -475,6 +475,7 @@ function wsUrl(path: string): string {
 }
 
 const AUDIO_SUBPROTOCOL = 'readback.audio';
+const LIVE_SUBPROTOCOL = 'readback.live';
 const AUDIO_TOKEN_PROTOCOL_PREFIX = 'readback.token.';
 const TERMINATE = JSON.stringify({ type: 'Terminate' });
 
@@ -628,7 +629,18 @@ export function useLiveSession(): LiveSession {
   const openLive = useCallback(
     (sessionId: string) =>
       new Promise<void>((resolve, reject) => {
-        const ws = new WebSocket(wsUrl(`/api/session/${sessionId}/live`));
+        /* The token rides the same subprotocol the audio socket uses, and for
+           the same reason: a browser cannot set a header on a WebSocket. The
+           event stream is organisation-scoped server-side, so a signed-in
+           operator whose viewer connected anonymously would be told "unknown
+           session" about their own call. */
+        const liveToken = getToken();
+        const ws = new WebSocket(
+          wsUrl(`/api/session/${sessionId}/live`),
+          liveToken
+            ? [LIVE_SUBPROTOCOL, AUDIO_TOKEN_PROTOCOL_PREFIX + liveToken]
+            : [LIVE_SUBPROTOCOL],
+        );
         liveRef.current = ws;
         let opened = false;
         ws.onopen = () => {

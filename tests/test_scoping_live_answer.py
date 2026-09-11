@@ -27,7 +27,7 @@ from starlette.websockets import WebSocketDisconnect
 from server import auth
 from server.config import Settings, get_settings
 from server.db import create_all, get_db, make_engine
-from server.main import DEMO_ORG_ID, DEMO_ORG_NAME, app
+from server.main import DEMO_ORG_ID, DEMO_ORG_NAME, LIVE_SUBPROTOCOL, app
 from server.models import Organisation, User
 
 PLACEHOLDER_HASH = "pbkdf2_sha256$1$00$00"
@@ -87,7 +87,8 @@ class _Fixture:
         """The first frame on /live, and the close code if the server hung up."""
         headers = {"Authorization": f"Bearer {token}"} if token else {}
         with self.client.websocket_connect(f"/api/session/{session_id}/live",
-                                           headers=headers) as ws:
+                                           headers=headers,
+                                           subprotocols=[LIVE_SUBPROTOCOL]) as ws:
             first = ws.receive_json()
             code: int | None = None
             if first.get("type") == "error":
@@ -153,7 +154,33 @@ def test_the_demo_tenant_still_reaches_its_own_sessions_anonymously() -> None:
         fx.close()
 
 
+def test_the_browsers_handshake_works_with_and_without_a_token() -> None:
+    """The browser cannot set a header on a WebSocket, so the token rides a
+    second subprotocol and the server must SELECT the first one -- a browser
+    fails a handshake whose offered subprotocol the server ignored. Both
+    shapes the client sends are exercised here."""
+    fx = _Fixture()
+    try:
+        docks = fx.organisation("Docks Ltd", "ada@docks.example")
+        sid = fx.replay(docks)
+
+        # Signed in: [readback.live, readback.token.<token>] -> readback.live.
+        with fx.client.websocket_connect(
+                f"/api/session/{sid}/live",
+                subprotocols=[LIVE_SUBPROTOCOL, f"readback.token.{docks}"]) as ws:
+            assert ws.receive_json()["type"] == "session.started"
+
+        # Anonymous on a demo session: [readback.live] alone.
+        anon_sid = fx.replay(None)
+        with fx.client.websocket_connect(
+                f"/api/session/{anon_sid}/live", subprotocols=[LIVE_SUBPROTOCOL]) as ws:
+            assert ws.receive_json()["type"] == "session.started"
+    finally:
+        fx.close()
+
+
 TESTS = [
+    test_the_browsers_handshake_works_with_and_without_a_token,
     test_the_event_stream_is_scoped_to_the_session_owner,
     test_an_answer_to_another_tenants_session_is_unknown_not_refused,
     test_the_demo_tenant_still_reaches_its_own_sessions_anonymously,
