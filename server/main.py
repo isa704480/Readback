@@ -1107,8 +1107,12 @@ async def session_audio(websocket: WebSocket, session_id: uuid.UUID,
                            source_label="live",
                            vocabulary=vocabulary,
                            catalogue=catalogue if len(catalogue) else None,
-                           format_tokens=({"catalogue": catalogue.skus}
-                                          if len(catalogue) else None),
+                           # No `format_tokens={"catalogue": catalogue.skus}`
+                           # here, and that absence is load-bearing: ARCH 3.9a,
+                           # runner.independent_keyterms. The catalogue is what
+                           # vouches for a `catalogue` commit, so the recogniser
+                           # is never handed it. The runner strips it anyway if
+                           # a caller forgets.
                            identify=_identifier(settings))
         pipeline = asyncio.create_task(run_session(
             source, live.stream, store=store, answerer=live.answerer(), config=cfg))
@@ -2172,8 +2176,9 @@ async def demo_replay(body: ReplayRequest,
                        source_label="replay",
                        vocabulary=vocabulary,
                        catalogue=catalogue if len(catalogue) else None,
-                       format_tokens=({"catalogue": catalogue.skus}
-                                      if len(catalogue) else None),
+                       # No catalogue keyterms on a replay either: ARCH 3.9a.
+                       # A fixture that only passes because the recogniser was
+                       # told the answer is a demonstration of nothing.
                        # `is not None`, not truthiness: 0 means "do not wait for
                        # an answer", and falsiness silently replaced it with the
                        # six-second default.

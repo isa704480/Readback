@@ -87,8 +87,25 @@ class CatalogueIndex:
 
     @property
     def skus(self) -> tuple[str, ...]:
-        """For the ARMED keyterm list: the recogniser is told what to expect."""
+        """The rows, as the catalogue spells them.
+
+        NOT for the keyterm list, and that is the point of the name change:
+        `runner.independent_keyterms` strips these strings back out of every
+        bias list, because the catalogue is the evidence a `catalogue` commit
+        rests on and evidence handed to the recogniser in advance is not
+        evidence. Display, the reference screen and tests read this.
+        """
         return tuple(r.sku for r in self._rows)
+
+    def vouches_for(self, candidate: str) -> bool:
+        """Is this string, spelled any way, one of the catalogue's own rows?
+
+        Exact on the normalisation rather than within edit distance: the
+        question this answers is "would a commit of exactly this value be
+        vouched for at distance 0", and that is the value it is unsafe to also
+        push at the recogniser.
+        """
+        return normalise(candidate) in self._by_norm
 
     def match(self, candidate: str) -> CatalogueMatch | None:
         cand = normalise(candidate)

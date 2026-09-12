@@ -439,3 +439,47 @@ measured:
   arithmetic to back the confidence up — and it says out loud that a *confident*
   mishearing inside a residue class is written silently, because nothing in the
   system can see it. That residue is bounded and measured, not zero.
+
+---
+
+## 9. The catalogue was the answer key and the bias at the same time
+
+Found on 12 September, in our own code, after reading another entry in this
+hackathon. `sadishihab/claim-intake-agent` published a section called *"How the
+validator was made powerless"*: they fed the list of valid policy numbers to
+`keyterms`, accuracy improved on clean speech, and then the recogniser began
+revising its own partials onto the list. Their log shows `C411` becoming
+`KD4-1188` — a real policy belonging to a different person — which then passed
+exact-match validation perfectly. Every guard downstream was intact and
+useless, because an exact match against the answer key stopped being evidence
+the moment the recogniser was handed the answer key.
+
+We had the same hole, in one format. ARCHITECTURE §3.6 spent the ARMED keyterm
+budget on "the 40 catalogue SKUs", and ARCH 3.9's vocabulary pack is documented
+to carry part numbers in *every* state. The `catalogue` format is exactly the
+one with no check digit: `_commit_catalogue` writes at distance 0, or corrects
+silently at distance 1–2, with `questions_asked=0`, on the strength of the
+catalogue row alone.
+
+The two are only safe apart:
+
+| format | what vouches for the commit | may the recogniser be biased toward it? |
+|---|---|---|
+| ISO 6346, IBAN, NHS, VIN, Luhn | arithmetic the recogniser cannot compute | yes — owner prefixes are a *second* signal over independent evidence |
+| catalogue | the catalogue row, and nothing else | **no** |
+
+`runner.independent_keyterms` now enforces it in the one place every session
+passes through, rather than trusting two call sites in `main.py` to remember.
+It strips any string `CatalogueIndex.vouches_for` recognises out of both the
+format tokens and the vocabulary pack, and leaves prefixes, carriers, NATO and
+digits alone. `tests/test_catalogue_independence.py` locks both halves: the
+filter, and a mutation arm that fails if `main.py` names `skus` in code again.
+
+**What it costs, honestly.** Part numbers lose the bias that was helping them,
+so the `catalogue` format will ask more often. That is the correct trade: a
+question costs two seconds, and this bug wrote a different company's part
+number into the record with no question, no diff and no flag.
+
+**The general rule, now in `CLAUDE.md`:** never bias the recogniser toward the
+set that validates its output. If the constraint *is* a closed list, the list
+stays out of the prompt.

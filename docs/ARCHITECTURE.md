@@ -216,10 +216,29 @@ Four cues over the tape, `≥2 of 4` before anything is written or spoken; any *
 IDLE   keyterms = carriers + NATO + digit variants          (~61)   max_turn_silence 1536
   ── trigger with format hypothesis ─►
 ARMED  keyterms = NATO + digits + format tokens             (~95)   max_turn_silence 2500
-       (MSKU/MSCU/TGHU/CMAU/HLXU… or the 40 catalogue SKUs)         eot_confidence_threshold ↓
+       (MSKU/MSCU/TGHU/CMAU/HLXU…, but NEVER the catalogue SKUs)     eot_confidence_threshold ↓
        prompt = format-specific context sentence
   ── committed, or 12 s, or topic change ─► IDLE
 ```
+
+**Amendment, 12 September: the ARMED list may not contain the catalogue.** This
+paragraph originally spent the arming budget on "the 40 catalogue SKUs", and
+that was wrong — not for the budget, for the evidence. A `catalogue` capture has
+no check digit, so the *only* thing that makes it committable is that the
+catalogue holds a matching row, and that match is evidence only while the
+recogniser has never been shown the catalogue. Bias the recogniser toward the
+rows and it revises its own partials onto them: a value nobody read out arrives
+spelled exactly like a row, matches at distance 0, and commits silently with
+`questions_asked=0` while every guard downstream stays intact and looking at a
+perfect match. `runner.independent_keyterms` now strips any string the
+catalogue vouches for out of both the format tokens and the organisation's
+vocabulary pack, and `tests/test_catalogue_independence.py` fails if either
+session builder starts carrying them again. Cost, stated: part numbers are
+recognised worse, and the `catalogue` format earns its commits the way the
+others do or it asks. Owner-code prefixes stay, and the distinction is exact —
+an ISO 6346 commit rests on arithmetic the recogniser cannot see, so the
+registry is a second signal on top of independent evidence, not the evidence
+itself. See FINDINGS §9.
 
 `ForceEndpoint` once the candidate is length-complete, to close the turn immediately and claw back the ~1.5 s the raised `max_turn_silence` cost.
 

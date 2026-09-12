@@ -604,7 +604,12 @@ async def run_session(
     cfg = config or RunnerConfig()
     st: CaptureStore = store or NullStore()
     tape = Tape()
-    detector = Detector(format_tokens=cfg.format_tokens, extra_terms=cfg.vocabulary)
+    # ARCH 3.9a: the catalogue cannot be both the answer key and the bias. This
+    # is not the caller's decision to get right -- every session goes through
+    # here, so the filter goes here. See `independent_keyterms`.
+    fmt_tokens, vocab = independent_keyterms(
+        cfg.catalogue, cfg.format_tokens, cfg.vocabulary)
+    detector = Detector(format_tokens=fmt_tokens, extra_terms=vocab)
     regime = RegimeDetector()
     speech = dec.SpeechBudget()
     summary = RunSummary(session_id=cfg.session_id)
@@ -1435,6 +1440,56 @@ def _candidates(result: dict[str, Any]) -> list[dict[str, Any]]:
 
 # ------------------------------------------------------------- catalogue ---
 CATALOGUE_MIN_CHARS: Final = 4
+
+
+def independent_keyterms(
+        catalogue: Any,
+        format_tokens: Mapping[str, Sequence[str]] | None,
+        vocabulary: Sequence[str],
+) -> tuple[Mapping[str, Sequence[str]] | None, tuple[str, ...]]:
+    """Strip the answer key out of the bias lists, and say what was stripped.
+
+    ARCH 3.9a. A `catalogue` capture has no check digit: the only thing that
+    makes it committable is that the catalogue holds a row within edit distance
+    2, uniquely. That match is evidence *because the recogniser does not know
+    the catalogue*. Push the rows in as `keyterms_prompt` and the recogniser
+    starts revising its own partials onto them -- a value the speaker never
+    said arrives already spelled like a row, matches at distance 0, and
+    `_commit_catalogue` writes it silently, with `questions_asked=0`, because
+    every guard downstream is intact and looking at a perfect match. The
+    correction is invisible: the row it snapped to is a real part, just not the
+    one that was read out.
+
+    The same hole is open through `vocabulary` (ARCH 3.9), which is the
+    organisation's own words and is documented to hold part numbers: those ride
+    along in EVERY state, so a vocabulary that lists the catalogue biases the
+    recogniser toward it even before a format is known.
+
+    So the rule, enforced here rather than trusted to a caller:
+
+        while the catalogue vouches for commits, no string the catalogue
+        vouches for may be pushed at the recogniser.
+
+    What it costs: part numbers are recognised worse, which is the honest
+    price. The `catalogue` format then earns its commits the way every other
+    format does -- by the constraint agreeing with an independent observation
+    -- or it asks. Owner prefixes, carriers, NATO and digits are untouched:
+    none of them is the thing being validated.
+
+    Returns the filtered `(format_tokens, vocabulary)`. With no catalogue in
+    play there is nothing to be circular about and both pass through.
+    """
+    if catalogue is None:
+        return format_tokens, tuple(vocabulary)
+    vouches_for = getattr(catalogue, "vouches_for", None)
+    if vouches_for is None:      # a stand-in in a test; nothing to strip
+        return format_tokens, tuple(vocabulary)
+    vocab = tuple(t for t in vocabulary if not vouches_for(t))
+    if format_tokens is None:
+        return None, vocab
+    tokens = {fmt: tuple(t for t in terms if not vouches_for(t))
+              for fmt, terms in format_tokens.items()}
+    return tokens, vocab
 
 
 def _catalogue_candidate(tape: Tape, index: Any,
