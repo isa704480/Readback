@@ -107,11 +107,11 @@ docs/
 
 ## Status
 
-The pipeline runs end to end against five recorded fixtures with no API key,
+The pipeline runs end to end against eight recorded fixtures with no API key,
 and against the live `universal-3-5-pro` socket with one:
 
 ```
-$ PYTHONPATH=. python -m pytest tests/ -q                       85 passed
+$ PYTHONPATH=. python -m pytest tests/ -q                      156 passed
 $ PYTHONPATH=. python experiments/day1/e2e_live.py --wav container.wav --truth MSKU4158005
   [4575 ms] capture.update   rack=MSKU4158___
   [5885 ms] candidate.seen   MSKU4158005  complete  checksum_ok  aligned

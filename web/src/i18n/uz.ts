@@ -112,6 +112,17 @@ const catalog = {
   'formats.method': 'Nazorat qanday ishlaydi',
   'formats.advantage': 'Nazorat nima beradi',
   'formats.sensitive': 'Shaxsni aniqlaydi',
+  'formats.who': 'Uni ovoz chiqarib kim oʻqiydi',
+  'formats.who.iso6346':
+    'Konteyner liniyalari, ekspeditorlar, port va terminal xodimlari. Raqam bron qilishda, terminalga kirishda va shikast boʻyicha qoʻngʻiroqlarda oʻqiladi — odatda maydonchada, shamolda, telefonda.',
+  'formats.who.iban':
+    'Bank va toʻlov boʻlimlari. Pul oʻtkazmasi sozlanayotganda yoki rekvizit tuzatilayotganda aytiladi: bitta xato belgi — qaytgan toʻlov va yana bir qoʻngʻiroq.',
+  'formats.who.vin':
+    'Sugʻurta, avtosalon va yoʻldagi yordam xizmati. Oyna ortidan oʻqiladi: oʻn yetti belgi, koʻchada, bir marta.',
+  'formats.who.nhs':
+    'Klinikalar va bemorni qabulga yozish. Raqamni bemorning oʻzi aytadi, ehtimol ogʻriq bilan, va notoʻgʻri yozuv — notoʻgʻri odam.',
+  'formats.who.luhn':
+    'Karta operatsiyalari. Luhn bitta xato raqamni sezadi, lekin qaysi biri ekanini aytmaydi. Shu sababli karta bu yerda tuzatilmaydi: qaytarib oʻqiladi yoki odamga topshiriladi.',
   'formats.try.title': 'Sinab koʻring',
   'formats.try.format': 'Format',
   'formats.try.value': 'Identifikator',

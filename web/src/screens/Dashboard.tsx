@@ -6,7 +6,7 @@ import type { RackRow } from '../components';
 import { getSnapshot, subscribe } from '../lib/api';
 import type { ApiErrorKind } from '../lib/api';
 import { useI18n } from '../i18n';
-import type { TranslationKey } from '../i18n';
+import type { PlainKey, TranslationKey } from '../i18n';
 import {
   HeldLine,
   RecordRow,
@@ -149,7 +149,9 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const OUTCOMES: readonly CaptureOutcome[] = ['settled', 'repaired', 'asking', 'flagged', 'heard'];
 const PERIODS: readonly Period[] = ['all', 'day', 'week'];
 
-type TKey = Parameters<ReturnType<typeof useI18n>['t']>[0];
+/* Both tables hold placeholder-free keys, which is what lets `t(TABLE[k])`
+ * be called with no params at all. See PlainKey in i18n/en.ts. */
+type TKey = PlainKey;
 const OUTCOME_LABEL: Readonly<Record<CaptureOutcome, TKey>> = {
   heard: 'capture.state.heard',
   repaired: 'capture.state.repaired',

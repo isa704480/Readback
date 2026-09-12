@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { Button, Icon, Rack } from '../components';
 import type { RackRow } from '../components';
 import { useI18n } from '../i18n';
-import type { TranslationKey } from '../i18n';
+import type { PlainKey } from '../i18n';
 import { outcomeOf, replayAsRecord, replayFixture, slotsFor } from './DashboardParts';
 import type { ReplayCapture } from './DashboardParts';
 import './Demo.css';
@@ -36,8 +36,8 @@ type RunState =
 interface Fixture {
   /** The file stem under tests/fixtures/, which is what the API accepts. */
   name: string;
-  title: TranslationKey;
-  body: TranslationKey;
+  title: PlainKey;
+  body: PlainKey;
 }
 
 /* `as const satisfies`, never an annotation -- see Pending.tsx for why. */

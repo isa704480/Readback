@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Button, Icon } from '../components';
 import { useI18n } from '../i18n';
-import type { TranslationKey } from '../i18n';
+import type { PlainKey } from '../i18n';
 import { validateIdentifier } from '../lib/api';
 import type { ValidateResult } from '../lib/api';
 import './Formats.css';
@@ -23,17 +23,20 @@ import './Formats.css';
 
 interface FormatDef {
   id: string;
-  name: TranslationKey;
-  length: TranslationKey;
-  check: TranslationKey;
-  strength: TranslationKey;
-  measured: readonly TranslationKey[];
+  name: PlainKey;
+  length: PlainKey;
+  check: PlainKey;
+  strength: PlainKey;
+  measured: readonly PlainKey[];
+  /** Who says this out loud on a call today: the line that tells a visitor
+   *  whether the product is for them, before they read any arithmetic. */
+  who: PlainKey;
   /** A valid identifier, verified against the solver. */
   example: string;
   /** 0-indexed positions that hold the computed check character(s). */
   checkPos: readonly number[];
   /** Rendered when the format identifies a real person. */
-  sensitive: TranslationKey | null;
+  sensitive: PlainKey | null;
 }
 
 /* The congruence classes mod 11 — arithmetic, identical in every language, so
@@ -45,6 +48,7 @@ const ISO6346_CLASSES =
 const FORMATS: readonly FormatDef[] = [
   {
     id: 'iso6346',
+    who: 'formats.who.iso6346',
     name: 'account.format.iso6346.name',
     length: 'account.format.iso6346.length',
     check: 'account.format.iso6346.check',
@@ -56,6 +60,7 @@ const FORMATS: readonly FormatDef[] = [
   },
   {
     id: 'iban',
+    who: 'formats.who.iban',
     name: 'account.format.iban.name',
     length: 'account.format.iban.length',
     check: 'account.format.iban.check',
@@ -67,6 +72,7 @@ const FORMATS: readonly FormatDef[] = [
   },
   {
     id: 'vin',
+    who: 'formats.who.vin',
     name: 'account.format.vin.name',
     length: 'account.format.vin.length',
     check: 'account.format.vin.check',
@@ -78,6 +84,7 @@ const FORMATS: readonly FormatDef[] = [
   },
   {
     id: 'nhs',
+    who: 'formats.who.nhs',
     name: 'account.format.nhs.name',
     length: 'account.format.nhs.length',
     check: 'account.format.nhs.check',
@@ -89,6 +96,7 @@ const FORMATS: readonly FormatDef[] = [
   },
   {
     id: 'luhn',
+    who: 'formats.who.luhn',
     name: 'account.format.luhn.name',
     length: 'account.format.luhn.length',
     check: 'account.format.luhn.check',
@@ -226,7 +234,13 @@ function TryOne() {
       ) : result ? (
         <div className="stack" role="status">
           {result.normalised.length > 0 ? (
-            <Shape example={result.normalised} checkPos={result.check_positions} bad={bad} />
+            <Shape
+              example={result.normalised}
+              checkPos={result.check_positions}
+              /* Omitted rather than passed as undefined: `bad` is optional, and
+               * under exactOptionalPropertyTypes those are not the same thing. */
+              {...(bad ? { bad } : {})}
+            />
           ) : null}
           <p className={`fmt__try-verdict fmt__try-verdict--${tone}`}>
             <Icon name={tone === 'ok' ? 'check' : 'alert'} size={16} />
@@ -269,6 +283,10 @@ function FormatCard({ f }: { f: FormatDef }) {
 
       <dl className="fmt__facts">
         <div>
+          <dt>{t('formats.who')}</dt>
+          <dd>{t(f.who)}</dd>
+        </div>
+        <div>
           <dt>{t('formats.method')}</dt>
           <dd>{t(f.check)}</dd>
         </div>
@@ -293,7 +311,7 @@ function FormatCard({ f }: { f: FormatDef }) {
         </p>
       ) : (
         <p className="fmt__note measure">
-          {t(`account.format.${f.id}.note` as TranslationKey)}
+          {t(`account.format.${f.id}.note` as PlainKey)}
         </p>
       )}
     </li>

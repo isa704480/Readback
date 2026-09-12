@@ -464,7 +464,12 @@ export async function fetchSessionSummaries(
   signal?: AbortSignal,
   cursor?: SessionCursor,
 ): Promise<ApiResult<SessionSummaryPage>> {
-  const query = cursor ? `?${new URLSearchParams(cursor).toString()}` : '';
+  // Named field by field rather than handed the cursor object: URLSearchParams
+  // wants an index signature, and widening SessionCursor to get one would let
+  // a future field ride onto the query string without anyone deciding to.
+  const query = cursor
+    ? `?${new URLSearchParams({ before: cursor.before, before_id: cursor.before_id }).toString()}`
+    : '';
   const result = await request<unknown>(`/api/session-summaries${query}`, {
     auth: true,
     ...(signal ? { signal } : {}),

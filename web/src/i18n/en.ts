@@ -146,6 +146,20 @@ export const en = {
   'formats.method': 'How the check works',
   'formats.advantage': 'What the check buys',
   'formats.sensitive': 'Identifies a person',
+  /* Who says this out loud, on a call, today. A format reference that shows
+   * only arithmetic leaves a visitor to work out whether the product is for
+   * them; this line answers it before they have to. */
+  'formats.who': 'Who reads it aloud',
+  'formats.who.iso6346':
+    'Shipping lines, freight forwarders, port and depot desks. Read out on booking, gate-in and damage-claim calls, usually from a yard on a phone in the wind.',
+  'formats.who.iban':
+    'Bank and payment operations. Dictated when a transfer is set up or a mandate is corrected, where one wrong character is a returned payment and a call back.',
+  'formats.who.vin':
+    'Insurers, dealers and roadside assistance. Read off a windscreen at the kerb: seventeen characters, outdoors, once.',
+  'formats.who.nhs':
+    'Clinics, surgeries and patient-facing scheduling. Spoken by the patient, who may be in pain, and where the wrong record is the wrong person.',
+  'formats.who.luhn':
+    'Card operations. Luhn catches a single wrong digit but cannot say which one, so a card is never repaired here: it is read back, or handed to a person.',
   /* "Try one": the solver's own arithmetic on whatever is typed. Nothing typed
    * here is kept. */
   'formats.try.title': 'Try one',
@@ -1120,3 +1134,20 @@ export type Messages = Readonly<Record<TranslationKey, string>>;
 /** The placeholder names a given key expects, read off the English string. */
 export type ParamsFor<K extends TranslationKey> =
   import('./types').ParamNames<(typeof en)[K]>;
+
+/**
+ * A key whose English string has no placeholders.
+ *
+ * `t()` is deliberately strict: a key with placeholders REQUIRES the params
+ * argument. That strictness is computed from the key's literal type, so it
+ * lands badly on a *table* of keys -- `Record<Outcome, TranslationKey>`, a
+ * fixture's `title`, a format card's fields. Their values are typed as the
+ * whole union, `ParamsFor` over the union is every placeholder in the catalog,
+ * and `t(table[k])` is then asked for params no caller could supply. Declare
+ * those tables as `PlainKey` instead: it says the thing that is actually true
+ * of them -- these keys interpolate nothing -- and a key with a placeholder
+ * put in one stops compiling at the table rather than at the call.
+ */
+export type PlainKey = {
+  [K in TranslationKey]: [ParamsFor<K>] extends [never] ? K : never;
+}[TranslationKey];

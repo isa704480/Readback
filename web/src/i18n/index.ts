@@ -14,7 +14,7 @@ export type { LanguageSwitcherProps } from './LanguageSwitcher';
 export { LANGUAGES, isLanguage } from './types';
 export type { Language } from './types';
 
-export type { TranslationKey, Messages, ParamsFor } from './en';
+export type { TranslationKey, Messages, ParamsFor, PlainKey } from './en';
 
 /* The locale pin. Exported so a future formatter can be added in format.ts
  * against the same tags rather than inventing a second mapping. */
