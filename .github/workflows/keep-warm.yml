@@ -1,0 +1,51 @@
+# Pings /health every 10 minutes so Render's free web service does not spin down.
+#
+# Render free services sleep after ~15 minutes of no traffic and the next
+# request takes ~50 s to wake the container. The web client gives up after
+# 12 s, so a cold instance looks broken to a visitor, not slow.
+#
+# GitHub Actions cron runs on shared infrastructure and can be several minutes
+# late; 10 minutes is the interval that reliably stays inside the 15-minute
+# window. The job is one HTTP call and finishes in about a second; scheduled
+# workflows on public repositories are free.
+#
+# One thing to know about the schedule: GitHub disables a scheduled workflow
+# on a repository that has had no commits for 60 days. A commit -- any commit
+# -- resets the counter. Nothing here does that automatically, on purpose: a
+# job that quietly resurrected itself would hide a repository nobody is
+# looking at from the "this is inactive" signal that is exactly correct.
+
+name: keep-warm
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch: {}
+
+concurrency:
+  # If a previous run is somehow still going, skip this one rather than
+  # queueing behind it. The point is a heartbeat, not a backlog.
+  group: keep-warm
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: GET /health
+        env:
+          # Set at Settings -> Secrets and variables -> Actions -> Variables.
+          # A variable, not a secret: the URL is public in every screenshot of
+          # the app and hiding it here changes nothing.
+          API: ${{ vars.READBACK_API }}
+        run: |
+          if [ -z "$API" ]; then
+            echo "READBACK_API repository variable is empty; nothing to ping." >&2
+            exit 1
+          fi
+          # --max-time 90: a cold start is ~50 s and we would rather wait for
+          # the wake-up than log a false failure. --fail turns a 5xx into a
+          # non-zero exit so a real outage does show up in the Actions log.
+          curl --fail --show-error --silent --max-time 90 --retry 2 --retry-delay 5 \
+            "$API/health" -o /dev/null -w "%{http_code} in %{time_total}s\n"

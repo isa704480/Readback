@@ -307,19 +307,51 @@ gives up on every request after **12 seconds** (`TIMEOUT_MS = 12_000`). A cold
 instance therefore does not look slow; it looks broken — the first click shows
 a timeout failure, and only a second attempt a minute later works.
 
-Pick one:
+There is one answer that works while the demo is running and does not cost
+anything, and it ships in this repository.
 
-- **Warm it by hand.** Two minutes before the demo:
-  ```bash
-  time curl -s https://YOUR-SERVICE.onrender.com/health
-  ```
-  Wait for the JSON. It then stays up through ~15 min of idle.
-- **Keep it warm.** Point any free uptime monitor at `/health` every 10
-  minutes. Do not use Render Cron for this on the free plan — cron is a paid
-  feature, and a service pinging itself does not reliably reset the timer.
+**`.github/workflows/keep-warm.yml`** — a GitHub Actions job that pings
+`/health` every 10 minutes.
+
+Why an external caller and not the server itself: a server pinging itself
+does nothing while the server is asleep, which is exactly the state that has
+to be broken. The caller has to live outside Render. GitHub Actions is free
+on a public repository, its scheduled runs are typically within a couple of
+minutes of the cron, and this job is a single `curl` that finishes in about a
+second.
+
+**To turn it on**, once the Render URL exists (step 3):
+
+1. In this repository on GitHub: **Settings → Secrets and variables →
+   Actions → Variables → New repository variable**. Name it
+   `READBACK_API`, value the Render origin (e.g. `https://readback-api-xxxx.onrender.com`).
+   A variable rather than a secret: the URL is public in every screenshot of
+   the app, and hiding it here changes nothing while making the workflow log
+   harder to read.
+2. **Actions** tab → **keep-warm** in the sidebar → **Enable workflow**
+   (Actions is off by default on a new fork).
+3. Click **Run workflow** once to confirm the URL is right. A green tick with
+   `200 in 0.4s` in the log means it works; anything else is a real problem,
+   not a schedule that has not fired yet.
+
+Two things to know:
+
+- **GitHub disables a scheduled workflow after 60 days of no commits.** Any
+  commit resets that counter; the workflow does not resurrect itself, on
+  purpose — a repository nobody is looking at should stop pinging.
+- **Cron on shared runners is late sometimes.** Ten minutes is inside the
+  15-minute window with margin; five would be a waste of compute for the
+  same result.
+
+Alternatives, if this ever will not do:
+
 - **Pay.** Change `plan: free` to `plan: starter` in `render.yaml` and
-  redeploy. Starter never sleeps. If the demo matters more than $7/mo, this is
-  the honest answer.
+  redeploy. Starter never sleeps. If the demo matters more than $7/mo, this
+  is the honest answer.
+- **Warm it by hand.** Two minutes before a demo, run
+  `time curl -s $API/health`; it stays up through ~15 min of idle after.
+- **Do NOT use Render Cron for this on the free plan** — cron is a paid
+  feature, and a service pinging itself does not reliably reset the timer.
 
 The **free Postgres instance also expires** — currently 30 days after creation,
 after which it is deleted, not merely stopped. `>> HUMAN:` diarise the date, or
@@ -595,7 +627,10 @@ account, or a value that does not exist until something else is deployed.
 - [ ] Create the Vercel project with **Root Directory = `web`** (step 5)
 - [ ] Set `VITE_READBACK_API` to the Render URL — set, not empty (step 5)
 - [ ] Put the Vercel origin into `READBACK_CORS_ORIGINS`; redeploy the API (step 6)
-- [ ] Decide how to handle cold starts before any demo (step 3)
+- [ ] Turn on the keep-warm workflow: Actions tab → Enable, then set
+      the `READBACK_API` repository variable to the Render URL (step 3,
+      "Free tier sleeps"). Without this, the first visitor after 15 min of
+      idle sees a timeout.
 - [ ] Diarise the free Postgres expiry, or use Neon (step 3)
 - [ ] Sign up in the deployed app, then in the Render **Shell** run
       `python -m server.admin_cli grant <your email>` -- the only way to open
