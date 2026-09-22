@@ -59,8 +59,9 @@ from sqlalchemy.orm import Session as SASession
 from server import audit, auth, llm, purge
 from server import ratelimit as rl
 from server.config import Settings, get_settings
-from server import budget, http_guards
-from server.routes import organisation, reference
+from server import budget, http_guards, platform_state
+from server.models import Organisation as OrganisationRow
+from server.routes import admin, organisation, reference
 from server.db import create_all, get_db, get_sessionmaker
 from server.models import (
     AuditEvent,
@@ -327,6 +328,7 @@ MAX_BODY_BYTES: Final = http_guards.MAX_BODY_BYTES
 app.include_router(auth.router)
 app.include_router(reference.router)
 app.include_router(organisation.router)
+app.include_router(admin.router)
 
 # Names the session code below and the tests read from here, kept stable
 # across the split into routes/.
@@ -441,6 +443,19 @@ def session_start(body: StartRequest, request: Request = None,  # type: ignore[a
         db.commit()
         raise HTTPException(403, "consent is required before a session can start")
 
+    # A suspended organisation is refused here, after consent (so a refusal
+    # never tells an unconsented caller anything) and before any limit is
+    # spent. `Organisation.active` existed in the schema from the start and
+    # was read by nothing until the admin panel could set it.
+    org = db.get(OrganisationRow, org_id)
+    if org is not None and not org.active:
+        audit.record(db, audit.SESSION_REFUSED, organisation_id=org_id,
+                     actor="api", detail={"reason": "organisation_suspended"})
+        db.commit()
+        raise HTTPException(403, {"error": "organisation_suspended",
+                                  "message": "This organisation is suspended. "
+                                             "Contact support."})
+
     salted = ip_hash(request, settings)
     if salted is not None:
         if _PER_HOUR.hit(salted) > settings.per_ip_per_hour:
@@ -462,12 +477,26 @@ def session_start(body: StartRequest, request: Request = None,  # type: ignore[a
         audit.record(db, audit.BUDGET_ALARM, organisation_id=org_id,
                      actor="api", detail={"remaining_socket_seconds": remaining})
     sockets = settings.demo_sockets if body.ab else 1
-    live = settings.live_capture and not exhausted
+    # Three things drop a session to replay, each recorded with its own reason:
+    # the deployment's daily ceiling, this organisation's own ceiling, and the
+    # operator's live pause (platform_state.CONTROL_DEFAULTS).
+    paused = platform_state.controls(db)["live_paused"]
+    org_exhausted = platform_state.org_budget_exhausted(db, org)
+    live = settings.live_capture and not exhausted and not org_exhausted and not paused
     if exhausted:
         audit.record(db, audit.BUDGET_EXHAUSTED, organisation_id=org_id,
                      actor="api", detail={"remaining_socket_seconds": remaining})
         audit.record(db, audit.REPLAY_ENTERED, organisation_id=org_id,
                      actor="api", detail={"reason": "daily_budget"})
+    elif org_exhausted:
+        audit.record(db, audit.BUDGET_EXHAUSTED, organisation_id=org_id,
+                     actor="api", detail={"scope": "organisation",
+                                          "budget_seconds": org.daily_budget_seconds})
+        audit.record(db, audit.REPLAY_ENTERED, organisation_id=org_id,
+                     actor="api", detail={"reason": "organisation_budget"})
+    elif paused and settings.live_capture:
+        audit.record(db, audit.REPLAY_ENTERED, organisation_id=org_id,
+                     actor="api", detail={"reason": "live_paused"})
 
     row = Session(
         id=uuid.uuid4(), organisation_id=org_id,
@@ -1485,6 +1514,27 @@ def session_record(session_id: uuid.UUID,
 
 
 # ------------------------------------------------------------------- stop ----
+async def terminate_live(session_id: uuid.UUID) -> bool:
+    """Stop a running pipeline. True if there was one.
+
+    Terminate before cancelling: the socket is the thing that bills, and a
+    cancelled task that never sent Terminate leaves it open. Awaited rather
+    than fired into a task, so "stop" has actually stopped by the time this
+    returns -- ARCH 3.11 names unclosed sessions the first cause of surprise
+    charges. Shared by the owner's stop and the operator's (routes/admin.py),
+    so the two cannot come to stop a session in different orders.
+    """
+    live = _SESSIONS.pop(session_id, None)
+    if live is None:
+        return False
+    if live.source is not None and getattr(live.source, "terminate", None):
+        await live.source.terminate()
+    if live.task is not None and not live.task.done():
+        live.task.cancel()
+    live.stream.close()
+    return True
+
+
 @app.post("/api/session/{session_id}/stop")
 async def session_stop(session_id: uuid.UUID, delete: bool = Body(False, embed=True),
                        user: User | None = Depends(auth.optional_user),
@@ -1505,18 +1555,7 @@ async def session_stop(session_id: uuid.UUID, delete: bool = Body(False, embed=T
     row = db.get(Session, session_id)
     if row is None or row.organisation_id != org_id:
         raise HTTPException(404, "unknown session")
-    live = _SESSIONS.pop(session_id, None)
-    if live is not None:
-        # Terminate before cancelling: the socket is the thing that bills, and a
-        # cancelled task that never sent Terminate leaves it open. Awaited rather
-        # than fired into a task, so "stop" has actually stopped by the time this
-        # returns -- ARCH 3.11 names unclosed sessions the first cause of
-        # surprise charges.
-        if live.source is not None and getattr(live.source, "terminate", None):
-            await live.source.terminate()
-        if live.task is not None and not live.task.done():
-            live.task.cancel()
-        live.stream.close()
+    await terminate_live(session_id)
     if delete:
         audit.record(db, audit.SESSION_DELETED, organisation_id=row.organisation_id,
                      session_id=session_id, actor="human",
@@ -1678,6 +1717,13 @@ async def demo_replay(body: ReplayRequest,
     _reap_finished()
 
     org_id = acting_organisation(user)
+    # Suspension reaches the demo tenant too: suspending it is how an operator
+    # stops anonymous replays during an abuse wave without touching anyone else.
+    org = db.get(OrganisationRow, org_id)
+    if org is not None and not org.active:
+        raise HTTPException(403, {"error": "organisation_suspended",
+                                  "message": "This organisation is suspended. "
+                                             "Contact support."})
     if body.session_id is not None:
         row = db.get(Session, body.session_id)
         # A caller may only replay into a session their own organisation owns.

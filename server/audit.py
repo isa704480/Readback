@@ -55,8 +55,21 @@ QUESTION_ANSWERED: Final = "question.answered"
 DATA_PURGED: Final = "data.purged"
 # ARCH 3.9: the organisation replaced its vocabulary pack (detail: term count).
 VOCABULARY_SET: Final = "vocabulary.set"
-# ARCH 3.9: the deployment's part catalogue was replaced (detail: row count).
+# ARCH 3.9: the organisation's part catalogue was replaced (detail: row count).
 CATALOGUE_SET: Final = "catalogue.set"
+# The platform admin panel (docs/ADMIN.md). Every write it can make is one of
+# these, with actor "admin:<user id>" -- the operator's own actions are the
+# ones most in need of a record nobody can edit afterwards.
+ADMIN_ORG_SUSPENDED: Final = "admin.org.suspended"
+ADMIN_ORG_REINSTATED: Final = "admin.org.reinstated"
+ADMIN_ORG_BUDGET_SET: Final = "admin.org.budget_set"
+ADMIN_USER_DISABLED: Final = "admin.user.disabled"
+ADMIN_USER_ENABLED: Final = "admin.user.enabled"
+ADMIN_CONTROL_SET: Final = "admin.control.set"
+ADMIN_SESSION_STOPPED: Final = "admin.session.stopped"
+ADMIN_BENCHMARK_RUN: Final = "admin.benchmark.run"
+ADMIN_GRANTED: Final = "admin.granted"
+ADMIN_REVOKED: Final = "admin.revoked"
 
 ACTIONS: Final[frozenset[str]] = frozenset({
     CONSENT_GRANTED, CONSENT_WITHDRAWN, DISCLOSURE_PLAYED,
@@ -65,6 +78,9 @@ ACTIONS: Final[frozenset[str]] = frozenset({
     BUDGET_ALARM, BUDGET_EXHAUSTED, REPLAY_ENTERED,
     CAPTURE_COMMITTED, CAPTURE_FLAGGED, CAPTURE_CORRECTED, CAPTURE_HANDOVER,
     QUESTION_ASKED, QUESTION_ANSWERED, DATA_PURGED, VOCABULARY_SET, CATALOGUE_SET,
+    ADMIN_ORG_SUSPENDED, ADMIN_ORG_REINSTATED, ADMIN_ORG_BUDGET_SET,
+    ADMIN_USER_DISABLED, ADMIN_USER_ENABLED, ADMIN_CONTROL_SET,
+    ADMIN_SESSION_STOPPED, ADMIN_BENCHMARK_RUN, ADMIN_GRANTED, ADMIN_REVOKED,
 })
 
 

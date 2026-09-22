@@ -393,6 +393,16 @@ async def signup_route(
     except rl.RateLimited as exc:
         raise _too_many(exc) from None
 
+    # The operator's abuse switch (platform_state, set from the admin panel).
+    # Checked before the password work, so a paused signup costs no KDF.
+    from server import platform_state  # late: keeps auth importable on its own
+    if platform_state.controls(db)["signups_paused"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"error": "signups_paused",
+                    "message": "New accounts are paused right now. Try again later."},
+        )
+
     email = body.email.strip().lower()
     if not EMAIL_RE.match(email):
         raise HTTPException(

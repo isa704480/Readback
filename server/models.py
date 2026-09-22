@@ -704,8 +704,6 @@ def assert_no_audio_or_tape_columns(metadata: Any = None) -> None:
                 )
 
 
-assert_no_audio_or_tape_columns()
-
 
 class VocabularyTerm(Base):
     """ARCH 3.9: an organisation's own words for the recogniser -- owner
@@ -722,3 +720,44 @@ class VocabularyTerm(Base):
     term: Mapped[str] = mapped_column(String(50), primary_key=True)
     position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_at: Mapped[datetime] = mapped_column(TS, nullable=False, default=utcnow)
+
+
+# -------------------------------------------------------- platform admin ---
+class PlatformAdmin(Base):
+    """Who may open the platform admin panel (docs/ADMIN.md).
+
+    A table rather than an email allowlist in configuration, on purpose: sign-up
+    is open and email is never verified, so "this email is an admin" would make
+    whoever registered that address first the operator of every tenant. A row
+    here is granted out of band, by someone with a shell on the server
+    (`python -m server.admin_cli grant <email>`), to an account that already
+    exists -- there is no HTTP path that writes this table.
+    """
+
+    __tablename__ = "platform_admin"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("app_user.id", ondelete="CASCADE"), primary_key=True)
+    granted_at: Mapped[datetime] = mapped_column(TS, nullable=False, default=utcnow)
+    granted_by: Mapped[str] = mapped_column(String(64), nullable=False, default="cli")
+
+
+class PlatformSetting(Base):
+    """Runtime switches the admin panel owns: one row per key, JSON value.
+
+    Read on every session admission, so a change takes effect on the next
+    session without a redeploy -- unlike the environment, which needs one.
+    """
+
+    __tablename__ = "platform_setting"
+
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    value: Mapped[Any] = mapped_column(JSONVariant, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(TS, nullable=False, default=utcnow)
+    updated_by: Mapped[str] = mapped_column(String(64), nullable=False, default="system")
+
+
+# The invariants run LAST, over every table this module defines. The call used
+# to sit above `VocabularyTerm`, so that table -- and anything appended after
+# it -- was declared after the check had already run and was never policed.
+assert_no_audio_or_tape_columns()
