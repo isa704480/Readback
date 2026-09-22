@@ -209,27 +209,14 @@ const catalog = {
   'rack.legend.locked.label': 'Format tomonidan qulflangan',
   'rack.legend.locked.note': 'Oldingi oʻrinlardan hisoblanadi. Ovoz uni oʻzgartira olmaydi.',
   // -------------------------------------------------------------- landing --
-
-  /* Tutuq belgisi note: this block also uses U+02BC MODIFIER LETTER APOSTROPHE
-   * (maʼlumot, nomaʼlum). That is the correct Uzbek Latin character for the
-   * glottal stop, and it is a different character from the U+02BB turned comma
-   * in oʻ and gʻ. Neither is an ASCII apostrophe. */
-
-  /* "allowed to be" has no clean Uzbek deontic that does not read as a legal
-   * entitlement, so this lands as "what the answer can be". The contrast the
-   * headline exists for -- eshitmaydi (does not hear) against biladi (knows) --
-   * is preserved, which is the part that carries the pitch. */
   'landing.hero.title.a': 'U yaxshiroq eshitmaydi.',
   'landing.hero.title.b': 'U javob qanday boʻlishi mumkinligini biladi.',
   'landing.hero.lede':
-    'Readback qoʻngʻiroq fonida tinglaydi va maʼlumot raqamlarini yozib boradi: konteyner raqamlari, IBAN, VIN, bemor raqamlari, karta raqamlari. U suhbatni transkripsiya qilmaydi va uni qisqacha bayon ham qilmaydi. Koʻpincha notoʻgʻri eshitganini indamay tuzatadi. Tuzata olmasa — bir marta boʻladi, bitta belgi haqida soʻraydi va yana jim boʻladi.',
+    'Readback qoʻngʻiroqni tinglab, maʼlumot raqamlarini yozib oladi: konteyner, IBAN, VIN, bemor va karta raqamlari. Notoʻgʻri eshitilganining koʻpini jimgina tuzatadi. Tuzata olmasa, bitta belgi haqida soʻraydi.',
   'landing.hero.scope':
-    'Readback qoʻngʻiroqni ingliz tilida tinglaydi va yagona savolini ingliz tilida beradi. Til faqat interfeysda oʻzgaradi.',
-
+    'Inglizcha tinglaydi va inglizcha soʻraydi. Til sozlamasi faqat ekranni oʻzgartiradi.',
+  'landing.hero.demo': 'Demoni ishga tushirish',
   'landing.rack.title': 'Yozuvlar rafi',
-
-  /* Uzbek does not inflect a noun after a numeral: "1 ta yozuv", "4 ta yozuv".
-   * All four CLDR categories therefore carry the same form. */
   'landing.rack.meta.captures.one': '{n} ta yozuv',
   'landing.rack.meta.captures.few': '{n} ta yozuv',
   'landing.rack.meta.captures.many': '{n} ta yozuv',
@@ -238,92 +225,36 @@ const catalog = {
   'landing.rack.meta.questions.few': '{n} ta savol',
   'landing.rack.meta.questions.many': '{n} ta savol',
   'landing.rack.meta.questions.other': '{n} ta savol',
-
   'landing.row.repaired.note':
     '{position}-oʻrin · eshitildi {heard} · yozildi {written} · {check} nazorat raqami mos keladi',
-  'landing.row.asking.note': 'oʻn ikkita koʻr juftlikdan biri',
-
-  /* The quoted fragment stays in English and is named as English, because it is
-   * what the agent actually says on the call. */
   'landing.row.asking.question':
     '{position}-oʻrin. Agent ingliz tilida soʻraydi: “{a} for {aWord}, or {b} for {bWord}?” Ikkalasi ham {check} nazorat raqamini qoldiradi, shuning uchun arifmetika hech qaysisiga qarshi chiqmaydi.',
-
-  'landing.row.arriving.digits.one': 'yana {n} ta raqam kutilmoqda',
-  'landing.row.arriving.digits.few': 'yana {n} ta raqam kutilmoqda',
-  'landing.row.arriving.digits.many': 'yana {n} ta raqam kutilmoqda',
-  'landing.row.arriving.digits.other': 'yana {n} ta raqam kutilmoqda',
-
+  'landing.row.asking.note': 'oʻn ikkita koʻr juftlikdan biri',
   'landing.row.settled.note':
     '{check} nazorat raqami mos keladi · tuzatadigan narsa yoʻq',
-
-  // ------------------------------------------------------ landing: beats --
-
-  'landing.beats.title': 'Uchta qadam, va mahsulot — oʻrtadagisi',
-
-  'landing.beat1.title': 'U notoʻgʻri eshitadi.',
-  /* "inglizcha" is added on purpose: five/nine and fifteen/fifty are English
-   * words confused by an English recogniser. Uzbek besh and toʻqqiz are not
-   * confusable, so a faithful translation would be a fabricated claim. */
-  'landing.beat1.body':
-    'Shovqinda inglizcha five va nine — bir xil tovush. M va N, S va F, fifteen va fifty ham shunday. Hech qanday akustik modellashtirish buni hal qilmaydi, chunki maʼlumot audioning oʻzida yoʻq.',
-  'landing.beat1.caption': 'Yomon aloqada, har qanday talaffuzda farqlab boʻlmaydi.',
-  'landing.confusable.soundsLike': '{a} va {b} bir xil eshitiladi',
-
-  'landing.beat2.title': 'Format javobni cheklaydi.',
-  'landing.beat2.body':
-    'Konteyner raqami — oʻn bitta erkin belgi emas. Bu oʻnta belgi va ulardan hisoblangan nazorat raqami: oxirgi katakni mikrofon emas, arifmetika toʻldiradi. IBAN mod-97 ni olib yuradi. Karta Luhn ni olib yuradi. Format mikrofon bilmagan narsalarni biladi.',
-  'landing.beat2.stripLabel':
+  'landing.how.title': 'Qanday ishlaydi',
+  'landing.how.step1.title': 'U notoʻgʻri eshitadi.',
+  'landing.how.step1.body':
+    'Yomon aloqada inglizcha five va nine bir xil eshitiladi. M va N, S va F ham shunday.',
+  'landing.how.step2.title': 'Format javobni cheklaydi.',
+  'landing.how.step2.body':
+    'Konteyner raqamida qolgan belgilardan hisoblangan nazorat raqami bor. IBANda mod‑97, kartada Luhn bor.',
+  'landing.how.step3.title': 'Odatda faqat bitta javob toʻgʻri.',
+  'landing.how.step3.body':
+    '{position}-pozitsiyaga oʻnta raqam mos keladi. Nazorat raqami bilan faqat bittasi toʻgʻri keladi va aynan u yoziladi.',
+  'landing.how.stripLabel':
     'ISO 6346. {spoken}, keyin {check} nazorat raqami — u oʻzidan oldingi oʻnta belgidan hisoblanadi.',
-  'landing.beat2.caption':
-    'Oxirgi katak qulflangan: audioni qanday oʻqish ham uni joyidan qimirlata olmaydi.',
-
-  'landing.beat3.title': 'Odatda faqat bitta javob joiz.',
-  'landing.beat3.body':
-    'Tanigich {position}-oʻringa {heard} qoʻydi, gapirgan odam esa {check} nazorat raqamini aytdi. U yerda oʻnta belgi turishi mumkin edi. Ulardan faqat bittasi arifmetikani mos keltiradi — agent oʻshani indamay yozib qoʻyadi.',
-  'landing.sweep.groupLabel': 'Har bir nomzod belgi beradigan nazorat raqami',
-  'landing.sweep.caption':
-    'Nomaʼlumi — {position}-oʻrin. Oʻsha yerda tura oladigan har bir belgi uchun nazorat raqami mana bunday boʻladi:',
-  'landing.sweep.stub.candidate': '{position}-oʻrin',
-  'landing.sweep.stub.check': 'nazorat raqami',
-  'landing.sweep.sr.heard': 'tanigich eshitgani',
-  'landing.sweep.sr.legal': 'aytilganga mos keladigan yagona qiymat',
-  'landing.beat3.caption':
-    'Oʻntadan toʻqqiztasi aytilgan nazorat raqamiga zid. Oʻninchisi yoziladi.',
-
-  // ------------------------------------------------------- landing: gain --
-
-  'landing.gain.title':
-    'Javobni cheklash tizim koʻtara oladigan xato darajasini oʻn besh barobar oshiradi.',
-  'landing.gain.body.measured':
-    'Sakkizta talaffuz va taxminan oʻn ikki million modellashtirilgan yozuvda oʻlchangan, yechuvchiga qaysi talaffuzni eshitayotgani hech qachon aytilmagan: ISO 6346 da {iso}×, IBAN da {iban}×. Talaffuzlar tanish xatosi boʻyicha koʻpi bilan {spread}× farq qiladi, {budget}× zaxira esa buni oʻn barobar ortigʻi bilan qoplaydi.',
-  'landing.gain.body.noDetection':
-    'Shuning uchun bu yerda talaffuz boʻyicha oʻqitish ham, talaffuzni aniqlash ham yoʻq. Qaysi talaffuzni tinglayotganingizni bilish ±{value} ga arziydi.',
+  'landing.gain.title': 'Cheklov oʻn besh barobar koʻp xatoni koʻtaradi.',
+  'landing.gain.body':
+    'Sakkiz xil aksent va taxminan oʻn ikki million modellashtirilgan yozuvda oʻlchangan: ISO 6346 da {iso}×, IBANda {iban}×. Aksentni bilish ±{value} ga teng, shuning uchun uni hech narsa aniqlamaydi.',
   'landing.gain.ratio.unconstrained': 'cheklovsiz',
   'landing.gain.ratio.constrained': 'cheklov bilan',
-
-  // ---------------------------------------------------- landing: silence --
-
-  'landing.silence.title': 'Sukunat — mahsulotning oʻzi.',
-  'landing.silence.body':
-    'Akustik model aniqlikka hech narsa qoʻshmaydi. Nazorat yigʻindisi va ikkita savol baribir taxminan 100% beradi. Model aslida sotib oladigani — sukunat: ISO 6346 da {iso} punkt, NHS raqamlarida {nhs} punkt sokin tuzatish.',
-  'landing.silence.pull':
-    'Har bir raqamni qayta soʻraydigan agent — bu aynan oʻsha “harflab ayting”, Readback esa uni yoʻq qilish uchun bor.',
-
-  // ------------------------------------------------- landing: blind pairs --
-
-  'landing.blind.title': 'U koʻra olmaydigan oʻn ikkitasi',
-  'landing.blind.body.math':
-    'ISO 6346 {formula} yigʻindisini oladi, shuning uchun 11 modulida bir xil qiymatga ega ikkita belgi nazorat raqami uchun bitta belgidir. Akustik jadval boʻyicha oʻlchanganda, real notoʻgʻri eshitishlarning {share}% shu boʻshliqqa tushadi — oʻn ikkita maʼlum juftlikda.',
-  'landing.blind.body.rest':
-    'Va yana toʻqqiztasi. Agent arifmetika ularni koʻradi deb oʻzini tutish oʻrniga, har safar oʻn ikkitasining hammasi haqida soʻraydi. Bu yerdagi sukunat ishonch emas, arifmetikaning koʻrligi boʻlardi — shuning uchun sahifa yuqorisidagi rafda nazorat raqami mutlaqo joyida boʻlgan raqamning bitta belgisini kutayotgan qator turibdi.',
-  'landing.blind.pair.chars': '{a} va {b}',
-  'landing.blind.pair.math': '{first} va {second}. Ikkalasi ham ≡ {residue} (mod 11).',
-
-  // ------------------------------------------------------ landing: close --
-
+  'landing.limit.title': 'U nimani koʻrmaydi.',
+  'landing.limit.body':
+    'Oʻn ikki juft harf, jumladan B va V, ISO 6346 nazorat raqami uchun farqsiz. Oʻlchangan notoʻgʻri eshitishlarning {share}% ular zimmasiga toʻgʻri keladi. U yerda agent har qanday shubhada soʻraydi, ishonch bilan notoʻgʻri eshitilgani esa eshitilganicha yoziladi. Bu qoldiq oʻlchangan va u nolga teng emas.',
   'landing.close.title': 'Raf — butun interfeysning oʻzi.',
   'landing.close.body':
-    'Oʻqiydigan transkript yoʻq, chunki suhbat hech qachon saqlanmaydi. Bahslashadigan ishonch bahosi yoʻq, chunki tizim shubhasini savol berib bildiradi. Qaytib keladigani — raqam va necha marta boʻlishga toʻgʻri kelgani.',
+    'Transkript saqlanmaydi. Qaytib keladigani — raqam va necha marta gapni boʻlishga toʻgʻri kelgani.',
   // ------------------------------------------------------------- transport --
 
   /* Har bir ApiErrorKind uchun bitta gap, va turlar bir-biridan AJRATILGAN.

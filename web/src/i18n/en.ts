@@ -701,52 +701,22 @@ export const en = {
   'parts.bar.noReading': 'NO READING',
   // -------------------------------------------------------------- landing --
 
-  /* The pitch page. Two things constrain every string in this block.
+  /* The landing page (screens/Landing.tsx). One argument, told once: the
+   * headline, the rack that shows it, three steps, the measured gain, the one
+   * limit, and the ask. Every figure is interpolated from a constant with its
+   * source in docs/, so no translation can change a claim.
    *
-   * FORMAT NAMES AND IDENTIFIER CHARACTERS ARE NOT TRANSLATED. "ISO 6346",
-   * "IBAN", "mod-97", "Luhn", "NHS", "VIN" and every character of a container
-   * number stay exactly as the pipeline produces them, in all three languages.
-   * They arrive here through placeholders so a translator never gets to retype
-   * one -- and a placeholder mismatch is a compile error (types.ts).
-   *
-   * MEASURED NUMBERS ARRIVE THROUGH PLACEHOLDERS TOO, for the same reason and a
-   * second one: they are localised by format.ts, so 14.9 is "14,9" in ru and uz
-   * without the claim being retyped in three places where it could drift from
-   * docs/FINDINGS.md.
-   */
-
-  /* THE HEADLINE IS TWO KEYS BECAUSE IT IS TWO CLAUSES.
-   *
-   * It renders as two block-level spans in every language and in both motion
-   * modes -- the denial, then the reversal that overturns it -- so the pivot is
-   * carried by the line break, which is layout, and not by the animation, which
-   * a reader may have switched off. Landing.tsx explains the measurement that
-   * forced it: at 375px the two clauses share a line, so any per-line split
-   * would have grouped the end of the denial with the start of the reversal.
-   *
-   * Two keys rather than a runtime split on ". ": a translator owns where their
-   * sentence turns, and not every language puts the turn at a full stop. Keep
-   * clause A a complete assertion and clause B the thing that overturns it; do
-   * not move the contrast across the boundary. */
+   * hero.title.a and .b are two keys on purpose: the pivot from denial to
+   * reversal is a line break, and a translator owns where their sentence turns.
+   * landing.rack.meta.* is also read by the record screen. */
   'landing.hero.title.a': 'It does not hear better.',
   'landing.hero.title.b': 'It knows what a valid answer is allowed to be.',
   'landing.hero.lede':
-    'Readback listens in the background of a call and writes reference numbers down: container numbers, IBANs, VINs, patient numbers, card numbers. It does not transcribe the call and it does not summarise it. Most of the time it repairs what it misheard without saying anything. When it cannot, it interrupts once, asks about one character, and goes quiet again.',
-
-  /* Shown in every language, English included, rather than only when the
-   * interface is not English. In English "Readback listens to the call" is
-   * true and unremarkable; translated, the same sentence reads as a promise of
-   * multilingual speech recognition, which Readback does not have. Saying it
-   * once, in the lede, in all three languages, is cheaper than an asterisk. */
+    'Readback listens to a call and writes down reference numbers: containers, IBANs, VINs, patient and card numbers. Most mishearings it repairs in silence. When it cannot, it asks about one character.',
   'landing.hero.scope':
-    'Readback listens to the call in English and asks its one question in English. Only the interface changes language.',
-
-  // The demo rack at the top of the page.
+    'It listens and asks in English. The language setting changes only the screen.',
+  'landing.hero.demo': 'Run the demo',
   'landing.rack.title': 'Capture rack',
-
-  /* Counted in the header line. Two plural sets rather than one hard-coded
-   * "4 captures / 1 question", because both counts are derived from the rows
-   * themselves and Russian needs three forms for each. */
   'landing.rack.meta.captures.one': '{n} capture',
   'landing.rack.meta.captures.few': '{n} captures',
   'landing.rack.meta.captures.many': '{n} captures',
@@ -755,99 +725,34 @@ export const en = {
   'landing.rack.meta.questions.few': '{n} questions',
   'landing.rack.meta.questions.many': '{n} questions',
   'landing.rack.meta.questions.other': '{n} questions',
-
   'landing.row.repaired.note':
     'position {position} · heard {heard} · wrote {written} · check digit {check} agrees',
-  'landing.row.asking.note': 'one of the twelve blind pairs',
-
-  /* The agent's own question. The quoted fragment is what it says on the call,
-   * and the call is in English -- so the fragment stays English in every
-   * catalog and uz/ru name it as a quotation rather than passing it off as the
-   * interface language. {aWord} and {bWord} are NATO alphabet words, which are
-   * English by definition. */
   'landing.row.asking.question':
     'Position {position} — {a} for {aWord}, or {b} for {bWord}? Both leave check digit {check}, so the arithmetic will never object to either.',
-
-  'landing.row.arriving.digits.one': '{n} digit still to come',
-  'landing.row.arriving.digits.few': '{n} digits still to come',
-  'landing.row.arriving.digits.many': '{n} digits still to come',
-  'landing.row.arriving.digits.other': '{n} digits still to come',
-
+  'landing.row.asking.note': 'one of the twelve blind pairs',
   'landing.row.settled.note': 'check digit {check} agrees · nothing to repair',
-
-  // ------------------------------------------------------ landing: beats --
-
-  'landing.beats.title': 'Three beats, and the middle one is the product',
-
-  'landing.beat1.title': 'It mishears.',
-  /* The confusable pairs are English words heard by an English recogniser. In
-   * English that goes without saying; uz and ru say "English five and nine",
-   * because "five and nine sound alike" is simply false about Russian pyat and
-   * devyat and would be a fabricated claim rather than a translation. */
-  'landing.beat1.body':
-    'In noise, five and nine are the same sound. So are M and N, S and F, fifteen and fifty. No amount of acoustic modelling settles this, because the information is not in the audio.',
-  'landing.beat1.caption': 'Indistinguishable on a bad line, in any accent.',
-  /* One utterance per pair, so the two letters and the relation between them
-   * are announced in the word order the language actually uses. */
-  'landing.confusable.soundsLike': '{a} sounds like {b}',
-
-  'landing.beat2.title': 'The format constrains the answer.',
-  'landing.beat2.body':
-    'A container number is not eleven free characters. It is ten characters and a check digit computed from them, and the last box is written by arithmetic rather than by the microphone. An IBAN carries mod-97. A card carries Luhn. The format knows things the microphone does not.',
-  'landing.beat2.stripLabel':
+  'landing.how.title': 'How it works',
+  'landing.how.step1.title': 'It mishears.',
+  'landing.how.step1.body': 'On a bad line, five and nine are one sound. So are M and N, S and F.',
+  'landing.how.step2.title': 'The format constrains the answer.',
+  'landing.how.step2.body':
+    'A container number carries a check digit computed from the rest. An IBAN carries mod‑97, a card carries Luhn.',
+  'landing.how.step3.title': 'Usually one answer is legal.',
+  'landing.how.step3.body':
+    'Ten digits fit position {position}. One agrees with the check digit, and that one is written.',
+  'landing.how.stripLabel':
     'ISO 6346. {spoken}, then check digit {check}, which is computed from the ten characters before it.',
-  'landing.beat2.caption': 'The last box is locked: no reading of the audio can move it.',
-
-  'landing.beat3.title': 'Usually only one answer is legal.',
-  'landing.beat3.body':
-    'The recogniser put a {heard} in position {position} and the speaker read out check digit {check}. Ten characters could have stood there. One of them makes the arithmetic agree, so the agent writes it down and says nothing.',
-  'landing.sweep.groupLabel': 'Check digit produced by each candidate character',
-  /* The identifier is NOT in this sentence. It is rendered beside it, inside a
-   * translate="no" run, because a page translator asked for Russian will
-   * happily rewrite a bare Latin code sitting in a Russian sentence. */
-  'landing.sweep.caption':
-    'Position {position} is the unknown. This is what the check digit becomes for each character that could stand there:',
-  'landing.sweep.stub.candidate': 'position {position}',
-  'landing.sweep.stub.check': 'check digit',
-  'landing.sweep.sr.heard': 'what the recogniser heard',
-  'landing.sweep.sr.legal': 'the only value that matches what was said',
-  'landing.beat3.caption':
-    'Nine of the ten contradict the check digit that was spoken. The tenth is what gets written.',
-
-  // ------------------------------------------------------- landing: gain --
-
-  'landing.gain.title':
-    'Constraining the answer multiplies the error rate the system absorbs by fifteen.',
-  'landing.gain.body.measured':
-    'Measured across eight accents and around twelve million simulated captures, with the solver never told which accent it was hearing: {iso}× on ISO 6346, {iban}× on IBAN. Accents differ in recognition error rate by at most {spread}×, and a {budget}× budget absorbs that with an order of magnitude to spare.',
-  'landing.gain.body.noDetection':
-    'That is why there is no accent training here and no accent detection. Knowing which accent you are listening to is worth ±{value}.',
+  'landing.gain.title': 'The constraint absorbs fifteen times the error.',
+  'landing.gain.body':
+    'Measured across eight accents and about twelve million simulated captures: {iso}× on ISO 6346, {iban}× on IBAN. Knowing the accent is worth ±{value}, so nothing detects it.',
   'landing.gain.ratio.unconstrained': 'unconstrained',
   'landing.gain.ratio.constrained': 'constrained',
-
-  // ---------------------------------------------------- landing: silence --
-
-  'landing.silence.title': 'Silence is the product.',
-  'landing.silence.body':
-    'The acoustic model contributes zero accuracy. Checksum plus two questions reaches about 100% either way. What the model actually buys is quiet: {iso} points of silent repair on ISO 6346, {nhs} points on NHS numbers.',
-  'landing.silence.pull':
-    'An agent that asks about every number is the “can you spell that” this exists to delete.',
-
-  // ------------------------------------------------- landing: blind pairs --
-
-  'landing.blind.title': 'The twelve it cannot see',
-  'landing.blind.body.math':
-    'ISO 6346 sums {formula}, so two characters with the same value mod 11 are the same character as far as the check digit is concerned. Measured against the acoustic table, {share}% of realistic mishearing lands in that gap, across twelve known pairs.',
-  'landing.blind.body.rest':
-    'And nine more. The agent asks about all twelve every time rather than pretending the arithmetic can see them. Silence there would not be confidence, it would be arithmetic that cannot see — which is why the rack at the top of this page has a row waiting on one character of a number whose check digit is perfectly happy.',
-  'landing.blind.pair.chars': '{a} and {b}',
-  'landing.blind.pair.math': '{first} and {second}. Both ≡ {residue} (mod 11).',
-
-  // ------------------------------------------------------ landing: close --
-
+  'landing.limit.title': 'What it cannot see.',
+  'landing.limit.body':
+    'Twelve letter pairs, B and V among them, are invisible to the ISO 6346 check digit. They carry {share}% of measured mishearings. There the agent asks on any doubt, and a confident mishearing is written as heard. That residue is measured, not zero.',
   'landing.close.title': 'The rack is the whole interface.',
   'landing.close.body':
-    'There is no transcript to read, because the conversation is never stored. There is no confidence score to argue with, because the system expresses doubt by asking. What comes back is the number, and a count of how many times it had to interrupt.',
+    'No transcript is kept. What comes back is the number, and how many times it had to interrupt.',
 
   // --------------------------------------------------------------- record --
 
