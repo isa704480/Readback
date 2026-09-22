@@ -994,7 +994,7 @@ async def session_audio(websocket: WebSocket, session_id: uuid.UUID,
     try:
         try:
             vocabulary = tuple(vocabulary_for(db, row.organisation_id))
-            catalogue = _catalogue_index(db)
+            catalogue = _catalogue_index(db, row.organisation_id)
             source = open_source(settings, None, config=_connect_config(vocabulary))
             await source.connect()
         except Exception:
@@ -1672,13 +1672,17 @@ class CatalogueRequest(BaseModel):
     parts: list[CataloguePartIn]
 
 
-def _catalogue_index(db: SASession) -> CatalogueIndex:
-    """The catalogue as the runner matches against it, read once per session."""
-    return CatalogueIndex((r.sku, r.description) for r in db.scalars(select(CataloguePart)))
+def _catalogue_index(db: SASession, org_id: uuid.UUID) -> CatalogueIndex:
+    """The organisation's catalogue as the runner matches against it, read once
+    per session. Never another organisation's: this is what vouches."""
+    return CatalogueIndex((r.sku, r.description) for r in db.scalars(
+        select(CataloguePart).where(CataloguePart.organisation_id == org_id)))
 
 
-def _catalogue_payload(db: SASession) -> dict[str, Any]:
-    rows = list(db.scalars(select(CataloguePart).order_by(CataloguePart.sku)))
+def _catalogue_payload(db: SASession, org_id: uuid.UUID) -> dict[str, Any]:
+    rows = list(db.scalars(select(CataloguePart)
+                           .where(CataloguePart.organisation_id == org_id)
+                           .order_by(CataloguePart.sku)))
     return {
         "parts": [{"sku": r.sku, "description": r.description} for r in rows],
         "max_rows": CATALOGUE_MAX_ROWS,
@@ -1689,15 +1693,11 @@ def _catalogue_payload(db: SASession) -> dict[str, Any]:
 @app.get("/api/catalogue")
 def get_catalogue(user: User = Depends(auth.current_user),
                   db: SASession = Depends(get_db)) -> dict[str, Any]:
-    """ARCH 3.9: the part catalogue that stands in for a check digit.
-
-    One per deployment: `catalogue_part` carries no organisation, by the
-    model's own design (the rhyme-signature index is the point, and it is
-    global). So it is read and replaced by any signed-in account, and a row
-    here is exactly what the runner will vouch for on the `catalogue` format.
+    """ARCH 3.9: the organisation's part catalogue, which stands in for a check
+    digit. A row here is exactly what the runner will vouch for on the
+    `catalogue` format -- for this organisation's sessions and no one else's.
     """
-    del user
-    return _catalogue_payload(db)
+    return _catalogue_payload(db, user.organisation_id)
 
 
 @app.put("/api/catalogue")
@@ -1725,14 +1725,15 @@ def put_catalogue(body: CatalogueRequest,
             "too_many_parts",
             f"{len(kept)} parts; the cap is {CATALOGUE_MAX_ROWS}.",
         )
-    db.execute(delete(CataloguePart))
+    org_id = user.organisation_id
+    db.execute(delete(CataloguePart).where(CataloguePart.organisation_id == org_id))
     for sku, description in kept.values():
-        db.add(CataloguePart(sku=sku, description=description,
+        db.add(CataloguePart(organisation_id=org_id, sku=sku, description=description,
                              rhyme_signature=catalogue_signature(sku)))
     audit.record(db, audit.CATALOGUE_SET, organisation_id=user.organisation_id,
                  session_id=None, actor="human", detail={"parts": len(kept)})
     db.commit()
-    return _catalogue_payload(db)
+    return _catalogue_payload(db, org_id)
 
 
 # ------------------------------------------------------------------ record ---
@@ -2061,7 +2062,7 @@ async def demo_replay(body: ReplayRequest,
         _SESSIONS[row.id] = live
 
     vocabulary = tuple(vocabulary_for(db, row.organisation_id))
-    catalogue = _catalogue_index(db)
+    catalogue = _catalogue_index(db, row.organisation_id)
     source = open_source(settings, path.stem, speed=body.speed,
                          config=_connect_config(vocabulary))
     live.source = source

@@ -142,7 +142,8 @@ def test_insert_one_of_each() -> None:
         db.add(q)
 
         db.add(OwnerCode(code="MSK", owner="Maersk A/S", weight=0.081))
-        db.add(CataloguePart(sku="BX-4471-A", description="Bearing housing",
+        db.add(CataloguePart(organisation_id=org.id, sku="BX-4471-A",
+                             description="Bearing housing",
                              rhyme_signature="EI-FFAI-A"))
         db.add(ConfusionObservation(heard="9", truth="5", n=3))
 

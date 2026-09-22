@@ -206,3 +206,79 @@ def test_a_cross_origin_put_passes_preflight() -> None:
         assert r.headers.get("access-control-allow-origin") == origin
     finally:
         fx.close()
+
+
+# --------------------------------------------------------------- section G ---
+
+def _member(fx: _Fixture, org_name: str, email: str) -> dict[str, str]:
+    from server import auth
+    from server.models import Organisation, User
+
+    with fx.Factory() as db:
+        org = Organisation(name=org_name)
+        user = User(organisation=org, email=email, name=org_name,
+                    password_hash="pbkdf2_sha256$1$00$00", role="owner")
+        db.add_all([org, user])
+        db.commit()
+        return {"Authorization": f"Bearer {auth.issue_token(user, _settings())}"}
+
+
+def test_one_organisation_cannot_read_or_replace_anothers_catalogue() -> None:
+    """The catalogue was one table for the whole deployment, readable and
+    replaceable by ANY signed-in account -- and sign-up is open. A stranger
+    could read another company's part list, or replace it, and the catalogue is
+    exactly what vouches for a `catalogue` capture: silently, at edit distance
+    up to 2, with no question asked. Each organisation now has its own."""
+    fx = _Fixture()
+    try:
+        docks = _member(fx, "Docks Ltd", "ada@docks.example")
+        rival = _member(fx, "Rival Co", "eve@rival.example")
+
+        mine = [{"sku": "BX-4471-A", "description": "Bearing housing"}]
+        assert fx.client.put("/api/catalogue", headers=docks,
+                             json={"parts": mine}).status_code == 200
+
+        # The other organisation sees nothing of it...
+        assert fx.client.get("/api/catalogue", headers=rival).json()["parts"] == []
+        # ...and replacing "the" catalogue replaces only its own.
+        theirs = [{"sku": "EV-0001-X", "description": "planted"}]
+        assert fx.client.put("/api/catalogue", headers=rival,
+                             json={"parts": theirs}).status_code == 200
+        assert fx.client.get("/api/catalogue", headers=docks).json()["parts"] == mine
+        assert fx.client.get("/api/catalogue", headers=rival).json()["parts"] == theirs
+    finally:
+        fx.close()
+
+
+def test_an_unscoped_catalogue_table_is_set_aside_not_read() -> None:
+    """A database created before catalogues had an owner keeps the old table.
+    Boot renames it aside -- never dropped, never served -- and creates the
+    scoped one. Running twice changes nothing."""
+    import sqlalchemy as sa
+
+    from server.db import create_all as boot
+
+    fd, path = tempfile.mkstemp(suffix=".sqlite3", prefix="readback_legacy_")
+    os.close(fd)
+    eng = make_engine(f"sqlite:///{path}", echo=False, settings=_settings())
+    try:
+        with eng.begin() as conn:
+            conn.exec_driver_sql(
+                "CREATE TABLE catalogue_part (sku VARCHAR(64) PRIMARY KEY, "
+                "description VARCHAR(255) NOT NULL, rhyme_signature VARCHAR(64) "
+                "NOT NULL, updated_at TIMESTAMP NOT NULL)")
+            conn.exec_driver_sql("CREATE INDEX ix_catalogue_rhyme ON catalogue_part (rhyme_signature)")
+            conn.exec_driver_sql(
+                "INSERT INTO catalogue_part VALUES ('BX-4471-A', 'old', 'x', '2026-09-01')")
+        boot(eng)
+        boot(eng)
+        insp = sa.inspect(eng)
+        assert "organisation_id" in {c["name"] for c in insp.get_columns("catalogue_part")}
+        assert "catalogue_part_unscoped_legacy" in insp.get_table_names()
+        with eng.connect() as conn:
+            kept = conn.exec_driver_sql(
+                "SELECT sku FROM catalogue_part_unscoped_legacy").scalars().all()
+            served = conn.exec_driver_sql("SELECT COUNT(*) FROM catalogue_part").scalar()
+        assert kept == ["BX-4471-A"] and served == 0
+    finally:
+        eng.dispose()

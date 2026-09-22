@@ -609,16 +609,25 @@ class CataloguePart(Base):
     a hypothesis is valid iff a row exists within edit distance 2. The rhyme
     signature is the multi-probe index key -- solver.RHYME collapses acoustically
     confusable characters to one class, so a lookup on it retrieves the whole
-    confusable neighbourhood in one indexed read instead of a scan."""
+    confusable neighbourhood in one indexed read instead of a scan.
+
+    One catalogue per ORGANISATION. It used to be one per deployment, read and
+    replaced by any signed-in account while sign-up was open -- so a stranger
+    could read another company's part list or plant their own, and the catalogue
+    is what vouches for a `catalogue` capture silently (22 September audit).
+    A table created before that is renamed aside on boot by
+    db.create_all, never read: its rows have no owner to give them to."""
 
     __tablename__ = "catalogue_part"
 
+    organisation_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("organisation.id", ondelete="CASCADE"), primary_key=True)
     sku: Mapped[str] = mapped_column(String(64), primary_key=True)
     description: Mapped[str] = mapped_column(String(255), nullable=False)
     rhyme_signature: Mapped[str] = mapped_column(String(64), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(TS, nullable=False, default=utcnow)
 
-    __table_args__ = (Index("ix_catalogue_rhyme", "rhyme_signature"),)
+    __table_args__ = (Index("ix_catalogue_rhyme", "organisation_id", "rhyme_signature"),)
 
 
 class ConfusionObservation(Base):

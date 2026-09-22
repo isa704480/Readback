@@ -112,7 +112,39 @@ def create_all(engine: Engine | None = None) -> None:
     """
     from server.models import Base
 
-    Base.metadata.create_all(engine or get_engine())
+    eng = engine or get_engine()
+    _set_aside_unscoped_catalogue(eng)
+    Base.metadata.create_all(eng)
+
+
+def _set_aside_unscoped_catalogue(eng: Engine) -> None:
+    """A `catalogue_part` table from before catalogues belonged to an
+    organisation has no `organisation_id`, and `create_all` never alters an
+    existing table -- so every read would fail on the missing column. Rename it
+    aside instead of dropping it: its rows had no owner then and cannot be
+    given one now, but a person may still want to look at them.
+
+    Idempotent. The one schema change this project has made without a
+    migration tool, and it is here, next to create_all, so it is not a second
+    place anybody has to remember.
+    """
+    from sqlalchemy import inspect
+
+    names = inspect(eng).get_table_names()
+    if "catalogue_part" not in names:
+        return
+    columns = {c["name"] for c in inspect(eng).get_columns("catalogue_part")}
+    if "organisation_id" in columns:
+        return
+    legacy, n = "catalogue_part_unscoped_legacy", 1
+    while legacy in names:            # never overwrite an earlier set-aside
+        n += 1
+        legacy = f"catalogue_part_unscoped_legacy_{n}"
+    with eng.begin() as conn:
+        conn.exec_driver_sql(f"ALTER TABLE catalogue_part RENAME TO {legacy}")
+        # SQLite keeps the old index name on the renamed table, and the new
+        # table wants the same name.
+        conn.exec_driver_sql("DROP INDEX IF EXISTS ix_catalogue_rhyme")
 
 
 def drop_all(engine: Engine | None = None) -> None:
