@@ -8,6 +8,7 @@ written before the fix so that it failed first. Section by section:
   C  the interactive API map is not served in production
   D  the client address is the one the outermost TRUSTED proxy wrote
   E  production refuses placeholder secrets whatever the database is
+  F  a cross-origin PUT -- the vocabulary save -- passes preflight
 
 Runs under pytest or as a script.
 """
@@ -183,3 +184,25 @@ def test_production_refuses_placeholder_secrets_even_on_sqlite() -> None:
              session_secret="a" * 48, ip_hash_salt="b" * 48)
     # A laptop is still a laptop.
     Settings(database_url="sqlite:///./x.db")
+
+
+# --------------------------------------------------------------- section F ---
+
+def test_a_cross_origin_put_passes_preflight() -> None:
+    """The web app PUTs /api/vocabulary with a bearer token. CORS allowed GET,
+    POST and OPTIONS only, so in production -- Vercel calling Render -- the
+    browser refused the preflight and the vocabulary pack could never be saved.
+    It worked locally because the Vite dev proxy is same-origin."""
+    fx = _Fixture()
+    try:
+        origin = _settings().cors_origin_list[0]
+        r = fx.client.options("/api/vocabulary", headers={
+            "Origin": origin,
+            "Access-Control-Request-Method": "PUT",
+            "Access-Control-Request-Headers": "authorization,content-type",
+        })
+        assert r.status_code == 200, r.status_code
+        assert "PUT" in r.headers.get("access-control-allow-methods", "")
+        assert r.headers.get("access-control-allow-origin") == origin
+    finally:
+        fx.close()
