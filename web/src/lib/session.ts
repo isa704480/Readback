@@ -8,11 +8,22 @@
 
 /* The server agent is building against :8000. Set VITE_READBACK_API to an empty
  * string to go same-origin instead, which routes through the dev proxy in
- * vite.config.ts and is what a deployed build wants. */
+ * vite.config.ts and is what a deployed build wants.
+ *
+ * The :8000 fallback is for `vite dev` only. A production build that forgot
+ * the variable used to send sign-in and the bearer token to
+ * http://localhost:8000 -- whatever happened to listen on the VISITOR's own
+ * machine. The CSP in vercel.json blocks plain http, but a guard that holds
+ * only because another layer exists is not a guard; unset in production now
+ * means same-origin, which fails closed and visibly. */
 const RAW_BASE = import.meta.env.VITE_READBACK_API;
 
 export const apiBase: string =
-  RAW_BASE === undefined ? 'http://localhost:8000' : RAW_BASE.replace(/\/+$/, '');
+  RAW_BASE !== undefined
+    ? RAW_BASE.replace(/\/+$/, '')
+    : import.meta.env.PROD
+      ? ''
+      : 'http://localhost:8000';
 
 const TOKEN_KEY = 'readback.token';
 

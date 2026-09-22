@@ -48,6 +48,11 @@ class Settings(BaseSettings):
     replay_mode: bool = False
     replay_fixture_dir: str = "tests/fixtures/turns"
 
+    # /docs, /redoc and /openapi.json. Off unless asked for: on a deployment they
+    # hand any visitor every route and every schema, which is a map, not a
+    # feature. READBACK_API_DOCS=true on a laptop.
+    api_docs: bool = False
+
     # ------------------------------------------------------------ the money --
     # universal-3-5-pro 0.45 + voice_focus 0.10 + prompting 0.05 = $0.60/hr per
     # socket = $0.000167 per socket-second. ARCH 3.11's $20/day ceiling is

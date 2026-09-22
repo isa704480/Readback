@@ -191,8 +191,11 @@ services:
         value: INFO
 
       # --- runtime ----------------------------------------------------------
+      # 3.12 is in its security-fixes-only phase, so every patch release IS a
+      # security release: 3.12.9 (Feb 2025) was seven behind. Bump this when
+      # python.org lists a newer 3.12.x -- same minor, so the hashed lock holds.
       - key: PYTHON_VERSION
-        value: "3.12.9"
+        value: "3.12.16"
       # Unbuffered stdout, so uvicorn's logs reach the Render log tail as they
       # happen rather than in blocks when the buffer flushes.
       - key: PYTHONUNBUFFERED

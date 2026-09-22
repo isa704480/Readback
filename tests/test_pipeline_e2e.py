@@ -687,8 +687,10 @@ def check_api(c: Checks) -> None:
     with TestClient(main.app) as client:
         health = client.get("/health").json()
         c.ok("api: health reports the seam", "live_capture" in health)
-        c.ok("api: and lists the fixtures",
-             set(FIXTURES) <= set(health["fixtures"]))
+        # The fixture list is read from the process, not /health: the public
+        # endpoint no longer publishes it (test_security_properties B).
+        c.ok("api: and the fixtures are on disk where replay looks",
+             set(FIXTURES) <= {p.stem for p in main.fixture_dir().glob("*.json")})
 
         reset_limits()
         refused = client.post("/api/session/start",
@@ -841,18 +843,20 @@ def check_api(c: Checks) -> None:
             for window in (main._PER_HOUR, main._PER_DAY, main._ADMISSIONS):
                 window.counts.clear()
             client.post("/api/demo/replay", json={"fixture": "iso_clean_single_turn"})
-        health = client.get("/health").json()
-        c.eq("api: a finished replay holds no capture slot", health["sessions_open"], 0)
+        # Load is read from the process: /health stopped publishing it.
+        settings_now = main.get_settings()
+        c.eq("api: a finished replay holds no capture slot",
+             main._running_sessions(settings_now), 0)
         c.ok("api: but its record is still in memory to be read",
-             health["sessions_retained"] >= main.get_settings().max_concurrent_sessions,
-             f"retained={health['sessions_retained']}")
+             len(main._SESSIONS) >= settings_now.max_concurrent_sessions,
+             f"retained={len(main._SESSIONS)}")
         for window in (main._PER_HOUR, main._PER_DAY, main._ADMISSIONS):
             window.counts.clear()
         again = client.post("/api/session/start",
                             json={"consent": {"accepted": True}})
         c.eq("api: so a session can still start after them", again.status_code, 200)
         c.eq("api: and it is the one occupying a slot",
-             client.get("/health").json()["sessions_open"], 1)
+             main._running_sessions(main.get_settings()), 1)
 
         # The gate still has to bite on sessions that really are running.
         for _ in range(main.get_settings().max_concurrent_sessions):

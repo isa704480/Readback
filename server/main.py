@@ -313,7 +313,18 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             live.task.cancel()
 
 
-app = FastAPI(title="Readback", version="0.1.0", lifespan=lifespan)
+def _docs_urls(settings: Settings) -> tuple[str | None, str | None, str | None]:
+    """(docs, redoc, openapi) -- all three None unless READBACK_API_DOCS is set.
+    Read once, at construction: FastAPI mounts these routes when the app is
+    built, so a flag flipped at runtime would change nothing."""
+    if settings.api_docs:
+        return "/docs", "/redoc", "/openapi.json"
+    return None, None, None
+
+
+_DOCS, _REDOC, _OPENAPI = _docs_urls(get_settings())
+app = FastAPI(title="Readback", version="0.1.0", lifespan=lifespan,
+              docs_url=_DOCS, redoc_url=_REDOC, openapi_url=_OPENAPI)
 
 # The browser refuses a cross-origin request before the route is ever reached,
 # so a missing CORS layer presents as "the endpoint does not exist" in a console
@@ -368,20 +379,93 @@ async def _flat_validation_errors(request: Request,
     })
 
 
-@app.middleware("http")
-async def _bound_body(request: Request, call_next):
+class _BodyTooLarge(Exception):
+    """Raised out of the wrapped `receive` the moment the running total passes
+    the cap, so no handler ever holds the rest of the body."""
+
+
+class _BoundBody:
     """Refuse an oversize body with the same flat shape as every other failure.
 
-    Content-Length is a claim, not a fact, so the streaming path is bounded
-    too: a chunked body that runs past the cap is cut off rather than buffered.
+    Content-Length is a claim, not a fact. The first version of this guard read
+    only the header, and its docstring promised more than that: a body sent
+    chunked, with no Content-Length at all, was buffered in full and parsed
+    (measured 22 September -- 1.1 MB reached the handler, which answered with
+    its own field error). So the bound is on bytes actually received: the ASGI
+    `receive` is wrapped and counts every `http.request` chunk as it arrives.
+    The header check stays in front of it as the cheap early exit.
+
+    A raw ASGI class rather than `@app.middleware("http")`: that decorator
+    hands the handler a Request whose body stream it does not own, so it can
+    see the header and nothing after it.
     """
-    declared = request.headers.get("content-length")
-    if declared is not None and declared.isdigit() and int(declared) > MAX_BODY_BYTES:
-        return JSONResponse(status_code=413, content={
+
+    def __init__(self, app, max_bytes: int = MAX_BODY_BYTES) -> None:
+        self.app = app
+        self.max_bytes = max_bytes
+
+    async def _refuse(self, send) -> None:
+        payload = json.dumps({
             "error": "body_too_large",
-            "message": f"the request body must be at most {MAX_BODY_BYTES} bytes.",
-        })
-    return await call_next(request)
+            "message": f"the request body must be at most {self.max_bytes} bytes.",
+        }).encode("utf-8")
+        await send({"type": "http.response.start", "status": 413,
+                    "headers": [(b"content-type", b"application/json"),
+                                (b"content-length", str(len(payload)).encode()),
+                                (b"connection", b"close")]})
+        await send({"type": "http.response.body", "body": payload})
+
+    async def __call__(self, scope, receive, send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        for name, value in scope.get("headers", ()):
+            if name == b"content-length" and value.isdigit() and int(value) > self.max_bytes:
+                await self._refuse(send)
+                return
+
+        received = 0
+        started = False
+        tripped = False
+
+        async def bounded_receive():
+            nonlocal received, tripped
+            message = await receive()
+            if message["type"] == "http.request":
+                received += len(message.get("body", b""))
+                if received > self.max_bytes:
+                    tripped = True
+                    raise _BodyTooLarge
+            return message
+
+        async def tracking_send(message) -> None:
+            # FastAPI catches ANY exception raised while it reads a body and
+            # answers 400 "There was an error parsing the body" in its own
+            # `detail` shape. The cut-off already happened -- nothing past the
+            # cap was buffered -- but the answer should say what happened, in
+            # the shape every other failure here uses. So once the cap has
+            # tripped, the app's own response is replaced, not forwarded.
+            nonlocal started
+            if tripped:
+                if message["type"] == "http.response.start" and not started:
+                    started = True
+                    await self._refuse(send)
+                return
+            if message["type"] == "http.response.start":
+                started = True
+            await send(message)
+
+        try:
+            await self.app(scope, bounded_receive, tracking_send)
+        except _BodyTooLarge:
+            # The body is read before any response starts, so this is the
+            # normal case; if something did start answering, the connection is
+            # simply dropped rather than given two responses.
+            if not started:
+                await self._refuse(send)
+
+
+app.add_middleware(_BoundBody)
 
 
 app.add_middleware(
@@ -426,20 +510,22 @@ async def _flat_errors(request: Request, exc: HTTPException) -> JSONResponse:
 @app.get("/health")
 def health(settings: Settings = Depends(get_settings)) -> dict[str, Any]:
     """Says which path the next session will take, because that is the one thing
-    about this deployment that changes tonight."""
+    about this deployment that changes tonight.
+
+    Unauthenticated, so it carries only what the consent screen reads. It used
+    to publish `sessions_open` beside the known concurrency cap -- telling
+    anyone the exact moment admission was one session from full, which is the
+    timing a capacity-exhaustion attempt needs -- plus an in-memory record
+    count and the fixture list. Tests read those from the process directly
+    (`_running_sessions`, `_SESSIONS`, `fixture_dir()`), which is where an
+    operator looking at load should read them too.
+    """
     return {
         "ok": True,
         "live_capture": settings.live_capture,
         "replay_mode": settings.replay_mode,
         "consent_required": settings.consent_required,
         "consent_version": settings.consent_version,
-        "fixtures": sorted(p.stem for p in fixture_dir().glob("*.json")),
-        # Two numbers, because they answer different questions. `sessions_open`
-        # is what the concurrency gate counts -- pipelines that can still spend
-        # money. `sessions_retained` is how many finished records are still
-        # readable in memory, which is a memory fact and not an admission one.
-        "sessions_open": _running_sessions(settings),
-        "sessions_retained": len(_SESSIONS),
     }
 
 
