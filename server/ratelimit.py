@@ -93,21 +93,42 @@ def check(limit: Limit, key: str, message: str) -> None:
         raise RateLimited(b.retry_after(), message)
 
 
-def client_ip(request) -> str:
-    """Best-effort client address.
+def forwarded_client(header: str, hops: int) -> str | None:
+    """The client address out of an X-Forwarded-For value, given how many
+    trusted proxies append to it.
 
-    X-Forwarded-For is trusted here because Render terminates TLS and sets it.
-    Behind a proxy that does NOT set it, this header is attacker-controlled and
-    the limit becomes bypassable — so a deployment on different infrastructure
-    must revisit this line rather than assume it.
+    Each proxy appends the address it saw, so the rightmost `hops` entries are
+    the trusted proxies' word and entry `-hops` is what the outermost of them
+    saw: the client. Everything to its left was written by the client and is
+    worth nothing. The leftmost entry made every per-IP limit bypassable by
+    setting the header (measured in the 2026-09-07 audit); a fixed "rightmost"
+    was correct for Render alone and wrong the day Cloudflare sits in front,
+    when it becomes the CDN's address and every user shares one limit.
+
+    Fewer entries than hops means the request did not pass every proxy, so the
+    leftmost -- written by whichever trusted proxy did see it -- is the peer.
     """
-    forwarded = request.headers.get("x-forwarded-for", "")
-    if forwarded:
-        # The RIGHTMOST entry: a proxy appends the address it saw, so that one
-        # is the proxy's word; the leftmost is whatever the client wrote into
-        # its own request. Leftmost made every per-IP limit bypassable by
-        # setting the header (measured in the 2026-09-07 audit).
-        return forwarded.split(",")[-1].strip()
+    if hops <= 0:
+        return None
+    entries = [e.strip() for e in header.split(",") if e.strip()]
+    if not entries:
+        return None
+    return entries[max(0, len(entries) - hops)]
+
+
+def client_ip(request) -> str:
+    """Best-effort client address, per READBACK_TRUSTED_PROXY_HOPS.
+
+    With hops = 0 the header is ignored. That is only correct when uvicorn runs
+    WITHOUT --proxy-headers: with it, uvicorn has already rewritten
+    request.client.host from the header's leftmost, client-written entry.
+    """
+    from server.config import get_settings  # late: config must not import this
+
+    hops = get_settings().trusted_proxy_hops
+    found = forwarded_client(request.headers.get("x-forwarded-for", ""), hops)
+    if found:
+        return found
     return getattr(request.client, "host", "unknown") or "unknown"
 
 # ARCH 3.11: a demo replay writes a session row and runs a pipeline, anonymously.

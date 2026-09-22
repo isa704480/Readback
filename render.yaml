@@ -190,6 +190,16 @@ services:
       - key: READBACK_LOG_LEVEL
         value: INFO
 
+      # Refuses the placeholder secrets whatever the database is (config.py).
+      - key: READBACK_ENVIRONMENT
+        value: production
+
+      # Proxies that append to X-Forwarded-For. 1 = Render's own edge. Measure
+      # it after the first deploy rather than trust this line -- the procedure
+      # is in docs/DEPLOY.md, "Client addresses".
+      - key: READBACK_TRUSTED_PROXY_HOPS
+        value: "1"
+
       # --- runtime ----------------------------------------------------------
       # 3.12 is in its security-fixes-only phase, so every patch release IS a
       # security release: 3.12.9 (Feb 2025) was seven behind. Bump this when

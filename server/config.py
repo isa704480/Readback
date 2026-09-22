@@ -53,6 +53,21 @@ class Settings(BaseSettings):
     # feature. READBACK_API_DOCS=true on a laptop.
     api_docs: bool = False
 
+    # Said out loud rather than inferred. The placeholder-secret refusal used to
+    # key on "the database is not SQLite", so a production box that happened to
+    # run on SQLite signed every token with a secret printed in this file.
+    # render.yaml sets production; nothing else needs to.
+    environment: Literal["development", "production"] = "development"
+
+    # How many proxies in front of this process append to X-Forwarded-For. The
+    # client's address is the entry the OUTERMOST trusted proxy wrote, counted
+    # from the right: 1 for Render alone, 2 if Cloudflare sits in front of it
+    # and appends too. 0 means nothing trusted appends and the header is
+    # ignored. Wrong in the low direction merges every user into one proxy
+    # address (a shared rate limit); wrong in the high direction trusts a
+    # client-written entry (a bypass). docs/DEPLOY.md says how to measure it.
+    trusted_proxy_hops: int = Field(default=1, ge=0, le=5)
+
     # ------------------------------------------------------------ the money --
     # universal-3-5-pro 0.45 + voice_focus 0.10 + prompting 0.05 = $0.60/hr per
     # socket = $0.000167 per socket-second. ARCH 3.11's $20/day ceiling is
@@ -185,7 +200,10 @@ class Settings(BaseSettings):
         # issues tokens, and a placeholder session secret makes every one of
         # them forgeable. The audit of 2026-09-07 found the `and` above this
         # line left exactly that shape unguarded.
-        if not self.database_url.startswith("sqlite"):
+        # An explicit production flag closes the last shape: SQLite on a real
+        # server. The database test stays as a second trigger so an older
+        # deployment that never set the flag is still covered.
+        if self.environment == "production" or not self.database_url.startswith("sqlite"):
             for name, value in _PLACEHOLDER_SECRETS:
                 # Empty counts as placeholder: pydantic-settings hands an env var
                 # that is set-but-blank through as "", not as the default, and
@@ -198,8 +216,9 @@ class Settings(BaseSettings):
                     # Any other exception type propagates untouched.
                     raise RuntimeError(
                         f"READBACK_{name.upper()} is empty or still the development "
-                        f"placeholder. A deployment with an AssemblyAI key and a "
-                        f"real database must set its own value: "
+                        f"placeholder. A production deployment (READBACK_ENVIRONMENT"
+                        f"=production, or any non-SQLite database) must set its own "
+                        f"value: "
                         f"python -c \"import secrets; print(secrets.token_urlsafe(48))\""
                     )
         return self

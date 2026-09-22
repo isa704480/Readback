@@ -383,12 +383,14 @@ and redeploy: every session replays the recorded fixtures, no socket opens,
 
 ```ts
 const RAW_BASE = import.meta.env.VITE_READBACK_API;
-export const apiBase = RAW_BASE === undefined ? 'http://localhost:8000' : RAW_BASE.replace(/\/+$/, '');
+export const apiBase =
+  RAW_BASE !== undefined ? RAW_BASE.replace(/\/+$/, '')
+  : import.meta.env.PROD ? '' : 'http://localhost:8000';
 ```
 
 | State | `apiBase` | What happens on Vercel |
 | --- | --- | --- |
-| **absent** (forgot to set it) | `http://localhost:8000` | Every request goes to the visitor's own laptop. Mixed-content error on HTTPS; nothing works. |
+| **absent** (forgot to set it) | `''` in a production build, `http://localhost:8000` under `vite dev` | Same as empty below: nothing works, visibly. It used to send sign-in and the token to `http://localhost:8000` on the *visitor's* machine; only the CSP stopped it (22 September audit). |
 | **empty** (`VITE_READBACK_API=`) | `''` → same origin | `fetch('/api/…')` hits Vercel, which has no API. The SPA rewrite hands back `index.html` and the client reports `malformed`. Even with a rewrite to Render for `/api/*`, **Vercel rewrites do not carry WebSocket upgrades**, so `/api/session/{id}/live` and `/audio` would still fail. |
 | **set** to the Render origin | `https://…onrender.com` | Correct. `useLiveSession.ts` turns it into `wss://…onrender.com/api/session/{id}/live` by swapping the scheme. |
 
@@ -479,12 +481,13 @@ API=https://YOUR-SERVICE.onrender.com
 curl -s $API/health
 ```
 
-Expect a JSON object with these fields (plus a fixture list and two session
-counters):
+Expect exactly these fields. Load counters and the fixture list were removed
+on 22 September: unauthenticated, they told anyone the moment admission was
+one session from full.
 
 ```json
 {"ok": true, "live_capture": true, "replay_mode": false,
- "consent_required": true, "consent_version": "2026-09-01", ...}
+ "consent_required": true, "consent_version": "2026-09-01"}
 ```
 
 - `live_capture: false` with `replay_mode: false` → the key never reached the
@@ -551,8 +554,26 @@ Postgres, which the consent story depends on.
    the 3-hour hard close — stop the service and find out why before the next
    demo.
 
-Then run `curl -s $API/health` again and read `sessions_open`. It must be
-`0`. A pipeline that outlives its browser tab is a pipeline that spends money.
+The `Terminate` line in step 6 is the check that nothing is still running.
+A pipeline that outlives its browser tab is a pipeline that spends money.
+
+### 5. Client addresses (READBACK_TRUSTED_PROXY_HOPS)
+
+Every per-address limit -- sign-in, sign-up, demo replay, session admission --
+keys on the address `server/ratelimit.py:client_ip` picks out of
+`X-Forwarded-For`. `render.yaml` assumes one proxy appends to that header.
+Measure it instead of trusting it:
+
+1. From one network (Wi-Fi), fail sign-in on purpose until the API answers
+   `429`.
+2. Immediately, from a different network (a phone hotspot), try once.
+   - It answers normally → addresses are distinct. `1` is right.
+   - It is also `429` → every visitor is being counted as one address: a
+     second proxy is appending. Set `READBACK_TRUSTED_PROXY_HOPS=2`, redeploy,
+     repeat.
+3. Never set it higher than the count you measured. One too many makes the
+   client-written entry the trusted one, and every per-address limit becomes
+   bypassable with a single header.
 
 ---
 
