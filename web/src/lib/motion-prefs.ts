@@ -4,44 +4,36 @@ import { useSyncExternalStore } from 'react';
    ONE PLACE THAT ANSWERS "MAY WE ANIMATE?"
 
    Everything that moves on the landing page asks this file, and gets the same
-   answer at the same moment. Two subsystems disagreeing about the reader's
-   preference is not a small bug: it produces a page where Lenis is smoothing
-   the scroll but no tween is running, or the reverse — tweens playing at full
-   length for someone who asked for stillness.
+   answer at the same moment: the Motion entrances (screens/Landing.tsx), the
+   three.js scene (landing/ContainerScene.tsx), the Swiper autoplay
+   (landing/FormatCarousel.tsx) and the Chart.js bars (landing/GainChart.tsx).
+   Four libraries each asking the browser on their own would disagree the day
+   one of them reads the preference differently -- and a page where the tiles
+   float but the text is still, or the reverse, has lost the preference.
 
    ── WHY THE QUERY IS `no-preference` AND NOT `not reduce` ───────────────────
-   gsap.matchMedia() gates the choreography on '(prefers-reduced-motion:
-   no-preference)'. If this file asked the opposite question — "is `reduce`
-   absent?" — the two would agree on every browser that supports the media
-   feature and DISAGREE on every browser that does not, where both `reduce` and
-   `no-preference` evaluate false. There, `not reduce` says yes and
-   `no-preference` says no, and Lenis would initialise for a page with no
-   tweens to smooth.
-
-   So this file asks GSAP's question, verbatim. The consequence is deliberate:
-   a browser too old to report the preference gets NO motion. That is the safe
-   direction of the error. A reader who wanted motion and did not get it has
-   lost nothing the page needed — motion.css's rule holds across this whole
-   design that motion is never the only carrier of meaning — while a reader who
-   asked for stillness and got motion has been handed the exact harm the query
-   exists to prevent.
+   On a browser that does not support the media feature, both `reduce` and
+   `no-preference` evaluate false. There `not reduce` says "animate" and
+   `no-preference` says "do not". This file asks `no-preference`, so a browser
+   too old to report the preference gets NO motion. That is the safe direction
+   of the error: motion is never the only carrier of meaning on this page,
+   while a reader who asked for stillness and got motion has been handed the
+   exact harm the query exists to prevent.
 
    ── REDUCED MOTION IS A REFUSAL, NOT A DEGRADATION ─────────────────────────
-   base.css collapses animation-duration and transition-duration to 1ms under
-   `reduce`. That is a CSS mechanism and it CANNOT reach GSAP, which runs on
-   requestAnimationFrame and writes inline styles. So on this page the
-   preference has to be a JavaScript branch, and the branch must be NOT
-   CREATING THE TWEEN — not creating it with duration 0. A zero-duration
-   fromTo() still writes its from-value inline for a frame, and a 14px jump in
-   one frame is motion.
+   base.css collapses CSS animation and transition durations under `reduce`.
+   That cannot reach a requestAnimationFrame loop, a WebGL render or a canvas
+   chart. So the preference is a JavaScript branch, and the branch is NOT
+   CREATING THE MOTION -- the scene draws one still frame, the carousel has no
+   autoplay, the chart is created with animation off, and Motion is given
+   `initial={false}` -- never "the same motion with duration 0", which still
+   writes a from-value for a frame.
 
    Callers therefore use this file to decide whether a thing EXISTS, never how
    fast it runs.
    ════════════════════════════════════════════════════════════════════════════ */
 
-/** The gate. Identical string to the one handed to gsap.matchMedia(), on
- *  purpose — see the header. Exported so the choreography can pass the same
- *  constant rather than retyping the query and drifting from it. */
+/** The gate: '(prefers-reduced-motion: no-preference)'. See the header. */
 export const MOTION_QUERY = '(prefers-reduced-motion: no-preference)';
 
 /** The complement, for anything that needs to assert the reader opted out

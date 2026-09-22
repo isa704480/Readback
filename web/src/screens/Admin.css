@@ -327,7 +327,8 @@
 }
 
 .link-btn {
-  padding: 0;
+  min-height: 0;
+  padding: 2px 0;
   border: 0;
   background: none;
   font: inherit;

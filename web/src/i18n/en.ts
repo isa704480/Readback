@@ -740,8 +740,14 @@ export const en = {
   'landing.how.step3.title': 'Usually one answer is legal.',
   'landing.how.step3.body':
     'Ten digits fit position {position}. One agrees with the check digit, and that one is written.',
-  'landing.how.stripLabel':
-    'ISO 6346. {spoken}, then check digit {check}, which is computed from the ten characters before it.',
+  'landing.scene.label':
+    'A container number in three dimensions. Position {position} was heard as {heard} and is written as {written}, because only {written} agrees with check digit {check}.',
+  'landing.formats.title': 'The formats it reads',
+  'landing.formats.label': 'Identifier formats, one per slide',
+  'landing.formats.valid': 'A valid example',
+  'landing.chart.label':
+    'Error rate the system absorbs, unconstrained against constrained: ISO 6346 {isoFrom} to {isoTo}, IBAN {ibanFrom} to {ibanTo}.',
+  'landing.chart.axis': 'Error rate absorbed',
   'landing.gain.title': 'The constraint absorbs fifteen times the error.',
   'landing.gain.body':
     'Measured across eight accents and about twelve million simulated captures: {iso}× on ISO 6346, {iban}× on IBAN. Knowing the accent is worth ±{value}, so nothing detects it.',

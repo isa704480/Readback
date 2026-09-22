@@ -1,15 +1,12 @@
 /* Landing page.
  *
- * One reading spine (--max-read, 720px) carries every sentence. Two objects
- * step out of it to the wide track (--max-grid, 1080px): the rack, because an
- * eleven-slot identifier must not wrap, and the three steps, because they are
- * one row of short statements rather than a column of prose. Nothing else
- * crosses the spine.
+ * One reading spine (--max-read, 720px) carries every sentence. Wide objects
+ * step out to the wide track (--max-grid, 1080px): the hero (text beside the
+ * three.js scene), the rack, the steps, the format carousel and the chart.
  *
- * Colour is the app's own: text in --text, supporting prose in --text-body,
- * metadata in --text-2, one accent. Every text/ground pair used here clears
- * 4.5:1 on --bg (#f5f5f7); --text-2 is 4.9:1 and is used only at 14px+ for
- * metadata or at display size.
+ * Colour is the app's own: text in --text, prose in --text-body, metadata in
+ * --text-2, one accent. The 3D scene and the chart read the same tokens at
+ * runtime, so there is one palette on the page, not three.
  */
 
 .landing {
@@ -21,39 +18,66 @@
     [wide-start] minmax(0, 1fr)
     [read-start] minmax(0, var(--max-read))
     [read-end] minmax(0, 1fr) [wide-end];
-  row-gap: clamp(72px, 11vw, 136px);
-  padding-block: clamp(40px, 8vw, 96px) clamp(64px, 10vw, 128px);
+  row-gap: clamp(72px, 10vw, 128px);
+  padding-block: clamp(32px, 6vw, 72px) clamp(64px, 10vw, 128px);
 }
 
-/* Sections sit on the parent's tracks; children default to the spine. */
-.landing > section {
+.landing > section,
+.landing > div {
   display: grid;
   grid-template-columns: subgrid;
   grid-column: wide-start / wide-end;
   align-content: start;
 }
 
-.landing > section > * {
+.landing > section > *,
+.landing > div > * {
   grid-column: read-start / read-end;
   min-width: 0;
 }
 
 @supports not (grid-template-columns: subgrid) {
-  .landing > section {
+  .landing > section,
+  .landing > div {
     grid-template-columns: inherit;
   }
 }
 
 /* ------------------------------------------------------------------ hero -- */
 
-.hero__title {
-  font-size: clamp(38px, 5.4vw, 60px);
-  line-height: 1.04;
-  letter-spacing: var(--tracking-title);
-  max-width: 21ch;
+.landing > .hero {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-6);
+  align-items: center;
 }
 
-/* The pivot is carried by colour, not by an ornament: the denial recedes, the
+.landing > .hero > * {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 1000px) {
+  .landing > .hero {
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    gap: var(--sp-7);
+  }
+
+  .landing > .hero > .hero__text {
+    grid-column: 1;
+  }
+
+  .landing > .hero > .hero__visual {
+    grid-column: 2;
+  }
+}
+
+.hero__title {
+  font-size: clamp(36px, 4.6vw, 56px);
+  line-height: 1.05;
+  letter-spacing: var(--tracking-title);
+  max-width: 17ch;
+}
+
+/* The pivot is carried by colour, not an ornament: the denial recedes, the
    claim that overturns it stands at full strength. */
 .hero__title-a,
 .hero__title-b {
@@ -73,7 +97,7 @@
 }
 
 .hero__lede {
-  max-width: 58ch;
+  max-width: 52ch;
   font-size: var(--text-lg);
   line-height: var(--leading-body);
   color: var(--text-body);
@@ -93,9 +117,54 @@
   gap: var(--sp-3);
 }
 
-.landing > .hero > .hero__rack {
+.hero__visual {
+  position: relative;
+  min-width: 0;
+}
+
+/* The scene's box. The canvas fills it; three.js sizes the drawing buffer from
+   it on every resize. A soft floor under the tiles, drawn in CSS, so the
+   number is standing on something rather than floating in the page. */
+.scene {
+  position: relative;
+  width: 100%;
+  height: clamp(170px, 19vw, 270px);
+}
+
+.scene::after {
+  content: '';
+  position: absolute;
+  inset: auto 6% 22% 6%;
+  height: 40px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.08), transparent);
+  pointer-events: none;
+}
+
+.scene__caption {
+  margin-top: var(--sp-2);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  text-align: center;
+  color: var(--text-2);
+}
+
+.scene canvas {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hero__strip {
+  margin-block: var(--sp-7);
+}
+
+/* ------------------------------------------------------------------ rack -- */
+
+.landing > .rack-wrap > * {
   grid-column: wide-start / wide-end;
-  margin-top: clamp(48px, 7vw, 80px);
 }
 
 /* ------------------------------------------------------------------- how -- */
@@ -104,33 +173,38 @@
   grid-column: wide-start / wide-end;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--sp-6);
+  gap: var(--sp-4);
   counter-reset: step;
 }
 
 @media (min-width: 820px) {
   .landing > .how > .how__steps {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--sp-7);
   }
 }
 
-/* The steps are a sequence, so they are numbered -- by the list, in the
-   quietest voice on the page. */
 .how__step {
   counter-increment: step;
-  padding-top: var(--sp-4);
-  border-top: 1px solid var(--hairline);
+  padding: var(--sp-5);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--sh-card);
 }
 
+/* The steps are a sequence, so they are numbered -- by the list. */
 .how__step::before {
   content: counter(step);
-  display: block;
-  margin-bottom: var(--sp-3);
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-bottom: var(--sp-4);
+  border-radius: 50%;
+  background: var(--accent);
   font-family: var(--font-mono);
   font-size: var(--text-meta);
-  font-variant-numeric: tabular-nums;
-  color: var(--accent-text);
+  font-weight: 600;
+  color: #fff;
 }
 
 .how__title {
@@ -144,30 +218,90 @@
   color: var(--text-body);
 }
 
-.how__figure {
-  margin: clamp(40px, 6vw, 64px) 0 0;
+/* --------------------------------------------------------------- formats -- */
+
+.section__title {
+  font-size: clamp(26px, 3vw, 33px);
+  letter-spacing: var(--tracking-h2);
+}
+
+.landing > .formats-section > .section__title {
+  grid-column: wide-start / wide-end;
+}
+
+.landing > .formats-section > .formats {
+  grid-column: wide-start / wide-end;
+  width: 100%;
+  margin-top: var(--sp-6);
+  padding-bottom: var(--sp-7);
+  --swiper-theme-color: var(--accent);
+  --swiper-pagination-bullet-inactive-color: var(--text-4);
+  --swiper-pagination-bullet-inactive-opacity: 1;
+  --swiper-pagination-bottom: 0px;
+}
+
+/* Slides size to their identifier: an IBAN is twice a container number. */
+.formats__slide {
+  width: auto;
+  max-width: 100%;
+  height: auto;
+}
+
+.formats .swiper-pagination-bullet {
+  position: relative;
+  min-height: 0;
+  width: 9px;
+  height: 9px;
+}
+
+.formats .swiper-pagination-bullet::before {
+  content: '';
+  position: absolute;
+  inset: -14px -6px;
+}
+
+.format {
   display: grid;
-  justify-items: start;
+  gap: var(--sp-3);
+  height: 100%;
+  padding: var(--sp-5);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--sh-card);
+}
+
+.format__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
   gap: var(--sp-4);
 }
 
-/* A formula is one expression: it does not break mid-way. On a narrow phone it
-   steps down a size rather than wrapping "mod 10" onto a line of its own. */
-.how__formula {
-  max-width: 100%;
-  overflow-x: auto;
-  white-space: nowrap;
-  font-family: var(--font-mono);
+.format__name {
+  font-size: var(--text-xl);
+}
+
+.format__length,
+.format__label {
   font-size: var(--text-meta);
-  letter-spacing: var(--tracking-code);
   color: var(--text-2);
 }
 
-@media (max-width: 420px) {
-  .how__formula {
-    font-size: 12px;
-    letter-spacing: 0;
-  }
+.format .slot-strip {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.format__check {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.format__who {
+  max-width: 44ch;
+  line-height: var(--leading-body);
+  color: var(--text-body);
 }
 
 /* ------------------------------------------------------------------ gain -- */
@@ -179,7 +313,10 @@
   font-variant-numeric: tabular-nums;
   line-height: 1;
   letter-spacing: var(--tracking-title);
-  color: var(--text);
+  background: linear-gradient(90deg, var(--text) 30%, var(--accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .gain__title {
@@ -195,61 +332,18 @@
   color: var(--text-body);
 }
 
-.ratios {
-  margin-top: var(--sp-7);
-  display: grid;
-  gap: var(--sp-3);
-}
-
-.ratio {
-  display: grid;
-  grid-template-columns: 8rem minmax(0, 1fr) 3rem;
-  align-items: center;
-  gap: var(--sp-4);
-}
-
-.ratio__label {
-  font-size: var(--text-meta);
-  color: var(--text-2);
-}
-
-.ratio__track {
-  height: 10px;
-  border-radius: var(--r-full);
-  background: var(--track);
-  overflow: hidden;
-}
-
-.ratio__fill {
-  display: block;
-  height: 100%;
-  min-width: 10px;
-  border-radius: var(--r-full);
-  background: var(--accent);
-}
-
-.ratio__value {
-  font-family: var(--font-mono);
-  font-size: var(--text-meta);
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-  color: var(--text);
-}
-
-@media (max-width: 520px) {
-  .ratio {
-    grid-template-columns: minmax(0, 1fr) 3rem;
-    row-gap: var(--sp-2);
-  }
-
-  .ratio__label {
-    grid-column: 1 / -1;
-  }
+.chart {
+  position: relative;
+  height: clamp(260px, 32vw, 340px);
+  margin-top: var(--sp-6);
+  padding: var(--sp-5);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--sh-card);
 }
 
 /* ----------------------------------------------------------------- limit -- */
 
-/* The honest line gets the same type as the claims, not a footnote's. */
 .limit__title {
   font-size: var(--text-xl);
 }

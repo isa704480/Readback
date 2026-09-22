@@ -242,8 +242,14 @@ const catalog = {
   'landing.how.step3.title': 'Odatda faqat bitta javob toʻgʻri.',
   'landing.how.step3.body':
     '{position}-pozitsiyaga oʻnta raqam mos keladi. Nazorat raqami bilan faqat bittasi toʻgʻri keladi va aynan u yoziladi.',
-  'landing.how.stripLabel':
-    'ISO 6346. {spoken}, keyin {check} nazorat raqami — u oʻzidan oldingi oʻnta belgidan hisoblanadi.',
+  'landing.scene.label':
+    'Konteyner raqami uch oʻlchamda. {position}-pozitsiyada {heard} eshitilgan, lekin {written} yoziladi, chunki faqat {written} nazorat raqami {check} bilan toʻgʻri keladi.',
+  'landing.formats.title': 'U qaysi formatlarni oʻqiydi',
+  'landing.formats.label': 'Identifikator formatlari, har slaydda bittadan',
+  'landing.formats.valid': 'Haqiqiy misol',
+  'landing.chart.label':
+    'Tizim koʻtaradigan xato darajasi, cheklovsiz va cheklov bilan: ISO 6346 {isoFrom} dan {isoTo} gacha, IBAN {ibanFrom} dan {ibanTo} gacha.',
+  'landing.chart.axis': 'Koʻtariladigan xato darajasi',
   'landing.gain.title': 'Cheklov oʻn besh barobar koʻp xatoni koʻtaradi.',
   'landing.gain.body':
     'Sakkiz xil aksent va taxminan oʻn ikki million modellashtirilgan yozuvda oʻlchangan: ISO 6346 da {iso}×, IBANda {iban}×. Aksentni bilish ±{value} ga teng, shuning uchun uni hech narsa aniqlamaydi.',
