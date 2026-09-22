@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom';
 import { Icon } from './Icon';
 import type { IconName } from './Icon';
 import { useI18n } from '../i18n';
+import { useIsAdmin } from '../lib/admin';
 import type { TranslationKey } from '../i18n';
 import './Sidebar.css';
 
@@ -117,6 +118,7 @@ export const NAV_PATHS = {
   formats: '/formats',
   demo: '/demo',
   account: '/account',
+  admin: '/admin',
 } as const;
 
 interface NavItem {
@@ -163,6 +165,15 @@ const ACCOUNT = {
   end: false,
 } as const satisfies NavItem;
 
+/* Operators only, and absent -- not disabled -- for everyone else, so a tenant
+ * never learns the panel exists. useIsAdmin asks /api/admin/me once per token. */
+const ADMIN = {
+  path: NAV_PATHS.admin,
+  labelKey: 'admin.nav',
+  icon: 'shield',
+  end: false,
+} as const satisfies NavItem;
+
 // ------------------------------------------------------------------- link --
 
 function linkClass({ isActive }: { isActive: boolean }): string {
@@ -182,6 +193,7 @@ export function Sidebar({ written, className }: SidebarProps) {
   const { t, n } = useI18n();
 
   const figure = written && written.total > 0 ? written : null;
+  const isAdmin = useIsAdmin();
 
   return (
     <nav
@@ -245,6 +257,14 @@ export function Sidebar({ written, className }: SidebarProps) {
               <span className="sidebar__label">{t(ACCOUNT.labelKey)}</span>
             </NavLink>
           </li>
+          {isAdmin ? (
+            <li className="sidebar__item">
+              <NavLink to={ADMIN.path} end={ADMIN.end} className={linkClass}>
+                <Icon name={ADMIN.icon} size={16} />
+                <span className="sidebar__label">{t(ADMIN.labelKey)}</span>
+              </NavLink>
+            </li>
+          ) : null}
         </ul>
       </div>
     </nav>

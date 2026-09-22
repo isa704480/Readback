@@ -64,6 +64,9 @@ const Sessions = lazy(() =>
 const Formats = lazy(() =>
   import("./screens/Formats").then((m) => ({ default: m.Formats })),
 );
+const Admin = lazy(() =>
+  import("./screens/Admin").then((m) => ({ default: m.Admin })),
+);
 
 // ───────────────────────────────────────────────────────── shell context ──
 
@@ -345,6 +348,8 @@ export default function App() {
             <Route path={NAV_PATHS.live} element={<Live />} />
             <Route path={NAV_PATHS.sessions} element={<Sessions />} />
             <Route path={NAV_PATHS.formats} element={<Formats />} />
+            {/* Operators only; the screen itself sends anyone else to the record. */}
+            <Route path={NAV_PATHS.admin} element={<Admin />} />
           </Route>
 
           {/* Neither branch: see DemoEntry. */}

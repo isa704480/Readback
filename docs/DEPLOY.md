@@ -597,6 +597,10 @@ account, or a value that does not exist until something else is deployed.
 - [ ] Put the Vercel origin into `READBACK_CORS_ORIGINS`; redeploy the API (step 6)
 - [ ] Decide how to handle cold starts before any demo (step 3)
 - [ ] Diarise the free Postgres expiry, or use Neon (step 3)
+- [ ] Sign up in the deployed app, then in the Render **Shell** run
+      `python -m server.admin_cli grant <your email>` -- the only way to open
+      `/admin` (docs/ADMIN.md)
+- [ ] Measure `READBACK_TRUSTED_PROXY_HOPS` (step 7, "Client addresses")
 
 Circular by nature: **Render must exist before Vercel can be configured, and
 Vercel must exist before CORS can be finished.** Expect two deploys of the API.

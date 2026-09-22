@@ -97,6 +97,10 @@ server/
   routes/
     reference.py     /health and /api/validate -- stateless, unauthenticated
     organisation.py  usage, vocabulary pack, part catalogue -- org-scoped
+    admin.py         the platform admin panel's API (docs/ADMIN.md)
+  platform_state.py  operator grants, runtime switches, per-tenant limits
+  quality.py      how right the agent is: traffic metrics and a benchmark
+  admin_cli.py    the only way to make an operator
   auth.py ratelimit.py models.py db.py audit.py config.py
 tests/
   test_solver_regression.py   the silent-wrong bound
