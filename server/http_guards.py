@@ -91,6 +91,11 @@ async def _flat_errors(request: Request, exc: HTTPException) -> JSONResponse:
                         headers=dict(exc.headers or {}))
 
 
+def bad_request(error: str, message: str) -> HTTPException:
+    """Flat body, same two keys as every other failure. See `_flat_errors`; raise it."""
+    return HTTPException(status_code=400, detail={"error": error, "message": message})
+
+
 class _BodyTooLarge(Exception):
     """Raised out of the wrapped `receive` the moment the running total passes
     the cap, so no handler ever holds the rest of the body."""

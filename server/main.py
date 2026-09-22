@@ -53,35 +53,29 @@ from typing import Any, Final, Literal
 
 from fastapi import Body, Depends, FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field, field_validator
-from sqlalchemy import and_, case, delete, func, or_, select
+from sqlalchemy import and_, case, func, or_, select
 from sqlalchemy.orm import Session as SASession
 
 from server import audit, auth, llm, purge
 from server import ratelimit as rl
 from server.config import Settings, get_settings
-from server import http_guards
+from server import budget, http_guards
+from server.routes import organisation, reference
 from server.db import create_all, get_db, get_sessionmaker
 from server.models import (
     AuditEvent,
     Capture,
-    CataloguePart,
     Organisation,
     QuestionEvent,
     Session,
     User,
     utcnow,
 )
-from server.readback.catalogue import CatalogueIndex
-from server.readback.catalogue import normalise as catalogue_normalise
-from server.readback.catalogue import signature as catalogue_signature
 from server.pipeline import events as ev
 from server.pipeline.detector import FORMAT_TOKENS, State
 from server.pipeline.detector import configuration as detector_configuration
 from server.pipeline.runner import Question, RunSummary, RunnerConfig, run_session
 from server.pipeline.store import SqlCaptureStore, apply_observations, mask_pan
-from server.models import Organisation as OrganisationRow
-from server.models import VocabularyTerm
-from server.readback.solver import IBANGB, ISO, LUHN16, NHS, VIN
 from server.stream.replay import Fixture, ReplaySource, fixture_dir
 from server.stream.source import SourceClosed, SourceConfig
 
@@ -331,29 +325,20 @@ http_guards.install(app, get_settings().cors_origin_list)
 MAX_BODY_BYTES: Final = http_guards.MAX_BODY_BYTES
 
 app.include_router(auth.router)
+app.include_router(reference.router)
+app.include_router(organisation.router)
 
-
-# ------------------------------------------------------------------ health ---
-@app.get("/health")
-def health(settings: Settings = Depends(get_settings)) -> dict[str, Any]:
-    """Says which path the next session will take, because that is the one thing
-    about this deployment that changes tonight.
-
-    Unauthenticated, so it carries only what the consent screen reads. It used
-    to publish `sessions_open` beside the known concurrency cap -- telling
-    anyone the exact moment admission was one session from full, which is the
-    timing a capacity-exhaustion attempt needs -- plus an in-memory record
-    count and the fixture list. Tests read those from the process directly
-    (`_running_sessions`, `_SESSIONS`, `fixture_dir()`), which is where an
-    operator looking at load should read them too.
-    """
-    return {
-        "ok": True,
-        "live_capture": settings.live_capture,
-        "replay_mode": settings.replay_mode,
-        "consent_required": settings.consent_required,
-        "consent_version": settings.consent_version,
-    }
+# Names the session code below and the tests read from here, kept stable
+# across the split into routes/.
+_bad_request = http_guards.bad_request
+_budget = budget.today
+spent_socket_seconds = budget.spent_socket_seconds
+_catalogue_index = organisation.catalogue_index
+vocabulary_for = organisation.vocabulary_for
+VALIDATE_MAX_CHARS = reference.VALIDATE_MAX_CHARS
+VOCAB_MAX_TERMS = organisation.VOCAB_MAX_TERMS
+VOCAB_MAX_CHARS = organisation.VOCAB_MAX_CHARS
+CATALOGUE_MAX_ROWS = organisation.CATALOGUE_MAX_ROWS
 
 
 # ----------------------------------------------------------------- schemas ---
@@ -432,28 +417,6 @@ class ReplayRequest(BaseModel):
 
 
 # ------------------------------------------------------------------ gates ----
-def spent_socket_seconds(db: SASession, since: datetime) -> int:
-    """Socket-seconds billed today. The product is computed, never stored --
-    models.py keeps `billed_seconds` and `sockets` apart so that a reconciliation
-    has one place to be wrong instead of two."""
-    total = db.scalar(
-        select(func.coalesce(func.sum(Session.billed_seconds * Session.sockets), 0))
-        .where(Session.started_at >= since)
-    )
-    return int(total or 0)
-
-
-def _budget(db: SASession, settings: Settings) -> tuple[int, bool, bool]:
-    """(remaining socket-seconds, alarm, exhausted)."""
-    midnight = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0,
-                                                  microsecond=0)
-    spent = spent_socket_seconds(db, midnight)
-    remaining = settings.daily_budget_seconds - spent
-    return (max(0, remaining),
-            spent >= settings.budget_alarm_seconds,
-            remaining < settings.session_socket_seconds)
-
-
 @app.post("/api/session/start", response_model=StartResponse)
 def session_start(body: StartRequest, request: Request = None,  # type: ignore[assignment]
                   user: User | None = Depends(auth.optional_user),
@@ -1161,11 +1124,6 @@ CAPTURES_LIMIT_DEFAULT: Final = 50
 CAPTURES_LIMIT_MAX: Final = 200
 
 
-def _bad_request(error: str, message: str) -> HTTPException:
-    """Flat body, same two keys as every other failure. See `_flat_errors`."""
-    return HTTPException(status_code=400, detail={"error": error, "message": message})
-
-
 def _parse_limit(raw: str | None) -> int:
     """Parsed here rather than declared as `limit: int = Query(le=200)`.
 
@@ -1435,305 +1393,6 @@ def session_summaries(limit: str | None = None,
         "next_before": last.started_at.isoformat() if last else None,
         "next_before_id": str(last.id) if last else None,
     }
-
-
-# ---------------------------------------------------------------- validate ---
-# The five formats the solver can arbitrate, keyed by the ids the interface
-# uses, each with the 0-indexed positions that hold its computed check.
-VALIDATE_FORMATS: Final = {
-    "iso6346": (ISO, (10,)),
-    "iban": (IBANGB, (2, 3)),
-    "vin": (VIN, (8,)),
-    "nhs": (NHS, (9,)),
-    "luhn": (LUHN16, (15,)),
-}
-VALIDATE_MAX_CHARS: Final = 64
-
-
-class ValidateRequest(BaseModel):
-    # Deliberately NOT `Field(max_length=...)`: a pydantic constraint answers
-    # with FastAPI's wrapped `{"detail": [...]}`, which no client here reads
-    # (see `_parse_limit`), and it would not stop the buffering either -- the
-    # body is read in full before any field is validated. The length is checked
-    # by hand below for the flat 400, and the BODY is bounded by the middleware
-    # at the top of this file.
-    format: str
-    value: str
-
-
-@app.post("/api/validate")
-def validate_identifier(body: ValidateRequest) -> dict[str, Any]:
-    """The formats reference's "try one": is this string a valid <format>, and
-    if not, exactly where it fails -- the wrong length, a character the
-    position cannot hold, or a check that does not agree.
-
-    Stateless and unauthenticated on purpose: nothing is stored and nothing is
-    read, and the arithmetic is the solver's own (server/readback/solver.py),
-    so the page can never call a string valid that the pipeline would refuse.
-    Spaces and hyphens are dropped and letters upper-cased first, because that
-    is how identifiers are typed. Bounded input; an unknown format is the same
-    flat 400 as every other bad request here.
-    """
-    entry = VALIDATE_FORMATS.get(body.format)
-    if entry is None:
-        raise _bad_request(
-            "unknown_format",
-            f"format must be one of {', '.join(sorted(VALIDATE_FORMATS))}.",
-        )
-    if len(body.value) > VALIDATE_MAX_CHARS:
-        raise _bad_request(
-            "value_too_long",
-            f"value must be at most {VALIDATE_MAX_CHARS} characters.",
-        )
-    fmt, check_pos = entry
-    normalised = "".join(ch for ch in body.value.upper() if ch.isalnum())
-    length_ok = len(normalised) == fmt.length
-    positions = []
-    for i, ch in enumerate(normalised):
-        in_range = i < fmt.length
-        positions.append({
-            "index": i,
-            "char": ch,
-            "allowed": bool(in_range and ch in fmt.A(i)),
-            "check": i in check_pos,
-        })
-    alphabet_ok = length_ok and all(p["allowed"] for p in positions)
-    checksum_ok = bool(fmt.ok(normalised)) if alphabet_ok else None
-    return {
-        "format": body.format,
-        "normalised": normalised,
-        "expected_length": fmt.length,
-        "length_ok": length_ok,
-        "positions": positions,
-        "check_positions": list(check_pos),
-        "checksum_ok": checksum_ok,
-        "valid": bool(length_ok and alphabet_ok and checksum_ok),
-    }
-
-
-# ------------------------------------------------------------------- usage ---
-@app.get("/api/usage")
-def usage(user: User = Depends(auth.current_user),
-          db: SASession = Depends(get_db),
-          settings: Settings = Depends(get_settings)) -> dict[str, Any]:
-    """What the account screen's usage panel could only estimate until now.
-
-    Two blocks, because ARCH 3.11's budget is a property of the DEPLOYMENT --
-    one daily ceiling on socket-seconds across every tenant, the kill switch
-    that stops a surprise invoice -- while what a team leader wants to see is
-    their own organisation's spend and count. Reporting the deployment figure
-    alone would let one tenant infer another's activity from the remainder;
-    reporting only the organisation's would hide the ceiling that will refuse
-    their next call. So both are here, and the organisation block is scoped
-    by the verified token like every other read.
-
-    Seconds are socket-seconds (billed_seconds x sockets), computed the same
-    way the admission gate computes them, never stored twice.
-    """
-    org_id = user.organisation_id
-    midnight = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0,
-                                                  microsecond=0)
-    remaining, alarm, exhausted = _budget(db, settings)
-    spent_today = spent_socket_seconds(db, midnight)
-
-    socket_seconds = func.coalesce(func.sum(Session.billed_seconds * Session.sockets), 0)
-    org_today = int(db.scalar(
-        select(socket_seconds).where(Session.organisation_id == org_id,
-                                     Session.started_at >= midnight)) or 0)
-    org_total = int(db.scalar(
-        select(socket_seconds).where(Session.organisation_id == org_id)) or 0)
-    sessions_today = int(db.scalar(
-        select(func.count()).select_from(Session)
-        .where(Session.organisation_id == org_id, Session.started_at >= midnight)) or 0)
-    sessions_total = int(db.scalar(
-        select(func.count()).select_from(Session)
-        .where(Session.organisation_id == org_id)) or 0)
-    captures_total = int(db.scalar(
-        select(func.count()).select_from(Capture)
-        .join(Session, Capture.session_id == Session.id)
-        .where(Session.organisation_id == org_id)) or 0)
-    org_row = db.get(OrganisationRow, org_id)
-
-    return {
-        "day_started_at": midnight.isoformat(),
-        "deployment": {
-            "daily_budget_seconds": settings.daily_budget_seconds,
-            "spent_today_seconds": spent_today,
-            "remaining_seconds": remaining,
-            "alarm": alarm,
-            "exhausted": exhausted,
-            "session_socket_seconds": settings.session_socket_seconds,
-            "cap_seconds": settings.session_cap_seconds,
-            "live_capture": settings.live_capture,
-            "replay_mode": settings.replay_mode,
-        },
-        "organisation": {
-            "daily_budget_seconds": org_row.daily_budget_seconds if org_row else None,
-            "seconds_today": org_today,
-            "seconds_total": org_total,
-            "sessions_today": sessions_today,
-            "sessions_total": sessions_total,
-            "captures_total": captures_total,
-        },
-    }
-
-
-# -------------------------------------------------------------- vocabulary ---
-# The recogniser's documented caps on keyterms_prompt (stream/source.py), which
-# the account screen mirrors. Enforced here so an over-long pack is a flat 400
-# at save time rather than a socket close mid-call.
-VOCAB_MAX_TERMS: Final = 100
-VOCAB_MAX_CHARS: Final = 50
-
-
-class VocabularyRequest(BaseModel):
-    terms: list[str]
-
-
-def _clean_terms(raw: list[str]) -> list[str]:
-    """Trim, collapse inner whitespace, drop empties, dedupe case-insensitively
-    keeping the first spelling and the operator's order."""
-    out: list[str] = []
-    seen: set[str] = set()
-    for term in raw:
-        cleaned = " ".join(str(term).split())
-        if not cleaned:
-            continue
-        if len(cleaned) > VOCAB_MAX_CHARS:
-            raise _bad_request(
-                "term_too_long",
-                f"a term is {len(cleaned)} characters; the cap is {VOCAB_MAX_CHARS}.",
-            )
-        key = cleaned.lower()
-        if key in seen:
-            continue
-        seen.add(key)
-        out.append(cleaned)
-    if len(out) > VOCAB_MAX_TERMS:
-        raise _bad_request(
-            "too_many_terms",
-            f"{len(out)} terms; the cap is {VOCAB_MAX_TERMS}.",
-        )
-    return out
-
-
-def vocabulary_for(db: SASession, org_id: uuid.UUID) -> list[str]:
-    """The organisation's pack, in the order it was saved. Read by the session
-    manager on every start and by the account screen."""
-    return list(db.scalars(
-        select(VocabularyTerm.term)
-        .where(VocabularyTerm.organisation_id == org_id)
-        .order_by(VocabularyTerm.position, VocabularyTerm.term)))
-
-
-def _vocabulary_payload(terms: list[str]) -> dict[str, Any]:
-    return {"terms": terms, "max_terms": VOCAB_MAX_TERMS, "max_chars": VOCAB_MAX_CHARS}
-
-
-@app.get("/api/vocabulary")
-def get_vocabulary(user: User = Depends(auth.current_user),
-                   db: SASession = Depends(get_db)) -> dict[str, Any]:
-    """ARCH 3.9: the organisation's own words for the recogniser."""
-    return _vocabulary_payload(vocabulary_for(db, user.organisation_id))
-
-
-@app.put("/api/vocabulary")
-def put_vocabulary(body: VocabularyRequest,
-                   user: User = Depends(auth.current_user),
-                   db: SASession = Depends(get_db)) -> dict[str, Any]:
-    """Replace the pack. Whole-list PUT rather than per-term POST/DELETE
-    because the pack is small, ordered, and the order is what the keyterm
-    budget spends first -- a list is the honest unit. Takes effect on the
-    organisation's NEXT session: a running socket keeps the pack it started
-    with (SourceConfig is frozen for the reason it gives).
-    """
-    terms = _clean_terms(body.terms)
-    org_id = user.organisation_id
-    db.execute(delete(VocabularyTerm).where(VocabularyTerm.organisation_id == org_id))
-    for i, term in enumerate(terms):
-        db.add(VocabularyTerm(organisation_id=org_id, term=term, position=i))
-    audit.record(db, audit.VOCABULARY_SET, organisation_id=org_id,
-                 session_id=None, actor="human", detail={"terms": len(terms)})
-    db.commit()
-    return _vocabulary_payload(terms)
-
-
-# --------------------------------------------------------------- catalogue ---
-CATALOGUE_MAX_ROWS: Final = 500
-CATALOGUE_MAX_SKU_CHARS: Final = 64
-
-
-class CataloguePartIn(BaseModel):
-    sku: str
-    description: str = ""
-
-
-class CatalogueRequest(BaseModel):
-    parts: list[CataloguePartIn]
-
-
-def _catalogue_index(db: SASession, org_id: uuid.UUID) -> CatalogueIndex:
-    """The organisation's catalogue as the runner matches against it, read once
-    per session. Never another organisation's: this is what vouches."""
-    return CatalogueIndex((r.sku, r.description) for r in db.scalars(
-        select(CataloguePart).where(CataloguePart.organisation_id == org_id)))
-
-
-def _catalogue_payload(db: SASession, org_id: uuid.UUID) -> dict[str, Any]:
-    rows = list(db.scalars(select(CataloguePart)
-                           .where(CataloguePart.organisation_id == org_id)
-                           .order_by(CataloguePart.sku)))
-    return {
-        "parts": [{"sku": r.sku, "description": r.description} for r in rows],
-        "max_rows": CATALOGUE_MAX_ROWS,
-        "max_sku_chars": CATALOGUE_MAX_SKU_CHARS,
-    }
-
-
-@app.get("/api/catalogue")
-def get_catalogue(user: User = Depends(auth.current_user),
-                  db: SASession = Depends(get_db)) -> dict[str, Any]:
-    """ARCH 3.9: the organisation's part catalogue, which stands in for a check
-    digit. A row here is exactly what the runner will vouch for on the
-    `catalogue` format -- for this organisation's sessions and no one else's.
-    """
-    return _catalogue_payload(db, user.organisation_id)
-
-
-@app.put("/api/catalogue")
-def put_catalogue(body: CatalogueRequest,
-                  user: User = Depends(auth.current_user),
-                  db: SASession = Depends(get_db)) -> dict[str, Any]:
-    """Replace the catalogue. Whole-list, like the vocabulary, and for the same
-    reason. Takes effect on the next session."""
-    kept: dict[str, tuple[str, str]] = {}
-    for part in body.parts:
-        sku = " ".join(part.sku.split())
-        key = catalogue_normalise(sku)
-        if not key:
-            continue
-        if len(sku) > CATALOGUE_MAX_SKU_CHARS:
-            raise _bad_request(
-                "sku_too_long",
-                f"a part number is {len(sku)} characters; the cap is {CATALOGUE_MAX_SKU_CHARS}.",
-            )
-        if key in kept:
-            continue
-        kept[key] = (sku, " ".join(part.description.split())[:255])
-    if len(kept) > CATALOGUE_MAX_ROWS:
-        raise _bad_request(
-            "too_many_parts",
-            f"{len(kept)} parts; the cap is {CATALOGUE_MAX_ROWS}.",
-        )
-    org_id = user.organisation_id
-    db.execute(delete(CataloguePart).where(CataloguePart.organisation_id == org_id))
-    for sku, description in kept.values():
-        db.add(CataloguePart(organisation_id=org_id, sku=sku, description=description,
-                             rhyme_signature=catalogue_signature(sku)))
-    audit.record(db, audit.CATALOGUE_SET, organisation_id=user.organisation_id,
-                 session_id=None, actor="human", detail={"parts": len(kept)})
-    db.commit()
-    return _catalogue_payload(db, org_id)
 
 
 # ------------------------------------------------------------------ record ---

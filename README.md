@@ -89,8 +89,15 @@ server/pipeline/
   events.py       the event stream -- the product's interface, not logging
   store.py        captures, questions, the online confusion pseudo-count
 server/
-  main.py         FastAPI: consent gate, budget gate, the demo replay endpoint
-  models.py db.py audit.py config.py
+  main.py         FastAPI app and the session lifecycle: start, live, audio,
+                  answer, stop, record, demo replay
+  http_guards.py  the perimeter: headers, received-bytes body bound, CORS,
+                  one flat error shape
+  budget.py       the daily socket-second ceiling (3.11)
+  routes/
+    reference.py     /health and /api/validate -- stateless, unauthenticated
+    organisation.py  usage, vocabulary pack, part catalogue -- org-scoped
+  auth.py ratelimit.py models.py db.py audit.py config.py
 tests/
   test_solver_regression.py   the silent-wrong bound
   test_detector.py            the cues and the state machine
