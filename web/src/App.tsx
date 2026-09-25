@@ -67,6 +67,9 @@ const Formats = lazy(() =>
 const Admin = lazy(() =>
   import("./screens/Admin").then((m) => ({ default: m.Admin })),
 );
+const Pitch = lazy(() =>
+  import("./screens/Pitch").then((m) => ({ default: m.Pitch })),
+);
 
 // ───────────────────────────────────────────────────────── shell context ──
 
@@ -340,6 +343,8 @@ export default function App() {
             <Route index element={<Landing />} />
             <Route path="login" element={<Auth mode="login" />} />
             <Route path="signup" element={<Auth mode="signup" />} />
+            {/* Pitch Day 3.0 -- ochiq sahifa, xuddi Landing kabi. */}
+            <Route path="pitch" element={<Pitch />} />
           </Route>
 
           <Route element={<AppRoutes />}>
