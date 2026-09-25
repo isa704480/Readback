@@ -205,7 +205,7 @@ services:
       # security release: 3.12.9 (Feb 2025) was seven behind. Bump this when
       # python.org lists a newer 3.12.x -- same minor, so the hashed lock holds.
       - key: PYTHON_VERSION
-        value: "3.12.16"
+        value: "3.12.7"
       # Unbuffered stdout, so uvicorn's logs reach the Render log tail as they
       # happen rather than in blocks when the buffer flushes.
       - key: PYTHONUNBUFFERED
