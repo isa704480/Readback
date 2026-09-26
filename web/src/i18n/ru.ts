@@ -1039,6 +1039,117 @@ const catalog = {
   'admin.sys.fixtures': 'Фикстуры',
   'admin.sys.ok': 'в порядке',
   'admin.sys.down': 'недоступна',
+
+  // ------------------------------------------------------- pitch (/pitch) --
+  'pitch.kicker': 'Pitch Day 3.0 · Этап 1',
+  'pitch.title.before': 'Readback — голосовой AI-агент, который записывает номера ',
+  'pitch.title.em': 'правильно',
+  'pitch.title.after': '.',
+  'pitch.lede':
+    'Каждый колл-центр, страховая и логистическая компания десятки раз в день просит «повторите ещё раз». Readback убирает это потерянное время: даже в шуме он знает, как проверить, что номер услышан правильно.',
+  'pitch.cta.tryDemo': 'Попробовать прототип',
+  'pitch.cta.product': 'Страница продукта',
+
+  'pitch.problem.title': 'Проблема и решение',
+  'pitch.problem.h3': 'Проблема',
+  'pitch.problem.p1':
+    'Операторы колл-центров, логистики и банков ежедневно принимают справочные номера по телефону — контейнеры, IBAN, VIN, коды пациентов, карты. В шуме 5 и 9, M и N, S и F звучат одинаково. Один неверный символ — контейнер уходит не в тот порт, платёж возвращается, лекарство получает не тот пациент.',
+  'pitch.problem.p2':
+    'Люди справляются, переспрашивая по каждому символу: «B как Bravo или D как Delta?» На один номер уходит 15–20 секунд, клиент раздражается, дневная производительность оператора падает на 30 %.',
+  'pitch.solution.h3': 'Решение',
+  'pitch.solution.p1':
+    'Readback слушает в фоне и знает форму, которую должен иметь номер. Контейнерные номера подчиняются контрольной цифре ISO 6346, IBAN даёт mod-97, карты — Luhn. Это ограничение не улучшает микрофон — оно в 15 раз увеличивает бюджет ошибок, который система может выдержать.',
+  'pitch.solution.p2':
+    'В двух случаях из трёх Readback молча исправляет ошибочно услышанный символ и показывает разницу на экране. Когда не может — задаёт один вопрос об одном символе и снова замолкает. Транскрипт не сохраняется. Возвращается подтверждённый номер и счёт того, сколько раз пришлось прерывать разговор.',
+
+  'pitch.team.title': 'Команда',
+  'pitch.team.role': 'Соло full-stack и AI инженер',
+  'pitch.team.list.python':
+    'Python, FastAPI, SQLAlchemy, PostgreSQL — сервер, управление сессиями, журнал аудита',
+  'pitch.team.list.typescript':
+    'TypeScript, React, Vite — веб-приложение, живой микрофонный поток (AudioWorklet → PCM16 → WebSocket)',
+  'pitch.team.list.voice':
+    'Voice AI: AssemblyAI Universal-3.5 Pro Streaming, управление ходами, keyterm biasing, LLM Gateway',
+  'pitch.team.list.visual':
+    'Визуал: Three.js, Motion, Chart.js, Swiper — 3D-сцена и графики на лендинге',
+  'pitch.team.list.infra':
+    'Инфраструктура: Render, Vercel, GitHub Actions (keep-alive), Neon Postgres',
+  'pitch.team.note':
+    'Проект построен в одиночку — 30+ коммитов за 24 дня, 180 тестов, трёхъязычный интерфейс, админ-панель, журнал аудита и деплой. Это значит, что команда готова перейти от MVP к следующему этапу в рамках Pitch Day.',
+
+  'pitch.reasons.title': 'Почему мы можем решить эту задачу',
+  'pitch.reasons.constraint.h3': 'Мы первыми применили ограничение',
+  'pitch.reasons.constraint.p':
+    'Другие голосовые агенты идут по пути «улучшить модель». Мы взяли ограничение формата за основу и измерили его на 12 миллионах симулированных вызовов по 8 акцентам. Бюджет ошибок без ограничения — 0.0047, с ограничением — 0.0692, разница в 14.9x. Это описано в docs/EXPERIMENT.md и воспроизводимо через скрипт замеров.',
+  'pitch.reasons.engineering.h3': 'Честная инженерная практика',
+  'pitch.reasons.engineering.p':
+    '180 автоматических тестов, аудит безопасности (закрыто 6 дефектов), неизменяемый журнал аудита, изоляция данных между организациями. Каждое утверждение измерено, источник указан в docs/. Никаких лживых цифр «100 %».',
+  'pitch.reasons.market.h3': 'Мы знаем узбекский рынок',
+  'pitch.reasons.market.p':
+    'В Узбекистане логистика (железнодорожные контейнеры, автопарки), страховые и банковские колл-центры — все они опираются на чтение номеров по телефону. Интерфейс на узбекском, русском и английском; распознавание по телефону — на английском (AssemblyAI streaming пока не поддерживает узбекский, и мы говорим об этом открыто).',
+
+  'pitch.roadmap.title': 'Дорожная карта',
+  'pitch.roadmap.idea.label': 'Идея',
+  'pitch.roadmap.idea.when': '31 августа 2026',
+  'pitch.roadmap.idea.body':
+    'Родилась ради AssemblyAI Voice Agent Hackathon. Проблема ясна: в шуме номер слышится неверно. Решение: формат сам отдаёт свою контрольную цифру.',
+  'pitch.roadmap.prototype.label': 'Прототип',
+  'pitch.roadmap.prototype.when': '1–10 сентября 2026',
+  'pitch.roadmap.prototype.body':
+    'Solver (валидатор + posterior), replay-путь, детектор ARM/IDLE, 8 записанных фикстур. Ни одного микрофона — арифметика поверх кода. 156 тестов.',
+  'pitch.roadmap.mvp.label': 'MVP',
+  'pitch.roadmap.mvp.when': '11–24 сентября 2026',
+  'pitch.roadmap.mvp.body':
+    'Живой сокет AssemblyAI, микрофонный путь в браузере, мультитенантная админ-панель, журнал аудита, аудит безопасности, трёхъязычный интерфейс. 180 тестов. Сейчас на этапе деплоя.',
+  'pitch.roadmap.launch.label': 'Запуск',
+  'pitch.roadmap.launch.when': 'Октябрь 2026',
+  'pitch.roadmap.launch.body':
+    'Реальные звонки с тремя пилотными клиентами (логистика, страхование, банк), измеренные показатели молчания и точности. Проход в топ-5 хакатона AssemblyAI и во второй и третий этапы Pitch Day.',
+
+  'pitch.plan.title': 'Как мы это реализуем',
+  'pitch.plan.stack.h3': 'Технологический стек',
+  'pitch.plan.stack.voice':
+    'Голос: AssemblyAI Universal-3.5 Pro Streaming (WebSocket), keyterm biasing, UpdateConfiguration для обновления списка ограничений при ARMED, ForceEndpoint для возврата к тишине по завершении номера',
+  'pitch.plan.stack.server':
+    'Сервер: FastAPI + uvicorn, SQLAlchemy 2, PostgreSQL. По одному процессу и одному сокету на сессию, дневной бюджет по ARCH 3.11',
+  'pitch.plan.stack.web':
+    'Веб: React 19, Vite, TypeScript, i18n-треугольник (en/uz/ru). AudioWorklet берёт микрофон и отправляет PCM16-чанки на сервер',
+  'pitch.plan.stack.security':
+    'Безопасность: pbkdf2_sha256 600k итераций, дневные и IP-лимиты, HttpOnly cookie, каталог на организацию, неизменяемый журнал аудита',
+  'pitch.plan.stages.h3': 'Этапы',
+  'pitch.plan.stages.sept':
+    'Сентябрь: деплой MVP, подача на Pitch Day 3.0, подача на AssemblyAI hackathon',
+  'pitch.plan.stages.oct':
+    'Октябрь: закрытая бета с тремя пилотными клиентами. Замер доли молчания и количества вопросов на звонок. Подключение LLM Gateway как второго сигнала',
+  'pitch.plan.stages.novDec':
+    'Ноябрь–декабрь: открытая бета. Интеграция оплаты, аккаунты пользователей, посекундная модель тарификации',
+  'pitch.plan.stages.jan2027': 'Январь 2027: коммерческий запуск, первые платящие клиенты',
+  'pitch.plan.ai.h3': 'AI-инструменты',
+  'pitch.plan.ai.assemblyai': 'AssemblyAI Universal-3.5 Pro — распознавание в реальном времени',
+  'pitch.plan.ai.gateway': 'AssemblyAI LLM Gateway — второй сигнал для определения формата',
+  'pitch.plan.ai.claudeCode': 'Claude Code — помощник по планированию и написанию кода',
+  'pitch.plan.ai.solver':
+    'Наш собственный solver — арифметика контрольных цифр и posterior. Границы измерены в docs/EXPERIMENT.md',
+
+  'pitch.demo.title': 'Демо и прототип',
+  'pitch.demo.videoTitle': 'Видео демо Readback',
+  'pitch.demo.placeholder':
+    'Демо-видео готовится. До 11 октября здесь появится видео на 1–5 минут.',
+  'pitch.demo.about.h3': 'О видео',
+  'pitch.demo.about.p':
+    'В видео имитируется реальный телефонный разговор: оператор запрашивает номер контейнера, клиент диктует его на шумной линии. На экране Readback заполняет номер символ за символом, один молча исправляет и показывает разницу. Во второй части — случай, который не удаётся исправить: он спрашивает один раз и записывает. В конце — доля молчания и оценка сэкономленных за день денег.',
+  'pitch.demo.prototype.h3': 'Работающий прототип',
+  'pitch.demo.prototype.demoLine': '/demo — 8 записанных фикстур, работает без аккаунта',
+  'pitch.demo.prototype.liveLine': '/live — живой микрофон (нужна регистрация)',
+  'pitch.demo.prototype.formatsLine': '/formats — 5 поддерживаемых форматов',
+  'pitch.demo.prototype.open': 'Открыть',
+  'pitch.demo.source.h3': 'Исходный код',
+  'pitch.demo.source.before': 'Полный код открыт на ',
+  'pitch.demo.source.link': 'GitHub',
+  'pitch.demo.source.after':
+    '. Сервер (FastAPI, ~4000 строк), веб (React, ~5000 строк), 180 автоматических тестов и docs/ — всё в одном репозитории.',
+
+  'pitch.footer.contact': 'По вопросам и за дополнительной информацией:',
 } as const;
 
 export const ru: Messages = catalog satisfies Translated<typeof en, typeof catalog>;

@@ -1038,6 +1038,117 @@ const catalog = {
   'admin.sys.fixtures': 'Fixture\'lar',
   'admin.sys.ok': 'ishlayapti',
   'admin.sys.down': 'ulanib boʻlmadi',
+
+  // ------------------------------------------------------- pitch (/pitch) --
+  'pitch.kicker': 'Pitch Day 3.0 · 1-bosqich',
+  'pitch.title.before': 'Readback — telefonda oʻqilgan raqamlarni ',
+  'pitch.title.em': 'toʻgʻri',
+  'pitch.title.after': ' yozib oladigan ovozli AI agent.',
+  'pitch.lede':
+    'Har bir chaqiruv markazi, sugʻurta va logistika kompaniyasi bir kunda oʻnlab marta «Yana bir marta ayting» deb soʻraydi. Readback bu yoʻqotilgan vaqtni tozalaydi: shovqinda ham u raqamning toʻgʻriligini qanday tekshirishni biladi.',
+  'pitch.cta.tryDemo': 'Prototipni sinash',
+  'pitch.cta.product': 'Mahsulot sahifasi',
+
+  'pitch.problem.title': 'Muammo va yechim',
+  'pitch.problem.h3': 'Muammo',
+  'pitch.problem.p1':
+    'Chaqiruv markazlari, logistika va bank operatorlari har kuni telefon orqali raqam yozib oladi — konteyner, IBAN, VIN, bemor kodi, karta. Shovqinda 5 va 9, M va N, S va F bir xil eshitiladi. Bitta notoʻgʻri belgi — konteyner boshqa portga joʻnatiladi, toʻlov qaytariladi yoki dori boshqa odamga beriladi.',
+  'pitch.problem.p2':
+    'Odamlar bunga «Bravo uchun B mi, Delta uchun D mi?» deb har bir belgini qaytadan soʻrash bilan javob berishadi. Bir raqamga 15–20 soniya sarflanadi, mijoz asablanadi, operatorning kunlik unumdorligi 30% pasayadi.',
+  'pitch.solution.h3': 'Yechim',
+  'pitch.solution.p1':
+    'Readback fonda tinglaydi va raqamning qanday boʻlishi kerakligini biladi. Konteyner raqami ISO 6346 nazorat raqamiga boʻysunadi, IBAN mod-97 ni beradi, karta Luhn ni. Bu cheklov mikrofonni yaxshilamaydi — u tizim koʻtara oladigan xato darajasini 15 barobar oshiradi.',
+  'pitch.solution.p2':
+    'Uchdan ikki holatda notoʻgʻri eshitilganini oʻzi jimgina tuzatadi va ekranda farqni koʻrsatadi. Tuzata olmasa — bir marta, bitta belgi haqida soʻraydi va yana jim boʻladi. Transkript saqlanmaydi. Qaytadigani — raqam va necha marta gap boʻlinganining hisobi.',
+
+  'pitch.team.title': 'Jamoa',
+  'pitch.team.role': 'Solo full-stack va AI muhandisi',
+  'pitch.team.list.python':
+    'Python, FastAPI, SQLAlchemy, PostgreSQL — server, sessiya boshqaruvi, audit jurnali',
+  'pitch.team.list.typescript':
+    'TypeScript, React, Vite — web ilova, jonli mikrofon oqimi (AudioWorklet → PCM16 → WebSocket)',
+  'pitch.team.list.voice':
+    'Ovoz AI: AssemblyAI Universal-3.5 Pro Streaming, tur boshqaruvi, keyterm biasing, LLM Gateway',
+  'pitch.team.list.visual':
+    'Vizual: Three.js, Motion, Chart.js, Swiper — landing sahifasidagi 3D sahna va grafik',
+  'pitch.team.list.infra':
+    'Infratuzilma: Render, Vercel, GitHub Actions (keep-alive), Neon Postgres',
+  'pitch.team.note':
+    'Loyiha yakka oʻzim tomonidan qurilgan — 24 kun ichida 30+ commit, 180 test, uch tilli interfeys, admin paneli, audit jurnali va deploy. Bu Pitch Day muddatida MVP dan keyingi bosqichga oʻtishga tayyor jamoa demakdir.',
+
+  'pitch.reasons.title': 'Nima uchun biz bu muammoni hal qila olamiz',
+  'pitch.reasons.constraint.h3': 'Cheklovni birinchi boʻlib qoʻlladik',
+  'pitch.reasons.constraint.p':
+    'Boshqa ovozli agentlar «modelni yaxshilash» yoʻlidan boradi. Biz format cheklovini asos qilib oldik va uni 12 million simulyatsiya qilingan qamrov boʻyicha 8 xil aksentda oʻlchadik. Cheklovsiz xato budjeti 0.0047, cheklov bilan 0.0692 — 14.9x. Bu docs/EXPERIMENT.md da yozilgan va oʻlchov skripti bilan takrorlanadi.',
+  'pitch.reasons.engineering.h3': 'Halol muhandislik amaliyoti',
+  'pitch.reasons.engineering.p':
+    '180 avtomatik test, xavfsizlik auditi (6 defekt yopilgan), immutable audit jurnali, tashkilotlar orasidagi maʼlumot izolyatsiyasi. Har bir daʼvo oʻlchangan va uning manbai docs/ da koʻrsatilgan. Yolgʻonchi «100%» raqamlari yoʻq.',
+  'pitch.reasons.market.h3': 'Oʻzbek bozorini bilamiz',
+  'pitch.reasons.market.p':
+    'Oʻzbekistonda logistika (temir yoʻl konteynerlari, avtokorxonalar), sugʻurta va bank chaqiruv markazlari — bularning hammasi raqam oʻqilishiga tayanadi. Interfeys oʻzbek, rus va inglizcha; telefonda ingliz tilida ishlaydi (AssemblyAI streaming Oʻzbek tilini hozircha qoʻllamaydi va biz buni oshkora aytamiz).',
+
+  'pitch.roadmap.title': 'Yoʻl xaritasi',
+  'pitch.roadmap.idea.label': 'Gʻoya',
+  'pitch.roadmap.idea.when': '31-avgust 2026',
+  'pitch.roadmap.idea.body':
+    'AssemblyAI Voice Agent Hackathon uchun tugʻilgan gʻoya. Muammo aniq: shovqinda raqam notoʻgʻri eshitiladi. Yechim: format oʻzining nazorat raqamini beradi.',
+  'pitch.roadmap.prototype.label': 'Prototip',
+  'pitch.roadmap.prototype.when': '1-10 sentabr 2026',
+  'pitch.roadmap.prototype.body':
+    'Solver (validator + posterior), replay yoʻli, ARM/IDLE detektori, 8 ta yozib olingan fixture. Hech qanday mikrofon yoʻq, faqat kod ustidagi arifmetika. 156 test.',
+  'pitch.roadmap.mvp.label': 'MVP',
+  'pitch.roadmap.mvp.when': '11-24 sentabr 2026',
+  'pitch.roadmap.mvp.body':
+    'Jonli AssemblyAI soketi, browserdagi mikrofon yoʻli, koʻp tashkilotli admin panel, audit jurnali, xavfsizlik auditi, uch tilli interfeys. 180 test. Hozir deploy bosqichida.',
+  'pitch.roadmap.launch.label': 'Ishga tushirish',
+  'pitch.roadmap.launch.when': 'Oktabr 2026',
+  'pitch.roadmap.launch.body':
+    'Uch pilot mijoz bilan haqiqiy chaqiruvlar (logistika, sugʻurta, bank), oʻlchangan sukunat va aniqlik koʻrsatkichlari. AssemblyAI hakatonining top-5 va Pitch Day 2 va 3-bosqichlariga oʻtish.',
+
+  'pitch.plan.title': 'Yechimni qanday amalga oshiramiz',
+  'pitch.plan.stack.h3': 'Texnologik stak',
+  'pitch.plan.stack.voice':
+    'Ovoz: AssemblyAI Universal-3.5 Pro Streaming (WebSocket), keyterm biasing, UpdateConfiguration orqali ARMED boʻlganda cheklov roʻyxatini yangilash, ForceEndpoint raqam tugagach sukunatni qaytarish',
+  'pitch.plan.stack.server':
+    'Server: FastAPI + uvicorn, SQLAlchemy 2, PostgreSQL. Har bir sessiya bitta jarayon, bitta soket, ARCH 3.11 boʻyicha kunlik byudjet',
+  'pitch.plan.stack.web':
+    'Web: React 19, Vite, TypeScript, i18n uchburchak (en/uz/ru). AudioWorklet mikrofonni oladi va serverga PCM16 chunk sifatida yuboradi',
+  'pitch.plan.stack.security':
+    'Xavfsizlik: pbkdf2_sha256 600k iteratsiya, kunlik va IP boʻyicha rate limit, HttpOnly cookie, katalog per tashkilot, immutable audit jurnali',
+  'pitch.plan.stages.h3': 'Bosqichlar',
+  'pitch.plan.stages.sept':
+    'Sentabr: MVP deploy, Pitch Day 3.0 topshirish, AssemblyAI hakaton topshirish',
+  'pitch.plan.stages.oct':
+    'Oktabr: Uch pilot mijoz bilan yopiq beta. Har bir chaqiruv uchun sukunat ulushi va soʻralgan savollar sonini oʻlchash. LLM Gateway ni ikkinchi signal sifatida ulash',
+  'pitch.plan.stages.novDec':
+    'Noyabr-Dekabr: Ochiq beta. Toʻlov integratsiyasi, foydalanuvchi hisobi, sekundlik hisoblash boʻyicha modeli',
+  'pitch.plan.stages.jan2027': '2027 Yanvar: Kommersial ishga tushirish, birinchi toʻlovchi mijozlar',
+  'pitch.plan.ai.h3': 'AI vositalar',
+  'pitch.plan.ai.assemblyai': 'AssemblyAI Universal-3.5 Pro — real vaqtda tanib olish',
+  'pitch.plan.ai.gateway': 'AssemblyAI LLM Gateway — format aniqlashda ikkinchi signal',
+  'pitch.plan.ai.claudeCode': 'Claude Code — rejalashtirish va kod yozish yordamchisi',
+  'pitch.plan.ai.solver':
+    'Oʻz solverimiz — nazorat raqami arifmetikasi va posterior. Chegaralar docs/EXPERIMENT.md da oʻlchangan',
+
+  'pitch.demo.title': 'Demo va prototip',
+  'pitch.demo.videoTitle': 'Readback demo videosi',
+  'pitch.demo.placeholder':
+    'Demo videosi tayyorlanmoqda. 11-oktabrgacha bu joyga 1–5 daqiqalik video joylanadi.',
+  'pitch.demo.about.h3': 'Video haqida',
+  'pitch.demo.about.p':
+    'Videoda haqiqiy telefon suhbati taqlid qilinadi: operator konteyner raqamini soʻraydi, mijoz shovqinli aloqada aytadi. Ekranda Readback raqamni belgi-belgi toʻldiradi, bittasini jimgina tuzatadi va farqni koʻrsatadi. Ikkinchi qismda uni tuzata olmaydigan holat: bir marta soʻraydi va yozib oladi. Oxirida — sukunat foizi va bir kunlik pul tejash hisobi.',
+  'pitch.demo.prototype.h3': 'Ishlaydigan prototip',
+  'pitch.demo.prototype.demoLine': '/demo — 8 ta yozib olingan fixture, hisobsiz ishlaydi',
+  'pitch.demo.prototype.liveLine': '/live — jonli mikrofon (roʻyxatdan oʻtish talab qiladi)',
+  'pitch.demo.prototype.formatsLine': '/formats — qoʻllab-quvvatlanadigan 5 format',
+  'pitch.demo.prototype.open': 'Ochish',
+  'pitch.demo.source.h3': 'Manba kodi',
+  'pitch.demo.source.before': 'Toʻliq kod ',
+  'pitch.demo.source.link': 'GitHub',
+  'pitch.demo.source.after':
+    ' da ochiq. Server (FastAPI, ~4000 qator), web (React, ~5000 qator), 180 avtomatik test va docs/ — hammasi bir repositoriyada.',
+
+  'pitch.footer.contact': 'Savol yoki qoʻshimcha maʼlumot uchun:',
 } as const;
 
 export const uz: Messages = catalog satisfies Translated<typeof en, typeof catalog>;

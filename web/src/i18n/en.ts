@@ -1191,6 +1191,120 @@ export const en = {
   'admin.sys.fixtures': 'Fixtures',
   'admin.sys.ok': 'ok',
   'admin.sys.down': 'unreachable',
+
+  // ------------------------------------------------------- pitch (/pitch) --
+  // The pitch page. Uzbek-first for Pitch Day 3.0 but tri-lingual because it
+  // is the same page LabLab judges land on when they follow the video URL.
+  // Inline emphasis and links are kept in the JSX so translations stay plain.
+  'pitch.kicker': 'Pitch Day 3.0 · Stage 1',
+  'pitch.title.before': 'Readback — a voice AI agent that gets the number ',
+  'pitch.title.em': 'right',
+  'pitch.title.after': '.',
+  'pitch.lede':
+    'Every call centre, insurer and logistics operator asks "say that again" dozens of times a day. Readback removes that lost time: even in noise, it knows how to check that the number is correct.',
+  'pitch.cta.tryDemo': 'Try the prototype',
+  'pitch.cta.product': 'Product page',
+
+  'pitch.problem.title': 'The problem and the solution',
+  'pitch.problem.h3': 'The problem',
+  'pitch.problem.p1':
+    'Call centres, logistics dispatchers and bank operators take reference numbers over the phone every day — container IDs, IBANs, VINs, patient codes, cards. In noise, 5 and 9, M and N, S and F sound the same. One wrong character means a container ships to the wrong port, a payment is reversed, or medication reaches the wrong patient.',
+  'pitch.problem.p2':
+    'People cope by asking "Bravo for B or Delta for D?" for every character. That costs 15–20 seconds per number, frustrates the customer, and drops operator throughput by 30 percent.',
+  'pitch.solution.h3': 'The solution',
+  'pitch.solution.p1':
+    'Readback listens in the background and knows the shape a number must take. Container numbers satisfy the ISO 6346 check digit, IBANs give mod-97, cards give Luhn. This constraint does not improve the microphone — it multiplies the error budget the system can tolerate by 15×.',
+  'pitch.solution.p2':
+    'Two thirds of the time it silently corrects a misheard character and shows the difference on screen. When it cannot, it asks about one character, once, and goes quiet again. The transcript is not stored. What comes back is the confirmed number and a count of how many times the conversation was interrupted.',
+
+  'pitch.team.title': 'Team',
+  'pitch.team.role': 'Solo full-stack and AI engineer',
+  'pitch.team.list.python':
+    'Python, FastAPI, SQLAlchemy, PostgreSQL — server, session management, audit log',
+  'pitch.team.list.typescript':
+    'TypeScript, React, Vite — web app, live microphone stream (AudioWorklet → PCM16 → WebSocket)',
+  'pitch.team.list.voice':
+    'Voice AI: AssemblyAI Universal-3.5 Pro Streaming, turn control, keyterm biasing, LLM Gateway',
+  'pitch.team.list.visual':
+    'Visual: Three.js, Motion, Chart.js, Swiper — the landing 3D scene and charts',
+  'pitch.team.list.infra':
+    'Infrastructure: Render, Vercel, GitHub Actions (keep-alive), Neon Postgres',
+  'pitch.team.note':
+    'Built solo — 30+ commits in 24 days, 180 tests, tri-lingual interface, admin panel, audit log and deploy. That means a team ready to move from MVP to the next stage inside the Pitch Day window.',
+
+  'pitch.reasons.title': 'Why we can solve this',
+  'pitch.reasons.constraint.h3': 'We were the first to enforce the constraint',
+  'pitch.reasons.constraint.p':
+    'Other voice agents chase model quality. We treat the format constraint as the primitive and measured it across 12 million simulated calls in eight accents. Unconstrained error budget 0.0047, constrained 0.0692 — 14.9×. Documented in docs/EXPERIMENT.md and reproducible via the shipped script.',
+  'pitch.reasons.engineering.h3': 'Honest engineering practice',
+  'pitch.reasons.engineering.p':
+    '180 automated tests, security audit (six defects closed), immutable audit log, cross-organisation data isolation. Every claim is measured and every source is cited in docs/. No lying "100%" figures.',
+  'pitch.reasons.market.h3': 'We know the Uzbek market',
+  'pitch.reasons.market.p':
+    'In Uzbekistan, logistics (rail containers, freight companies), insurance and bank call centres all lean on reading numbers over the phone. The interface is Uzbek, Russian and English; the recogniser listens in English (AssemblyAI streaming does not yet support Uzbek and we say so up front).',
+
+  'pitch.roadmap.title': 'Roadmap',
+  'pitch.roadmap.idea.label': 'Idea',
+  'pitch.roadmap.idea.when': '31 Aug 2026',
+  'pitch.roadmap.idea.body':
+    'Born for the AssemblyAI Voice Agent Hackathon. Problem clear: numbers mishear in noise. Solution: let the format give up its own check digit.',
+  'pitch.roadmap.prototype.label': 'Prototype',
+  'pitch.roadmap.prototype.when': '1–10 Sep 2026',
+  'pitch.roadmap.prototype.body':
+    'Solver (validator + posterior), replay path, ARM/IDLE detector, 8 recorded fixtures. No microphone at all — arithmetic over code. 156 tests.',
+  'pitch.roadmap.mvp.label': 'MVP',
+  'pitch.roadmap.mvp.when': '11–24 Sep 2026',
+  'pitch.roadmap.mvp.body':
+    'Live AssemblyAI socket, browser microphone path, multi-tenant admin panel, audit log, security audit, tri-lingual interface. 180 tests. Now in deploy.',
+  'pitch.roadmap.launch.label': 'Launch',
+  'pitch.roadmap.launch.when': 'Oct 2026',
+  'pitch.roadmap.launch.body':
+    'Real calls with three pilot customers (logistics, insurance, bank), measured silence rate and accuracy figures. Advance to Pitch Day stages 2 and 3, and top-5 at the AssemblyAI hackathon.',
+
+  'pitch.plan.title': 'How we execute',
+  'pitch.plan.stack.h3': 'Technical stack',
+  'pitch.plan.stack.voice':
+    'Voice: AssemblyAI Universal-3.5 Pro Streaming (WebSocket), keyterm biasing, UpdateConfiguration to refresh the constraint list when ARMED, ForceEndpoint to snap back to silence at the end of a number',
+  'pitch.plan.stack.server':
+    'Server: FastAPI + uvicorn, SQLAlchemy 2, PostgreSQL. One process per session, one socket, daily budget per ARCH 3.11',
+  'pitch.plan.stack.web':
+    'Web: React 19, Vite, TypeScript, i18n triangle (en/uz/ru). AudioWorklet takes the mic and sends PCM16 chunks to the server',
+  'pitch.plan.stack.security':
+    'Security: PBKDF2-SHA256 600k iterations, daily and per-IP rate limits, HttpOnly cookies, per-organisation catalog, immutable audit log',
+  'pitch.plan.stages.h3': 'Stages',
+  'pitch.plan.stages.sept':
+    'September: MVP deploy, Pitch Day 3.0 submission, AssemblyAI hackathon submission',
+  'pitch.plan.stages.oct':
+    'October: closed beta with three pilot customers. Measure silence share and asked-question count per call. Wire LLM Gateway as a second signal',
+  'pitch.plan.stages.novDec':
+    'November–December: open beta. Payment integration, user accounts, per-second billing model',
+  'pitch.plan.stages.jan2027': 'January 2027: commercial launch, first paying customers',
+  'pitch.plan.ai.h3': 'AI tools',
+  'pitch.plan.ai.assemblyai': 'AssemblyAI Universal-3.5 Pro — real-time recognition',
+  'pitch.plan.ai.gateway': 'AssemblyAI LLM Gateway — second signal for format detection',
+  'pitch.plan.ai.claudeCode': 'Claude Code — planning and code-writing assistant',
+  'pitch.plan.ai.solver':
+    'Our own solver — check-digit arithmetic and posterior. Boundaries measured in docs/EXPERIMENT.md',
+
+  'pitch.demo.title': 'Demo and prototype',
+  'pitch.demo.videoTitle': 'Readback demo video',
+  'pitch.demo.placeholder':
+    'Demo video in production. A 1–5 minute video will land here by 11 October.',
+  'pitch.demo.about.h3': 'About the video',
+  'pitch.demo.about.p':
+    'The video mimics a real phone call: the operator asks for a container number, the caller reads it back over a noisy line. On screen, Readback fills the number character by character, silently corrects one, and shows the difference. In the second half, a case it cannot correct: it asks once and records. Ending: silence share and a one-day money-saved figure.',
+  'pitch.demo.prototype.h3': 'Working prototype',
+  'pitch.demo.prototype.demoLine': '/demo — 8 recorded fixtures, no account needed',
+  'pitch.demo.prototype.liveLine': '/live — live microphone (account required)',
+  'pitch.demo.prototype.formatsLine': '/formats — the 5 supported formats',
+  'pitch.demo.prototype.open': 'Open',
+  'pitch.demo.source.h3': 'Source code',
+  'pitch.demo.source.before': 'Full code on ',
+  'pitch.demo.source.link': 'GitHub',
+  'pitch.demo.source.after':
+    '. Server (FastAPI, ~4000 lines), web (React, ~5000 lines), 180 automated tests and docs/ — all in one repository.',
+
+  'pitch.footer.contact': 'For questions or more information:',
 } as const;
 
 /** Every key in the catalog. Adding one here is what forces uz and ru to move. */
